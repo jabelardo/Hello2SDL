@@ -5,9 +5,13 @@
 #ifndef HELLO2SDL_GAME_H
 #define HELLO2SDL_GAME_H
 
-#include "Entity.h"
 #include <memory>
 #include <vector>
+
+#include "Entity.h"
+#include "InputHandler.h"
+
+class TextureManager;
 
 class Game {
   TextureManager *textureManager = 0;
@@ -15,6 +19,7 @@ class Game {
   SDL_Renderer *renderer = 0;
   bool running = true;
   std::vector<std::unique_ptr<Entity>> entities;
+  InputHandler inputHandler = InputHandler{};
 
 public:
   bool init(const char *title, int xpos, int ypos, int width, int height, Uint32 flags,
@@ -29,6 +34,8 @@ public:
   void clean();
 
   bool isRunning();
+
+  void quit();
 };
 
 

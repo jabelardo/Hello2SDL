@@ -12,7 +12,9 @@ set(SOURCE_FILES
         src/main.cpp
         src/TextureManager.cpp
         src/TextureManager.h
-        src/Vector2D.h)
+        src/Vector2D.h
+        src/InputHandler.cpp
+        src/InputHandler.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

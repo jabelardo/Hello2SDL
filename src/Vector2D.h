@@ -8,13 +8,15 @@
 #include <math.h>
 
 struct Vector2D {
-  Vector2D(float x, float y): x(x), y(y) {}
-
   float x;
   float y;
 
+  float lengthSquare() {
+    return x * x + y * y;
+  }
+
   float length() {
-    return sqrt(x * x + y * y);
+    return sqrtf(lengthSquare());
   }
 
   void normalize() {

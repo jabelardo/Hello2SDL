@@ -9,6 +9,8 @@
 #endif
 
 #include "Game.h"
+#include "TextureManager.h"
+#include "LoaderParams.h"
 
 #define ANIMATE 1
 
@@ -43,40 +45,13 @@ Game::init(const char *title, int xpos, int ypos, int width, int height, Uint32 
 
 void
 Game::handleEvents() {
-  auto event = SDL_Event{};
-  if (SDL_PollEvent(&event)) {
-    switch (event.type) {
-      case SDL_QUIT: {
-        running = false;
-      }
-        break;
-
-      default:
-        break;
-    }
-  }
+  inputHandler.update(this);
 }
 
 void
 Game::update() {
   for (auto &Entity : entities) {
-    switch (Entity->getType()) {
-      case Entity::PlayerType: {
-        Entity->setAcceleration(Vector2D{.025,0});
-        Entity->setVelocity(Entity->getVelocity() + Entity->getAcceleration());
-        Entity->setPosition(Entity->getPosition() + Entity->getVelocity());
-      }
-        break;
-      case Entity::DefaultType: {
-        Entity->setPosition(Entity->getPosition() - Vector2D{1,0});
-      }
-        break;
-      case Entity::EnemyType: {
-        Entity->setPosition(Entity->getPosition() + Vector2D{1,1});
-      }
-        break;
-    }
-    Entity->frameUpdate();
+    Entity->update(&inputHandler);
   }
 }
 
@@ -102,4 +77,8 @@ Game::clean() {
 bool
 Game::isRunning() {
   return running;
+}
+
+void Game::quit() {
+  running = false;
 }

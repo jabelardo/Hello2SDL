@@ -10,9 +10,12 @@
 #else
 #include <SDL_render.h>
 #endif
+
 #include "Vector2D.h"
-#include "LoaderParams.h"
-#include "TextureManager.h"
+
+struct LoaderParams;
+class TextureManager;
+class InputHandler;
 
 class Entity {
 
@@ -25,23 +28,11 @@ public:
 
   void draw(TextureManager* textureManager, SDL_Renderer* renderer);
   
-  void frameUpdate();
+  void update(InputHandler* inputHandler);
   
   void clean();
 
-  Entity::Type getType();
-
-  Vector2D getPosition();
-
-  void setPosition(const Vector2D& position);
-
-  Vector2D getVelocity();
-
-  void setVelocity(const Vector2D& velocity);
-
-  Vector2D getAcceleration();
-
-  void setAcceleration(const Vector2D& acceleration);
+  Entity::Type getType() const;
 
 private:
   Entity::Type type;
@@ -53,6 +44,8 @@ private:
   Vector2D position;
   Vector2D velocity;
   Vector2D acceleration;
+
+  void handleInput(InputHandler* inputHandler);
 };
 
 

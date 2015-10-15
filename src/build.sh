@@ -8,7 +8,7 @@ else
 	SRC_DIR="$1"
 fi
 
-CommonFlags="-Wall -Werror -Wno-unused-variable -Wno-unused-function \
+CommonFlags="-Wall -Werror -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field \
 	-std=c++14 -DBUILD_INTERNAL=1 -DBUILD_SLOW=1 \
 	-DBUILD_OSX=1 -framework SDL2 -framework SDL2_image"
 
