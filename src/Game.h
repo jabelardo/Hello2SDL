@@ -17,7 +17,7 @@ class Game {
   std::vector<std::unique_ptr<Entity>> entities;
 
 public:
-  bool init(const char *title, int xpos, int ypos, int width, int height, int flags,
+  bool init(const char *title, int xpos, int ypos, int width, int height, Uint32 flags,
             TextureManager *textureManager);
 
   void handleEvents();

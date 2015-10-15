@@ -1,17 +1,9 @@
-#ifdef __APPLE__
-#include <SDL2/SDL.h>
-#include <SDL2_image/SDL_image.h>
-#else
-#include <SDL.h>
-#include <SDL_image.h>
-#endif
-
-#include "TextureManager.cpp"
-#include "Game.cpp"
 #include "Entity.cpp"
+#include "Game.cpp"
+#include "TextureManager.cpp"
 
-const auto FPS = 60;
-const auto DELAY_TIME = 1000.0f / FPS;
+const auto FPS = 60.f;
+const auto DELAY_TIME = (Uint32)(1000.0f / FPS);
 
 int 
 main(int argc, char* args[]) {

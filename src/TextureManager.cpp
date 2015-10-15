@@ -4,6 +4,9 @@
 
 #include "TextureManager.h"
 #include <cassert>
+#include <SDL2/SDL_log.h>
+#include <SDL2/SDL_filesystem.h>
+#include <SDL2_image/SDL_image.h>
 
 #ifndef ASSETS_FOLDER
 #define ASSETS_FOLDER "assets"
@@ -15,10 +18,9 @@
 #define PATH_SEP "/"
 #endif
 
-static std::string
-sdlGetResourcePath(const std::string &filename) {
-  static auto baseRes = std::string{};
-  if (baseRes.empty()) {
+std::string
+TextureManager::getResourcePath(const std::string &filename) {
+  if (baseResourcePath.empty()) {
     auto basePathRaw = SDL_GetBasePath();
     if (!basePathRaw) {
       SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
@@ -28,13 +30,12 @@ sdlGetResourcePath(const std::string &filename) {
     SDL_free(basePathRaw);
     auto pos = basePath.find("build");
     if (pos == std::string::npos) {
-      baseRes = basePath + ASSETS_FOLDER + PATH_SEP;
+      baseResourcePath = basePath + ASSETS_FOLDER + PATH_SEP;
     } else {
-      baseRes = basePath.substr(0, pos) + ASSETS_FOLDER + PATH_SEP;
+      baseResourcePath = basePath.substr(0, pos) + ASSETS_FOLDER + PATH_SEP;
     }
-
   }
-  auto result = baseRes;
+  auto result = baseResourcePath;
   if (!filename.empty()) {
     result += filename;
   }
@@ -43,7 +44,7 @@ sdlGetResourcePath(const std::string &filename) {
 
 bool
 TextureManager::load(int textureId, const std::string &fileName, SDL_Renderer *renderer) {
-  auto resource = sdlGetResourcePath(fileName);
+  auto resource = getResourcePath(fileName);
   if (resource.empty()) {
     return false;
   }
@@ -90,3 +91,4 @@ TextureManager::drawFrame(int textureId, int x, int y, int width, int height,
   assert(textureMap.count(textureId) == 1);
   SDL_RenderCopyEx(renderer, textureMap[textureId], &srcRect, &destRect, 0, 0, flip);
 }
+

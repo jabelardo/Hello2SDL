@@ -8,6 +8,8 @@
 #include <math.h>
 
 struct Vector2D {
+  Vector2D(float x, float y): x(x), y(y) {}
+
   float x;
   float y;
 
@@ -59,6 +61,5 @@ struct Vector2D {
     return *this;
   }
 };
-
 
 #endif //HELLO2SDL_VECTOR2D_H

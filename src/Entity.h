@@ -5,8 +5,14 @@
 #ifndef HELLO2SDL_ENTITY_H
 #define HELLO2SDL_ENTITY_H
 
+#ifdef __APPLE__
+#include <SDL2/SDL_render.h>
+#else
+#include <SDL_render.h>
+#endif
 #include "Vector2D.h"
 #include "LoaderParams.h"
+#include "TextureManager.h"
 
 class Entity {
 
