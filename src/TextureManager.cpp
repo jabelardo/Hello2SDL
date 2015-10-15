@@ -21,8 +21,7 @@ sdlGetResourcePath(const std::string &filename) {
   if (baseRes.empty()) {
     auto basePathRaw = SDL_GetBasePath();
     if (!basePathRaw) {
-      SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n",
-                   SDL_GetError());
+      SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
       return "";
     }
     auto basePath = std::string{basePathRaw};
@@ -43,8 +42,7 @@ sdlGetResourcePath(const std::string &filename) {
 }
 
 bool
-TextureManager::load(int textureId, const std::string &fileName,
-                     SDL_Renderer *renderer) {
+TextureManager::load(int textureId, const std::string &fileName, SDL_Renderer *renderer) {
   auto resource = sdlGetResourcePath(fileName);
   if (resource.empty()) {
     return false;
@@ -63,8 +61,8 @@ TextureManager::load(int textureId, const std::string &fileName,
 }
 
 void
-TextureManager::draw(int textureId, int x, int y, int width, int height,
-                     SDL_Renderer *renderer, SDL_RendererFlip flip) {
+TextureManager::draw(int textureId, int x, int y, int width, int height, SDL_Renderer *renderer,
+                     SDL_RendererFlip flip) {
   auto srcRect = SDL_Rect{};
   auto destRect = SDL_Rect{};
   srcRect.x = 0;

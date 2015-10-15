@@ -14,12 +14,11 @@ class TextureManager {
 public:
   bool load(int textureId, const std::string &fileName, SDL_Renderer *renderer);
 
-  void draw(int textureId, int x, int y, int width, int height,
-            SDL_Renderer *renderer, SDL_RendererFlip flip = SDL_FLIP_NONE);
+  void draw(int textureId, int x, int y, int width, int height, SDL_Renderer *renderer,
+            SDL_RendererFlip flip = SDL_FLIP_NONE);
 
-  void drawFrame(int textureId, int x, int y, int width, int height,
-                 int currentRow, int currentFrame, SDL_Renderer *renderer,
-                 SDL_RendererFlip flip = SDL_FLIP_NONE);
+  void drawFrame(int textureId, int x, int y, int width, int height, int currentRow,
+                 int currentFrame, SDL_Renderer *renderer, SDL_RendererFlip flip = SDL_FLIP_NONE);
 };
 
 

@@ -5,16 +5,20 @@
 #ifndef HELLO2SDL_GAME_H
 #define HELLO2SDL_GAME_H
 
+#include "GameObject.h"
+#include <memory>
+#include <vector>
+
 class Game {
   TextureManager *textureManager = 0;
   SDL_Window *window = 0;
   SDL_Renderer *renderer = 0;
   bool running = true;
-  int currentFrame = 0;
+  std::vector<std::unique_ptr<GameObject>> gameObjects;
 
 public:
-  bool init(const char *title, int xpos, int ypos, int width, int height,
-            int flags, TextureManager *textureManager);
+  bool init(const char *title, int xpos, int ypos, int width, int height, int flags,
+            TextureManager *textureManager);
 
   void handleEvents();
 

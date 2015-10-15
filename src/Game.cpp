@@ -4,11 +4,11 @@
 
 #include "Game.h"
 
-#define ANIMATE_ALPHA_ID 1
+#define ANIMATE 1
 
 bool
-Game::init(const char *title, int xpos, int ypos, int width, int height,
-           int flags, TextureManager *textureManager) {
+Game::init(const char *title, int xpos, int ypos, int width, int height,  int flags,
+           TextureManager *textureManager) {
   this->textureManager = textureManager;
   if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
     window = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
@@ -17,9 +17,15 @@ Game::init(const char *title, int xpos, int ypos, int width, int height,
       renderer = SDL_CreateRenderer(window, -1, 0);
     }
 
-    if (renderer) {
-      return textureManager->load(ANIMATE_ALPHA_ID, "animate-alpha.png", renderer);
+    if (renderer &&
+        !textureManager->load(ANIMATE, "animate-alpha.png", renderer)) {
+      return false;
     }
+    gameObjects.push_back(std::make_unique<GameObject>());
+    gameObjects.push_back(std::make_unique<GameObject>());
+    gameObjects[0]->load(ANIMATE, 100, 100, 128, 82);
+    gameObjects[1]->load(ANIMATE, 300, 300, 128, 82);
+    return true;
   }
   return false;
 }
@@ -41,7 +47,9 @@ Game::handleEvents() {
 
 void
 Game::update() {
-  currentFrame = int(((SDL_GetTicks() / 100) % 6));
+  for (auto& gameObject : gameObjects) {
+    gameObject->update();
+  }
 }
 
 void
@@ -49,9 +57,9 @@ Game::render() {
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   SDL_RenderClear(renderer);
 
-  textureManager->draw(ANIMATE_ALPHA_ID, 0, 0, 128, 82, renderer);
-
-  textureManager->drawFrame(ANIMATE_ALPHA_ID, 100, 100, 128, 82, 1, currentFrame, renderer);
+  for (auto& gameObject : gameObjects) {
+    gameObject->draw(textureManager, renderer);
+  }
 
   SDL_RenderPresent(renderer);
 }

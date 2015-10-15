@@ -8,6 +8,7 @@
 
 #include "TextureManager.cpp"
 #include "Game.cpp"
+#include "GameObject.cpp"
 
 int 
 main(int argc, char* args[]) {
@@ -21,6 +22,7 @@ main(int argc, char* args[]) {
     game.handleEvents();
     game.update();
     game.render();
+    SDL_Delay(10);
   }
   game.clean();
 

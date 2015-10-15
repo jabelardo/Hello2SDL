@@ -9,7 +9,7 @@ else
 fi
 
 CommonFlags="-Wall -Werror -Wno-unused-variable -Wno-unused-function \
-	-std=c++11 -DBUILD_INTERNAL=1 -DBUILD_SLOW=1 \
+	-std=c++14 -DBUILD_INTERNAL=1 -DBUILD_SLOW=1 \
 	-DBUILD_OSX=1 -framework SDL2 -framework SDL2_image"
 
 c++ $CommonFlags ${SRC_DIR}/main.cpp -o Hello2SDL -g
