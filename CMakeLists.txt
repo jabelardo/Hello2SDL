@@ -3,6 +3,17 @@ project(Hello2SDL)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
+set(CXX_SOURCE_FILES
+    Entity.cpp
+    Entity.h
+    Game.cpp
+    Game.h
+    LoadParams.h
+    main.cpp
+    TextureManager.cpp
+    TextureManager.h
+    Vector2D.h)
+
 add_custom_target(Hello2SDL
                   COMMAND ${Hello2SDL_SOURCE_DIR}/src/build.sh ${Hello2SDL_SOURCE_DIR}/src)
 
