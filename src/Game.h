@@ -5,7 +5,7 @@
 #ifndef HELLO2SDL_GAME_H
 #define HELLO2SDL_GAME_H
 
-#include "GameObject.h"
+#include "Entity.h"
 #include <memory>
 #include <vector>
 
@@ -14,7 +14,7 @@ class Game {
   SDL_Window *window = 0;
   SDL_Renderer *renderer = 0;
   bool running = true;
-  std::vector<std::unique_ptr<GameObject>> gameObjects;
+  std::vector<std::unique_ptr<Entity>> entities;
 
 public:
   bool init(const char *title, int xpos, int ypos, int width, int height, int flags,
