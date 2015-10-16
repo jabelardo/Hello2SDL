@@ -5,6 +5,14 @@
 #ifndef HELLO2SDL_GAMESTATE_H
 #define HELLO2SDL_GAMESTATE_H
 
+#ifdef __APPLE__
+#include <SDL2/SDL_render.h>
+#else
+#include <SDL_render.h>
+#endif
+
+class InputHandler;
+class TextureManager;
 
 class GameState {
 public:

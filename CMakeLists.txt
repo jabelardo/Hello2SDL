@@ -4,10 +4,14 @@ project(Hello2SDL)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 set(SOURCE_FILES
+        src/AnimatedGraphic.cpp
+        src/AnimatedGraphic.h
         src/Entity.cpp
         src/Entity.h
         src/Game.cpp
         src/Game.h
+        src/GameOverState.cpp
+        src/GameOverState.h
         src/GameState.h
         src/GameStateMachine.cpp
         src/GameStateMachine.h
@@ -19,6 +23,8 @@ set(SOURCE_FILES
         src/MenuButton.h
         src/MenuState.cpp
         src/MenuState.h
+        src/PauseState.cpp
+        src/PauseState.h
         src/PlayState.cpp
         src/PlayState.h
         src/Sprite.cpp

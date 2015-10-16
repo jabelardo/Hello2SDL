@@ -8,14 +8,23 @@
 #include "TextureManager.h"
 #include "LoaderParams.h"
 #include "Game.h"
+#include "Sprite.h"
+#include "Entity.h"
 
-Game*
-PlayState::game = 0;
+Game *
+    PlayState::game = 0;
 
 void
 PlayState::update(InputHandler *inputHandler) {
+  assert(game);
+  if (inputHandler->isKeyDown(SDL_SCANCODE_ESCAPE)) {
+    game->pause();
+  }
   for (auto &entity : entities) {
     entity->update(inputHandler);
+  }
+  if (Sprite::checkCollision(entities[0]->getSprite(), entities[1]->getSprite())) {
+    game->gameOver();
   }
 }
 
@@ -32,9 +41,15 @@ PlayState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
   if (!textureManager->load(HELICOPTER, "helicopter.png", renderer)) {
     return false;
   }
+  if (!textureManager->load(HELICOPTER2, "helicopter2.png", renderer)) {
+    return false;
+  }
 
   entities.push_back(std::make_unique<Entity>(Entity::PLAYER_TYPE,
-                                              LoaderParams{HELICOPTER, 100, 100, 128, 55, 5}));
+                                              LoaderParams{HELICOPTER, 500, 100, 128, 55, 5}));
+
+  entities.push_back(std::make_unique<Entity>(Entity::ENEMY_TYPE,
+                                              LoaderParams{HELICOPTER2, 0, 100, 128, 55, 5}));
 
   return true;
 }

@@ -65,3 +65,8 @@ InputHandler::onMouseButtonUp(SDL_Event &event) {
   }
 }
 
+void InputHandler::reset() {
+  for (auto& mouseButtonState : mouseButtonStates) {
+    mouseButtonState = false;
+  }
+}

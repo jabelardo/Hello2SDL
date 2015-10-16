@@ -5,11 +5,8 @@
 #ifndef HELLO2SDL_MENUSTATE_H
 #define HELLO2SDL_MENUSTATE_H
 
-#include <SDL2/SDL_render.h>
 #include <vector>
 #include "GameState.h"
-#include "InputHandler.h"
-#include "TextureManager.h"
 #include "MenuButton.h"
 
 class Game;

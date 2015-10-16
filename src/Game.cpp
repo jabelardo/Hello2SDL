@@ -13,6 +13,8 @@
 #include "LoaderParams.h"
 #include "MenuState.h"
 #include "PlayState.h"
+#include "PauseState.h"
+#include "GameOverState.h"
 
 bool
 Game::init(const char *title, int xpos, int ypos, int width, int height, Uint32 flags,
@@ -25,23 +27,12 @@ Game::init(const char *title, int xpos, int ypos, int width, int height, Uint32 
       renderer = SDL_CreateRenderer(window, -1, 0);
     }
 
-//    if (renderer &&
-//        !textureManager->load(ANIMATE, "animate-alpha.png", renderer)) {
-//      return false;
-//    }
-//    entities.push_back(std::make_unique<Entity>(Entity::PLAYER_TYPE,
-//                                                LoaderParams{ANIMATE, 100, 100, 128, 82, 6}));
-//
-//    entities.push_back(std::make_unique<Entity>(Entity::DEFAULT_TYPE,
-//                                                LoaderParams{ANIMATE, 300, 300, 128, 82, 6}));
-//
-//    entities.push_back(std::make_unique<Entity>(Entity::ENEMY_TYPE,
-//                                                LoaderParams{ANIMATE, 0, 0, 128, 82, 6}));
-
     PlayState::setGame(this);
     MenuState::setGame(this);
+    PauseState::setGame(this);
+    GameOverState::setGame(this);
 
-    stateMachine.changeState(std::make_unique<MenuState>(), textureManager, renderer);
+    showMenu();
 
     return true;
   }
@@ -51,14 +42,13 @@ Game::init(const char *title, int xpos, int ypos, int width, int height, Uint32 
 void
 Game::handleEvents() {
   inputHandler.update(this);
-  if (inputHandler.isKeyDown(SDL_SCANCODE_RETURN)){
+  if (inputHandler.isKeyDown(SDL_SCANCODE_RETURN)) {
     play();
   }
 }
 
 void
 Game::update() {
-
   stateMachine.update(&inputHandler);
 }
 
@@ -86,6 +76,30 @@ Game::quit() {
   running = false;
 }
 
-void Game::play() {
+void
+Game::play() {
   stateMachine.changeState(std::make_unique<PlayState>(), textureManager, renderer);
+}
+
+void
+Game::showMenu() {
+  stateMachine.changeState(std::make_unique<MenuState>(), textureManager, renderer);
+}
+
+void
+Game::resumePlay() {
+  stateMachine.popState(textureManager);
+}
+
+void
+Game::pause() {
+  stateMachine.changeState(std::make_unique<PauseState>(), textureManager, renderer);
+}
+
+void Game::resetInput() {
+  inputHandler.reset();
+}
+
+void Game::gameOver() {
+  stateMachine.changeState(std::make_unique<GameOverState>(), textureManager, renderer);
 }

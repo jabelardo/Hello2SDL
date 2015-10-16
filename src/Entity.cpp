@@ -17,7 +17,19 @@
 #include "InputHandler.h"
 
 Entity::Entity(Entity::Type type, const LoaderParams &params)
-    : type(type), sprite(params), velocity{0, 0}, acceleration{0, 0} {
+    : type(type), sprite(params), velocity(), acceleration() {
+  switch (type) {
+    case Entity::ENEMY_TYPE: {
+      velocity = Vector2D{2, .33f};
+      acceleration = Vector2D{0, .33f};
+      break;
+    }
+    case PLAYER_TYPE: {
+      velocity = Vector2D{0, 0};
+      acceleration = Vector2D{0, 0};
+      break;
+    }
+  }
 }
 
 void
@@ -31,24 +43,32 @@ Entity::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
 
 void
 Entity::update(InputHandler *inputHandler) {
+  sprite.setCurrentFrame((int) ((SDL_GetTicks() / 100) % sprite.getTotalFrames()));
   switch (type) {
     case Entity::PLAYER_TYPE: {
       velocity = Vector2D{0, 0};
       handleInput(inputHandler);
-      velocity += acceleration;
-      sprite.setPosition(sprite.getPosition() + velocity);
-    }
       break;
-    case Entity::DEFAULT_TYPE: {
-      sprite.setPosition(sprite.getPosition() - Vector2D{1, 0});
     }
-      break;
     case Entity::ENEMY_TYPE: {
-      sprite.setPosition(sprite.getPosition() + Vector2D{1, 1});
-    }
+      if (sprite.getPosition().y < 0) {
+        velocity = Vector2D{2, .33f};
+        acceleration = Vector2D{0, .33f};
+
+      } else if (sprite.getPosition().y > 400) {
+        velocity = Vector2D{2, -.33f};
+        acceleration = Vector2D{0, -.33f};
+      }
+      if (sprite.getPosition().x > 640) {
+        auto pos = sprite.getPosition();
+        pos.x = 0;
+        sprite.setPosition(pos);
+      }
       break;
+    }
   }
-  sprite.setCurrentFrame((int) ((SDL_GetTicks() / 100) % sprite.getTotalFrames()));
+  velocity += acceleration;
+  sprite.setPosition(sprite.getPosition() + velocity);
 }
 
 void
@@ -110,4 +130,8 @@ void Entity::handleInput(InputHandler *inputHandler) {
 //    }
 //  }
 //  acceleration += vect;
+}
+
+const Sprite &Entity::getSprite() const {
+  return sprite;
 }

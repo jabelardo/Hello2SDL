@@ -63,3 +63,22 @@ int
 Sprite::getTotalFrames() const {
   return totalFrames;
 }
+
+bool
+Sprite::checkCollision(const Sprite &sprite1, const Sprite &sprite2) {
+  auto leftA = sprite1.getPosition().x;
+  auto rightA = sprite1.getPosition().x + sprite1.getWidth();
+  auto topA = sprite1.getPosition().y;
+  auto bottomA = sprite1.getPosition().y + sprite1.getHeight();
+  //Calculate the sides of rect B
+  auto leftB = sprite2.getPosition().x;
+  auto rightB = sprite2.getPosition().x + sprite2.getWidth();
+  auto topB = sprite2.getPosition().y;
+  auto bottomB = sprite2.getPosition().y + sprite2.getHeight();
+  //If any of the sides from A are outside of B
+  if (bottomA <= topB) { return false; }
+  if (topA >= bottomB) { return false; }
+  if (rightA <= leftB) { return false; }
+  if (leftA >= rightB) { return false; }
+  return true;
+}

@@ -21,7 +21,7 @@ class Entity {
 
 public:
   enum Type {
-    PLAYER_TYPE, DEFAULT_TYPE, ENEMY_TYPE
+    PLAYER_TYPE, ENEMY_TYPE
   };
 
   Entity(Entity::Type type, const LoaderParams& params);
@@ -34,6 +34,8 @@ public:
 
   Entity::Type getType() const;
 
+  const Sprite &getSprite() const;
+
 private:
   Entity::Type type;
   Sprite sprite;
@@ -41,6 +43,7 @@ private:
   Vector2D acceleration;
 
   void handleInput(InputHandler* inputHandler);
+
 };
 
 

@@ -40,8 +40,10 @@ public:
     return false;
   }
 
+  void reset();
+
 private:
-  bool mouseButtonStates[5];
+  bool mouseButtonStates[3];
   Vector2D mousePosition;
   const Uint8 *keyStates;
 

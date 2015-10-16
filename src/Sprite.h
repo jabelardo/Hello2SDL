@@ -43,6 +43,8 @@ public:
 
   int getTotalFrames() const;
 
+  static bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
+
 private:
   TextureId textureId;
   Vector2D position;

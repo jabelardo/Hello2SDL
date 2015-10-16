@@ -5,14 +5,12 @@
 #ifndef HELLO2SDL_PLAYSTATE_H
 #define HELLO2SDL_PLAYSTATE_H
 
-#include <SDL2/SDL_render.h>
 #include <vector>
 #include "GameState.h"
-#include "InputHandler.h"
-#include "TextureManager.h"
 
 class Entity;
 class Game;
+class Sprite;
 
 class PlayState : public GameState {
 
