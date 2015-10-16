@@ -61,6 +61,7 @@ PlayState::onExit(TextureManager *textureManager) {
   }
   entities.clear();
   textureManager->clearFromTextureMap(HELICOPTER);
+  textureManager->clearFromTextureMap(HELICOPTER2);
   return true;
 }
 

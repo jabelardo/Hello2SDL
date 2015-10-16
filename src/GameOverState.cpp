@@ -16,7 +16,9 @@ GameOverState::update(InputHandler *inputHandler) {
   for (auto &menuButton : menuButtons) {
     menuButton.update(inputHandler);
   }
-  gameOverGraphic->update(inputHandler);
+  if (gameOverGraphic) {
+    gameOverGraphic->update(inputHandler);
+  }
 }
 
 void
@@ -24,7 +26,9 @@ GameOverState::render(TextureManager *textureManager, SDL_Renderer *renderer) {
   for (auto &menuButton : menuButtons) {
     menuButton.draw(textureManager, renderer);
   }
-  gameOverGraphic->draw(textureManager, renderer);
+  if (gameOverGraphic) {
+    gameOverGraphic->draw(textureManager, renderer);
+  }
 }
 
 bool
@@ -53,7 +57,9 @@ GameOverState::onExit(TextureManager *textureManager) {
   for (auto &menuButton : menuButtons) {
     menuButton.clean();
   }
-  gameOverGraphic->clean();
+  if (gameOverGraphic) {
+    gameOverGraphic->clean();
+  }
   menuButtons.clear();
   textureManager->clearFromTextureMap(MAIN_BUTTON);
   textureManager->clearFromTextureMap(RESTART_BUTTON);
