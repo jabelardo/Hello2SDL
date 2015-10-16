@@ -56,9 +56,9 @@ PauseState::onExit(TextureManager *textureManager) {
   return true;
 }
 
-int
+GameStateId
 PauseState::getStateId() const {
-  return 0;
+  return PAUSE_STATE;
 }
 
 void

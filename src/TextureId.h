@@ -14,7 +14,6 @@ using TextureId = enum {
   MAIN_BUTTON,
   RESUME_BUTTON,
   RESTART_BUTTON,
-
 };
 
 

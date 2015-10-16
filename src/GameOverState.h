@@ -25,7 +25,7 @@ public:
 
   virtual bool onExit(TextureManager *textureManager);
 
-  virtual int getStateId() const;
+  virtual GameStateId getStateId() const;
 
   static void setGame(Game *game);
 

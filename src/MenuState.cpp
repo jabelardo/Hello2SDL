@@ -54,9 +54,9 @@ MenuState::onExit(TextureManager *textureManager) {
   return true;
 }
 
-int
+GameStateId
 MenuState::getStateId() const {
-  return 0;
+  return MENU_STATE;
 }
 
 void

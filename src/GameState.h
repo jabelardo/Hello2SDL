@@ -11,6 +11,8 @@
 #include <SDL_render.h>
 #endif
 
+#include "GameStateId.h"
+
 class InputHandler;
 class TextureManager;
 
@@ -21,7 +23,7 @@ public:
   virtual void render(TextureManager *textureManager, SDL_Renderer *renderer) = 0;
   virtual bool onEnter(TextureManager *textureManager, SDL_Renderer *renderer) = 0;
   virtual bool onExit(TextureManager *textureManager) = 0;
-  virtual int getStateId() const = 0;
+  virtual GameStateId getStateId() const = 0;
 };
 
 

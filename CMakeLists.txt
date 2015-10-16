@@ -32,7 +32,7 @@ set(SOURCE_FILES
         src/TextureId.h
         src/TextureManager.cpp
         src/TextureManager.h
-        src/Vector2D.h)
+        src/Vector2D.h src/GameStateId.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

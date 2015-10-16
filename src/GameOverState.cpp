@@ -7,6 +7,7 @@
 #include "TextureManager.h"
 #include "LoaderParams.h"
 #include "Game.h"
+#include "GameStateId.h"
 
 Game *
 GameOverState::game = 0;
@@ -67,9 +68,9 @@ GameOverState::onExit(TextureManager *textureManager) {
   return true;
 }
 
-int
+GameStateId
 GameOverState::getStateId() const {
-  return 0;
+  return GAME_OVER_STATE;
 }
 
 void

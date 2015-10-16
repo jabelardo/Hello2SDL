@@ -65,9 +65,9 @@ PlayState::onExit(TextureManager *textureManager) {
   return true;
 }
 
-int
+GameStateId
 PlayState::getStateId() const {
-  return 1;
+  return PLAY_STATE;
 }
 
 void
