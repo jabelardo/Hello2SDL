@@ -78,12 +78,12 @@ Game::quit() {
 
 void
 Game::play() {
-  stateMachine.changeState(std::make_unique<PlayState>(), textureManager, renderer);
+  stateMachine.changeState(playState, textureManager, renderer);
 }
 
 void
 Game::showMenu() {
-  stateMachine.changeState(std::make_unique<MenuState>(), textureManager, renderer);
+  stateMachine.changeState(menuState, textureManager, renderer);
 }
 
 void
@@ -93,7 +93,7 @@ Game::resumePlay() {
 
 void
 Game::pause() {
-  stateMachine.changeState(std::make_unique<PauseState>(), textureManager, renderer);
+  stateMachine.pushState(pauseState, textureManager, renderer);
 }
 
 void Game::resetInput() {
@@ -101,5 +101,5 @@ void Game::resetInput() {
 }
 
 void Game::gameOver() {
-  stateMachine.changeState(std::make_unique<GameOverState>(), textureManager, renderer);
+  stateMachine.changeState(gameOverState, textureManager, renderer);
 }

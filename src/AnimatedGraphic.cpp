@@ -21,5 +21,8 @@ AnimatedGraphic::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
 
 void
 AnimatedGraphic::update(InputHandler *inputHandler) {
-  sprite.setCurrentFrame((int) ((SDL_GetTicks() / (100 / animationSpeed)) % sprite.getTotalFrames()));
+  if (animationSpeed) {
+    sprite.setCurrentFrame(
+        (int) ((SDL_GetTicks() / (1000 / animationSpeed)) % sprite.getTotalFrames()));
+  }
 }

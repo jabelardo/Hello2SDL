@@ -9,32 +9,28 @@
 #include "InputHandler.h"
 
 void
-GameStateMachine::pushState(std::unique_ptr<GameState> state, TextureManager *textureManager,
+GameStateMachine::pushState(GameState& state, TextureManager *textureManager,
                             SDL_Renderer *renderer) {
-  assert(state);
-  gameStates.push_back(std::move(state));
-  gameStates.back()->onEnter(textureManager, renderer);
+  gameStates.push_back(state);
+  gameStates.back().get().onEnter(textureManager, renderer);
 }
 
 void
-GameStateMachine::changeState(std::unique_ptr<GameState> state, TextureManager *textureManager,
+GameStateMachine::changeState(GameState& state, TextureManager *textureManager,
                               SDL_Renderer *renderer) {
-  assert(state);
   if (!gameStates.empty()) {
-    if (gameStates.back()->getStateId() == state->getStateId()) {
+    if (gameStates.back().get().getStateId() == state.getStateId()) {
       return;
     }
-    if (gameStates.back()->onExit(textureManager)) {
-      gameStates.pop_back();
-    }
+    popState(textureManager);
   }
-  pushState(std::move(state), textureManager, renderer);
+  pushState(state, textureManager, renderer);
 }
 
 void
 GameStateMachine::popState(TextureManager *textureManager) {
   if (!gameStates.empty()) {
-    if (gameStates.back()->onExit(textureManager)) {
+    if (gameStates.back().get().onExit(textureManager)) {
       gameStates.pop_back();
     }
   }
@@ -43,13 +39,13 @@ GameStateMachine::popState(TextureManager *textureManager) {
 void
 GameStateMachine::render(TextureManager *textureManager, SDL_Renderer *renderer) {
   if (!gameStates.empty()) {
-    gameStates.back()->render(textureManager, renderer);
+    gameStates.back().get().render(textureManager, renderer);
   }
 }
 
 void
 GameStateMachine::update(InputHandler *inputHandler) {
   if (!gameStates.empty()) {
-    gameStates.back()->update(inputHandler);
+    gameStates.back().get().update(inputHandler);
   }
 }

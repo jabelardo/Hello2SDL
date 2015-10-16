@@ -8,6 +8,10 @@
 #include "Entity.h"
 #include "InputHandler.h"
 #include "GameStateMachine.h"
+#include "PlayState.h"
+#include "MenuState.h"
+#include "PauseState.h"
+#include "GameOverState.h"
 
 class TextureManager;
 
@@ -48,6 +52,10 @@ private:
   bool running = true;
   InputHandler inputHandler = InputHandler{};
   GameStateMachine stateMachine;
+  PlayState playState;
+  MenuState menuState;
+  PauseState pauseState;
+  GameOverState gameOverState;
 };
 
 

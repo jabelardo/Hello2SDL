@@ -14,10 +14,10 @@
 
 class GameStateMachine {
 public:
-  void pushState(std::unique_ptr<GameState> state, TextureManager *textureManager,
+  void pushState(GameState& state, TextureManager *textureManager,
                  SDL_Renderer *renderer);
 
-  void changeState(std::unique_ptr<GameState> state, TextureManager *textureManager,
+  void changeState(GameState& state, TextureManager *textureManager,
                    SDL_Renderer *renderer);
 
   void popState(TextureManager *textureManager);
@@ -27,7 +27,7 @@ public:
   void render(TextureManager *textureManager, SDL_Renderer *renderer);
 
 private:
-  std::vector<std::unique_ptr<GameState>> gameStates;
+  std::vector<std::reference_wrapper<GameState>> gameStates;
 
 };
 
