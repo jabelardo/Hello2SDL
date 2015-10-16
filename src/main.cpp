@@ -1,7 +1,12 @@
 #include "Entity.cpp"
 #include "Game.cpp"
-#include "TextureManager.cpp"
+#include "GameStateMachine.cpp"
 #include "InputHandler.cpp"
+#include "MenuButton.cpp"
+#include "MenuState.cpp"
+#include "PlayState.cpp"
+#include "Sprite.cpp"
+#include "TextureManager.cpp"
 
 const auto FPS = 60.f;
 const auto DELAY_TIME = (Uint32)(1000.0f / FPS);

@@ -20,9 +20,9 @@ public:
   void update(Game* game);
 
   enum MouseButton {
-    LeftMouseButton = 0,
-    MiddleMouseButton,
-    RightMouseButton
+    LEFT_MOUSE_BUTTON = 0,
+    MIDDLE_MOUSE_BUTTON,
+    RIGHT_MOUSE_BUTTON
   };
 
   bool getMouseButtonState(MouseButton mouseButton) const {

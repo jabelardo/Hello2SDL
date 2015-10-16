@@ -43,7 +43,7 @@ TextureManager::getResourcePath(const std::string &filename) {
 }
 
 bool
-TextureManager::load(int textureId, const std::string &fileName, SDL_Renderer *renderer) {
+TextureManager::load(TextureId textureId, const std::string &fileName, SDL_Renderer *renderer) {
   auto resource = getResourcePath(fileName);
   if (resource.empty()) {
     return false;
@@ -62,8 +62,8 @@ TextureManager::load(int textureId, const std::string &fileName, SDL_Renderer *r
 }
 
 void
-TextureManager::draw(int textureId, int x, int y, int width, int height, SDL_Renderer *renderer,
-                     SDL_RendererFlip flip) {
+TextureManager::draw(TextureId textureId, int x, int y, int width, int height,
+                     SDL_Renderer *renderer, SDL_RendererFlip flip) {
   auto srcRect = SDL_Rect{};
   auto destRect = SDL_Rect{};
   srcRect.x = 0;
@@ -77,9 +77,8 @@ TextureManager::draw(int textureId, int x, int y, int width, int height, SDL_Ren
 }
 
 void
-TextureManager::drawFrame(int textureId, int x, int y, int width, int height,
-                 int currentRow, int currentFrame, SDL_Renderer *renderer,
-                 SDL_RendererFlip flip) {
+TextureManager::drawFrame(TextureId textureId, int x, int y, int width, int height, int currentRow,
+                          int currentFrame, SDL_Renderer *renderer, SDL_RendererFlip flip) {
   auto srcRect = SDL_Rect{};
   auto destRect = SDL_Rect{};
   srcRect.x = width * currentFrame;
@@ -92,3 +91,12 @@ TextureManager::drawFrame(int textureId, int x, int y, int width, int height,
   SDL_RenderCopyEx(renderer, textureMap[textureId], &srcRect, &destRect, 0, 0, flip);
 }
 
+void
+TextureManager::clearFromTextureMap(TextureId textureId) {
+  assert(textureMap.count(textureId) == 1);
+  auto found = textureMap.find(textureId);
+  if (found != textureMap.end()) {
+    SDL_DestroyTexture(found->second);
+  }
+  textureMap.erase(textureId);
+}

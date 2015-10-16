@@ -10,16 +10,11 @@
 
 #include "Entity.h"
 #include "InputHandler.h"
+#include "GameStateMachine.h"
 
 class TextureManager;
 
 class Game {
-  TextureManager *textureManager = 0;
-  SDL_Window *window = 0;
-  SDL_Renderer *renderer = 0;
-  bool running = true;
-  std::vector<std::unique_ptr<Entity>> entities;
-  InputHandler inputHandler = InputHandler{};
 
 public:
   bool init(const char *title, int xpos, int ypos, int width, int height, Uint32 flags,
@@ -36,6 +31,17 @@ public:
   bool isRunning();
 
   void quit();
+
+  void play();
+
+private:
+  TextureManager *textureManager = 0;
+  SDL_Window *window = 0;
+  SDL_Renderer *renderer = 0;
+  bool running = true;
+  //std::vector<std::unique_ptr<Entity>> entities;
+  InputHandler inputHandler = InputHandler{};
+  GameStateMachine stateMachine;
 };
 
 

@@ -17,36 +17,38 @@
 #include "InputHandler.h"
 
 Entity::Entity(Entity::Type type, const LoaderParams &params)
-    : type(type), textureId(params.textureId), currentFrame(1), currentRow(1), width(params.width),
-      height(params.height), position{params.x, params.y}, velocity{0, 0}, acceleration{0, 0} {
+    : type(type), sprite(params), velocity{0, 0}, acceleration{0, 0} {
 }
 
 void
 Entity::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
-  textureManager->drawFrame(textureId, (int) position.x, (int) position.y, width, height,
-                            currentRow, currentFrame, renderer);
+  if (velocity.x > 0) {
+    sprite.draw(textureManager, renderer, SDL_FLIP_HORIZONTAL);
+  } else {
+    sprite.draw(textureManager, renderer);
+  }
 }
 
 void
 Entity::update(InputHandler *inputHandler) {
   switch (type) {
-    case Entity::PlayerType: {
+    case Entity::PLAYER_TYPE: {
       velocity = Vector2D{0, 0};
       handleInput(inputHandler);
       velocity += acceleration;
-      position += velocity;
+      sprite.setPosition(sprite.getPosition() + velocity);
     }
       break;
-    case Entity::DefaultType: {
-      position -= Vector2D{1, 0};
+    case Entity::DEFAULT_TYPE: {
+      sprite.setPosition(sprite.getPosition() - Vector2D{1, 0});
     }
       break;
-    case Entity::EnemyType: {
-      position += Vector2D{1, 1};
+    case Entity::ENEMY_TYPE: {
+      sprite.setPosition(sprite.getPosition() + Vector2D{1, 1});
     }
       break;
   }
-  currentFrame = (int) ((SDL_GetTicks() / 100) % 6);
+  sprite.setCurrentFrame((int) ((SDL_GetTicks() / 100) % sprite.getTotalFrames()));
 }
 
 void
@@ -60,23 +62,23 @@ Entity::getType() const {
 }
 
 void Entity::handleInput(InputHandler *inputHandler) {
-  assert(type == PlayerType);
+  assert(type == PLAYER_TYPE);
 
-  auto vec = inputHandler->getMousePosition();
-  velocity = (vec - position) / 100;
+  auto target = inputHandler->getMousePosition();
+  velocity = (target - sprite.getPosition()) / 50;
 
-  if (inputHandler->isKeyDown(SDL_SCANCODE_RIGHT)) {
-    velocity += Vector2D{2, 0};
-  }
-  if (inputHandler->isKeyDown(SDL_SCANCODE_LEFT)) {
-    velocity -= Vector2D{2, 0};
-  }
-  if (inputHandler->isKeyDown(SDL_SCANCODE_UP)) {
-    velocity -= Vector2D{0, 2};
-  }
-  if (inputHandler->isKeyDown(SDL_SCANCODE_DOWN)) {
-    velocity += Vector2D{0, 2};
-  }
+//  if (inputHandler->isKeyDown(SDL_SCANCODE_RIGHT)) {
+//    velocity += Vector2D{2, 0};
+//  }
+//  if (inputHandler->isKeyDown(SDL_SCANCODE_LEFT)) {
+//    velocity -= Vector2D{2, 0};
+//  }
+//  if (inputHandler->isKeyDown(SDL_SCANCODE_UP)) {
+//    velocity -= Vector2D{0, 2};
+//  }
+//  if (inputHandler->isKeyDown(SDL_SCANCODE_DOWN)) {
+//    velocity += Vector2D{0, 2};
+//  }
 
 //  auto vect = Vector2D{0, 0};
 //  if (inputHandler->getMouseButtonState(InputHandler::LeftMouseButton)) {

@@ -37,13 +37,13 @@ InputHandler::update(Game *game) {
 void
 InputHandler::onMouseButtonDown(SDL_Event &event) {
   if (event.button.button == SDL_BUTTON_LEFT) {
-    mouseButtonStates[LeftMouseButton] = true;
+    mouseButtonStates[LEFT_MOUSE_BUTTON] = true;
   }
   if (event.button.button == SDL_BUTTON_MIDDLE) {
-    mouseButtonStates[MiddleMouseButton] = true;
+    mouseButtonStates[MIDDLE_MOUSE_BUTTON] = true;
   }
   if (event.button.button == SDL_BUTTON_RIGHT) {
-    mouseButtonStates[RightMouseButton] = true;
+    mouseButtonStates[RIGHT_MOUSE_BUTTON] = true;
   }
 }
 
@@ -55,13 +55,13 @@ InputHandler::onMouseMove(SDL_Event &event) {
 void
 InputHandler::onMouseButtonUp(SDL_Event &event) {
   if (event.button.button == SDL_BUTTON_LEFT) {
-    mouseButtonStates[LeftMouseButton] = false;
+    mouseButtonStates[LEFT_MOUSE_BUTTON] = false;
   }
   if (event.button.button == SDL_BUTTON_MIDDLE) {
-    mouseButtonStates[MiddleMouseButton] = false;
+    mouseButtonStates[MIDDLE_MOUSE_BUTTON] = false;
   }
   if (event.button.button == SDL_BUTTON_RIGHT) {
-    mouseButtonStates[RightMouseButton] = false;
+    mouseButtonStates[RIGHT_MOUSE_BUTTON] = false;
   }
 }
 

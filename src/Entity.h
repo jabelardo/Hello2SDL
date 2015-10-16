@@ -11,7 +11,7 @@
 #include <SDL_render.h>
 #endif
 
-#include "Vector2D.h"
+#include "Sprite.h"
 
 struct LoaderParams;
 class TextureManager;
@@ -21,7 +21,7 @@ class Entity {
 
 public:
   enum Type {
-    PlayerType, DefaultType, EnemyType
+    PLAYER_TYPE, DEFAULT_TYPE, ENEMY_TYPE
   };
 
   Entity(Entity::Type type, const LoaderParams& params);
@@ -36,12 +36,7 @@ public:
 
 private:
   Entity::Type type;
-  int textureId;
-  int currentFrame;
-  int currentRow;
-  int width;
-  int height;
-  Vector2D position;
+  Sprite sprite;
   Vector2D velocity;
   Vector2D acceleration;
 
