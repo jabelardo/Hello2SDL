@@ -12,6 +12,7 @@
 #endif
 
 #include "Sprite.h"
+#include "UserInput.h"
 
 struct LoaderParams;
 class TextureManager;
@@ -20,13 +21,13 @@ class InputHandler;
 class MenuButton {
 public:
 
-  using Callback = void();
+  using Callback = void(SDL_Renderer*);
 
   MenuButton(const LoaderParams& params, Callback* callback);
 
   void draw(TextureManager* textureManager, SDL_Renderer* renderer);
 
-  void update(InputHandler* inputHandler);
+  void update(UserInput *inputHandler, SDL_Renderer* renderer);
 
   void clean();
 

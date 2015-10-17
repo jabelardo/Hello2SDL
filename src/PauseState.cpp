@@ -5,7 +5,6 @@
 #include <assert.h>
 #include "PauseState.h"
 #include "MenuButton.h"
-#include "InputHandler.h"
 #include "TextureManager.h"
 #include "LoaderParams.h"
 #include "Game.h"
@@ -14,9 +13,9 @@ Game*
 PauseState::game = 0;
 
 void
-PauseState::update(InputHandler *inputHandler) {
+PauseState::update(UserInput *inputHandler, SDL_Renderer *renderer) {
   for (auto &menuButton : menuButtons) {
-    menuButton.update(inputHandler);
+    menuButton.update(inputHandler, renderer);
   }
 }
 
@@ -45,13 +44,13 @@ PauseState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
 bool
 PauseState::onExit(TextureManager *textureManager) {
   assert(game);
-  for (auto &menuButton : menuButtons) {
+  for (auto& menuButton : menuButtons) {
     menuButton.clean();
   }
   menuButtons.clear();
   textureManager->clearFromTextureMap(MAIN_BUTTON);
   textureManager->clearFromTextureMap(RESUME_BUTTON);
-  game->resetInput();
+  // TODO game->resetInput();
 
   return true;
 }
@@ -67,13 +66,13 @@ PauseState::setGame(Game *game) {
 }
 
 void
-PauseState::pauseToMain() {
+PauseState::pauseToMain(SDL_Renderer *renderer) {
   assert(game);
-  game->showMenu();
+  game->showMenu(renderer);
 }
 
 void
-PauseState::resumePlay() {
+PauseState::resumePlay(SDL_Renderer *renderer) {
   assert(game);
   game->resumePlay();
 }

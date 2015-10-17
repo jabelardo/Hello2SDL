@@ -15,8 +15,6 @@ set(SOURCE_FILES
         src/GameState.h
         src/GameStateMachine.cpp
         src/GameStateMachine.h
-        src/InputHandler.cpp
-        src/InputHandler.h
         src/LoaderParams.h
         src/main.cpp
         src/MenuButton.cpp
@@ -32,7 +30,7 @@ set(SOURCE_FILES
         src/TextureId.h
         src/TextureManager.cpp
         src/TextureManager.h
-        src/Vector2D.h src/GameStateId.h)
+        src/Vector2D.h src/GameStateId.h src/UserInput.h src/GameUpdateAndRender.cpp src/GameUpdateAndRender.h src/GameContext.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

@@ -14,7 +14,7 @@
 #include "Entity.h"
 #include "LoaderParams.h"
 #include "TextureManager.h"
-#include "InputHandler.h"
+#include "UserInput.h"
 
 Entity::Entity(Entity::Type type, const LoaderParams &params)
     : type(type), sprite(params), velocity(), acceleration() {
@@ -42,12 +42,12 @@ Entity::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
 }
 
 void
-Entity::update(InputHandler *inputHandler) {
+Entity::update(UserInput *userInput) {
   sprite.setCurrentFrame((int) ((SDL_GetTicks() / 100) % sprite.getTotalFrames()));
   switch (type) {
     case Entity::PLAYER_TYPE: {
       velocity = Vector2D{0, 0};
-      handleInput(inputHandler);
+      handleInput(userInput);
       break;
     }
     case Entity::ENEMY_TYPE: {
@@ -81,55 +81,11 @@ Entity::getType() const {
   return type;
 }
 
-void Entity::handleInput(InputHandler *inputHandler) {
+void Entity::handleInput(UserInput *userInput) {
   assert(type == PLAYER_TYPE);
 
-  auto target = inputHandler->getMousePosition();
+  auto target = Vector2D{(float) userInput->mousePositionX, (float) userInput->mousePositionY};
   velocity = (target - sprite.getPosition()) / 50;
-
-//  if (inputHandler->isKeyDown(SDL_SCANCODE_RIGHT)) {
-//    velocity += Vector2D{2, 0};
-//  }
-//  if (inputHandler->isKeyDown(SDL_SCANCODE_LEFT)) {
-//    velocity -= Vector2D{2, 0};
-//  }
-//  if (inputHandler->isKeyDown(SDL_SCANCODE_UP)) {
-//    velocity -= Vector2D{0, 2};
-//  }
-//  if (inputHandler->isKeyDown(SDL_SCANCODE_DOWN)) {
-//    velocity += Vector2D{0, 2};
-//  }
-
-//  auto vect = Vector2D{0, 0};
-//  if (inputHandler->getMouseButtonState(InputHandler::LeftMouseButton)) {
-//    if (velocity.x > 0) {
-//      vect += Vector2D{.025, 0};
-//    }
-//    if (velocity.x < 0) {
-//      vect -= Vector2D{.025, 0};
-//    }
-//    if (velocity.y > 0) {
-//      vect += Vector2D{0, .025};
-//    }
-//    if (velocity.y < 0) {
-//      vect -= Vector2D{0, .025};
-//    }
-//  }
-//  if (inputHandler->getMouseButtonState(InputHandler::RightMouseButton)) {
-//    if (velocity.x > 0) {
-//      vect -= Vector2D{.025, 0};
-//    }
-//    if (velocity.x < 0) {
-//      vect += Vector2D{.025, 0};
-//    }
-//    if (velocity.y > 0) {
-//      vect -= Vector2D{0, .025};
-//    }
-//    if (velocity.y < 0) {
-//      vect += Vector2D{0, .025};
-//    }
-//  }
-//  acceleration += vect;
 }
 
 const Sprite &Entity::getSprite() const {

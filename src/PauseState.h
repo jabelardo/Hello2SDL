@@ -8,19 +8,18 @@
 #include <vector>
 #include "GameState.h"
 #include "MenuButton.h"
+#include "UserInput.h"
 
 class Game;
 
 class PauseState : public GameState {
 
 public:
-  virtual void update(InputHandler *inputHandler);
+  virtual void update(UserInput *userInput, SDL_Renderer *renderer);
 
-  virtual void render(TextureManager *textureManager,
-                      SDL_Renderer *renderer);
+  virtual void render(TextureManager *textureManager, SDL_Renderer *renderer);
 
-  virtual bool onEnter(TextureManager *textureManager,
-                       SDL_Renderer *renderer);
+  virtual bool onEnter(TextureManager *textureManager, SDL_Renderer *renderer);
 
   virtual bool onExit(TextureManager *textureManager);
 
@@ -32,8 +31,8 @@ private:
   static Game* game;
   std::vector<MenuButton> menuButtons;
 
-  static void pauseToMain();
-  static void resumePlay();
+  static void pauseToMain(SDL_Renderer *renderer);
+  static void resumePlay(SDL_Renderer *renderer);
 };
 
 

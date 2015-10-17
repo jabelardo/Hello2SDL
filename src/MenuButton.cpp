@@ -3,7 +3,7 @@
 //
 
 #include "MenuButton.h"
-#include "InputHandler.h"
+#include "UserInput.h"
 
 MenuButton::MenuButton(const LoaderParams &params, Callback* callback)
 : sprite(params), callback(callback), buttonReleased(false) {
@@ -21,18 +21,19 @@ MenuButton::clean() {
 }
 
 void
-MenuButton::update(InputHandler *inputHandler) {
-  auto mousePosition = inputHandler->getMousePosition();
-  if (mousePosition.x < (sprite.getPosition().x + sprite.getWidth())
-     && mousePosition.x > sprite.getPosition().x
-     && mousePosition.y < (sprite.getPosition().y + sprite.getHeight())
-     && mousePosition.y > sprite.getPosition().y) {
+MenuButton::update(UserInput *userInput, SDL_Renderer *renderer) {
+  auto mousePositionX = userInput->mousePositionX;
+  auto mousePositionY = userInput->mousePositionY;
+  if (mousePositionX < (sprite.getPosition().x + sprite.getWidth())
+     && mousePositionX > sprite.getPosition().x
+     && mousePositionY < (sprite.getPosition().y + sprite.getHeight())
+     && mousePositionY > sprite.getPosition().y) {
 
-    if (inputHandler->getMouseButtonState(InputHandler::LEFT_MOUSE_BUTTON) && buttonReleased) {
+    if (userInput->mouseButtonLeft.endedDown && buttonReleased) {
       sprite.setCurrentFrame(CLICKED);
-      callback();
+      callback(renderer);
       buttonReleased = false;
-    } else if (inputHandler->getMouseButtonState(InputHandler::LEFT_MOUSE_BUTTON)) {
+    } else if (userInput->mouseButtonLeft.endedDown) {
       buttonReleased = true;
       sprite.setCurrentFrame(MOUSE_OVER);
     }

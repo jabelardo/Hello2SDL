@@ -1,45 +1,215 @@
-#include "AnimatedGraphic.cpp"
-#include "Entity.cpp"
-#include "Game.cpp"
-#include "GameOverState.cpp"
-#include "GameStateMachine.cpp"
-#include "InputHandler.cpp"
-#include "MenuButton.cpp"
-#include "MenuState.cpp"
-#include "PauseState.cpp"
-#include "PlayState.cpp"
-#include "Sprite.cpp"
-#include "TextureManager.cpp"
+#ifdef __APPLE__
+#include <SDL2/SDL.h>
+#else
+#include <SDL.h>
+#endif
 
-const auto FPS = 60.f;
-const auto DELAY_TIME = (Uint32)(1000.0f / FPS);
+#if _MSC_VER
+#include <windows.h>
+#else
+#include <sys/mman.h>
+#endif
 
-int 
-main(int argc, char* args[]) {
-  auto textureManager = TextureManager{};
-  auto game = Game{};
-  if (!game.init("Chapter 1", 100, 100, 640, 480, 0, &textureManager)) {
+#include <assert.h>
+
+#include "UserInput.h"
+
+#include "GameUpdateAndRender.cpp"
+#include "GameContext.h"
+
+// NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
+// On the vast majority of those systems, one can use MAP_ANON instead.
+// Huge thanks to Adam Rosenfield for investigating this, and suggesting this
+// workaround:
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
+const auto DEFAULT_REFRESH_RATE = 60;
+
+int
+sdlGetWindowRefreshRate(SDL_Window &window) {
+  auto displayIndex = SDL_GetWindowDisplayIndex(&window);
+
+  // If we can't find the refresh rate, we'll return DEFAULT_REFRESH_RATE
+  SDL_DisplayMode mode;
+  if (SDL_GetDesktopDisplayMode(displayIndex, &mode) != 0) {
+    return DEFAULT_REFRESH_RATE;
+  }
+  if (mode.refresh_rate == 0) {
+    return DEFAULT_REFRESH_RATE;
+  }
+  return mode.refresh_rate;
+}
+
+void
+sdlProcessKeyPress(ButtonState &newState, bool isDown) {
+  assert(newState.endedDown != isDown);
+  newState.endedDown = isDown;
+  ++newState.halfTransitionCount;
+}
+
+void
+sdlHandleEvent(SDL_Event &event, UserInput &userInput) {
+  switch (event.type) {
+    case SDL_QUIT: {
+      userInput.shouldQuit = true;
+      break;
+    }
+    case SDL_MOUSEWHEEL: {
+      userInput.mouseWheelY = event.wheel.y;
+      break;
+    }
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP: {
+      auto button = event.button.button;
+      auto keyPressed = (event.button.state == SDL_PRESSED);
+      switch (button) {
+        case SDL_BUTTON_LEFT: {
+          sdlProcessKeyPress(userInput.mouseButtonLeft, keyPressed);
+          break;
+        }
+        case SDL_BUTTON_MIDDLE: {
+          sdlProcessKeyPress(userInput.mouseButtonMiddle, keyPressed);
+          break;
+        }
+        case SDL_BUTTON_RIGHT: {
+          sdlProcessKeyPress(userInput.mouseButtonRight, keyPressed);
+          break;
+        }
+      }
+      break;
+    }
+    case SDL_MOUSEMOTION: {
+      userInput.mousePositionX = event.motion.x;
+      userInput.mousePositionY = event.motion.y;
+      break;
+    }
+    case SDL_KEYDOWN:
+    case SDL_KEYUP: {
+      auto keyCode = event.key.keysym.sym;
+      auto keyPressed = (event.key.state == SDL_PRESSED);
+      if (event.key.repeat == 0) {
+        switch (keyCode) {
+          case SDLK_w: {
+            sdlProcessKeyPress(userInput.moveUp, keyPressed);
+            break;
+          }
+          case SDLK_a: {
+            sdlProcessKeyPress(userInput.moveLeft, keyPressed);
+            break;
+          }
+          case SDLK_s: {
+            sdlProcessKeyPress(userInput.moveDown, keyPressed);
+            break;
+          }
+          case SDLK_d: {
+            sdlProcessKeyPress(userInput.moveRight, keyPressed);
+            break;
+          }
+          case SDLK_q: {
+            sdlProcessKeyPress(userInput.leftShoulder, keyPressed);
+            break;
+          }
+          case SDLK_e: {
+            sdlProcessKeyPress(userInput.rightShoulder, keyPressed);
+            break;
+          }
+          case SDLK_UP: {
+            sdlProcessKeyPress(userInput.actionUp, keyPressed);
+            break;
+          }
+          case SDLK_LEFT: {
+            sdlProcessKeyPress(userInput.actionLeft, keyPressed);
+            break;
+          }
+          case SDLK_DOWN: {
+            sdlProcessKeyPress(userInput.actionDown, keyPressed);
+            break;
+          }
+          case SDLK_RIGHT: {
+            sdlProcessKeyPress(userInput.actionRight, keyPressed);
+            break;
+          }
+          case SDLK_ESCAPE: {
+            sdlProcessKeyPress(userInput.back, keyPressed);
+            break;
+          }
+          case SDLK_SPACE: {
+            sdlProcessKeyPress(userInput.start, keyPressed);
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+float
+sdlGetSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
+  return ((float) (currentCounter - oldCounter) /
+          (float) (SDL_GetPerformanceFrequency()));
+}
+
+int
+main(int argc, char *args[]) {
+
+  auto result = SDL_Init(SDL_INIT_EVERYTHING);
+  if (result != 0) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error initializating SDL: %s\n", SDL_GetError());
+    return result;
+  }
+
+  atexit(SDL_Quit);
+
+  auto window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                 640, 480, 0);
+  if (!window) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating window: %s\n", SDL_GetError());
     return 1;
   }
 
-  auto frameStart = Uint32{};
-  auto frameTime = Uint32{};
-
-  while (game.isRunning()) {
-
-    frameStart = SDL_GetTicks();
-
-    game.handleEvents();
-    game.update();
-    game.render();
-
-    frameTime = SDL_GetTicks() - frameStart;
-
-    if (frameTime < DELAY_TIME) {
-      SDL_Delay(DELAY_TIME - frameTime);
-    }
+  auto renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+  if (!renderer) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating renderer: %s\n", SDL_GetError());
+    return 1;
   }
-  game.clean();
 
-  return 0; 
-} 
+  auto lastCounter = SDL_GetPerformanceCounter();
+  auto monitorRefreshHz = sdlGetWindowRefreshRate(*window);
+  auto targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
+  auto userInput = UserInput{};
+  auto gameContext = GameContext{};
+  userInput.shouldQuit = false;
+
+  while (!userInput.shouldQuit) {
+    auto event = SDL_Event{};
+    while (SDL_PollEvent(&event)) {
+      sdlHandleEvent(event, userInput);
+    }
+
+    SDL_RenderClear(renderer);
+    gameUpdateAndRender(&gameContext, &userInput, renderer);
+    SDL_RenderPresent(renderer);
+
+    auto secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
+    if (secondsElapsedForFrame < targetSecondsPerFrame) {
+      auto timeToSleep = (Sint32) ((targetSecondsPerFrame - secondsElapsedForFrame) * 1000) - 1;
+      if (timeToSleep > 0) {
+//        printf("timeToSleep %d\n", timeToSleep);
+        SDL_Delay(timeToSleep);
+      }
+      while (secondsElapsedForFrame < targetSecondsPerFrame) {
+        secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
+      }
+    } else {
+      printf("MISSED FRAME RATE!\n");
+    }
+
+    auto endCounter = SDL_GetPerformanceCounter();
+
+    lastCounter = endCounter;
+  }
+
+  return 0;
+}

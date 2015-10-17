@@ -9,13 +9,14 @@
 #include "GameState.h"
 #include "MenuButton.h"
 #include "AnimatedGraphic.h"
+#include "UserInput.h"
 
 class Game;
 
 class GameOverState : public GameState {
 
 public:
-  virtual void update(InputHandler *inputHandler);
+  virtual void update(UserInput *userInput, SDL_Renderer *renderer);
 
   virtual void render(TextureManager *textureManager,
                       SDL_Renderer *renderer);
@@ -34,9 +35,9 @@ private:
   std::vector<MenuButton> menuButtons;
   std::unique_ptr<AnimatedGraphic> gameOverGraphic;
 
-  static void gameOverToMain();
+  static void gameOverToMain(SDL_Renderer *renderer);
 
-  static void restartPlay();
+  static void restartPlay(SDL_Renderer *renderer);
 };
 
 

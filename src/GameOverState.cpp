@@ -13,12 +13,12 @@ Game *
 GameOverState::game = 0;
 
 void
-GameOverState::update(InputHandler *inputHandler) {
+GameOverState::update(UserInput *userInput, SDL_Renderer *renderer) {
   for (auto &menuButton : menuButtons) {
-    menuButton.update(inputHandler);
+    menuButton.update(userInput, renderer);
   }
   if (gameOverGraphic) {
-    gameOverGraphic->update(inputHandler);
+    gameOverGraphic->update(userInput);
   }
 }
 
@@ -79,13 +79,13 @@ GameOverState::setGame(Game *game) {
 }
 
 void
-GameOverState::gameOverToMain() {
+GameOverState::gameOverToMain(SDL_Renderer *renderer) {
   assert(game);
-  game->showMenu();
+  game->showMenu(renderer);
 }
 
 void
-GameOverState::restartPlay() {
+GameOverState::restartPlay(SDL_Renderer *renderer) {
   assert(game);
-  game->play();
+  game->play(renderer);
 }

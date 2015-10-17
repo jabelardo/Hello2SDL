@@ -8,13 +8,14 @@
 #include <vector>
 #include "GameState.h"
 #include "MenuButton.h"
+#include "UserInput.h"
 
 class Game;
 
 class MenuState : public GameState {
 
 public:
-  virtual void update(InputHandler *inputHandler);
+  virtual void update(UserInput *userInput, SDL_Renderer *renderer);
 
   virtual void render(TextureManager *textureManager, SDL_Renderer *renderer);
 
@@ -30,8 +31,8 @@ private:
   static Game* game;
   std::vector<MenuButton> menuButtons;
 
-  static void menuToPlay();
-  static void exitFromMenu();
+  static void menuToPlay(SDL_Renderer *renderer);
+  static void exitFromMenu(SDL_Renderer *renderer);
 };
 
 

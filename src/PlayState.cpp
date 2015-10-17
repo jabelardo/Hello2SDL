@@ -4,7 +4,6 @@
 
 #include <assert.h>
 #include "PlayState.h"
-#include "InputHandler.h"
 #include "TextureManager.h"
 #include "LoaderParams.h"
 #include "Game.h"
@@ -12,19 +11,19 @@
 #include "Entity.h"
 
 Game *
-    PlayState::game = 0;
+PlayState::game = 0;
 
 void
-PlayState::update(InputHandler *inputHandler) {
+PlayState::update(UserInput *userInput, SDL_Renderer *renderer) {
   assert(game);
-  if (inputHandler->isKeyDown(SDL_SCANCODE_ESCAPE)) {
-    game->pause();
+  if (userInput->back.endedDown) {
+    game->pause(renderer);
   }
   for (auto &entity : entities) {
-    entity->update(inputHandler);
+    entity->update(userInput);
   }
   if (Sprite::checkCollision(entities[0]->getSprite(), entities[1]->getSprite())) {
-    game->gameOver();
+    game->gameOver(renderer);
   }
 }
 

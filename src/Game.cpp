@@ -9,97 +9,61 @@
 #endif
 
 #include "Game.h"
-#include "TextureManager.h"
 #include "LoaderParams.h"
-#include "MenuState.h"
-#include "PlayState.h"
-#include "PauseState.h"
-#include "GameOverState.h"
+#include "Entity.h"
+#include "UserInput.h"
 
-bool
-Game::init(const char *title, int xpos, int ypos, int width, int height, Uint32 flags,
-           TextureManager *textureManager) {
-  this->textureManager = textureManager;
-  if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
-    window = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
 
-    if (window) {
-      renderer = SDL_CreateRenderer(window, -1, 0);
-    }
-
-    PlayState::setGame(this);
-    MenuState::setGame(this);
-    PauseState::setGame(this);
-    GameOverState::setGame(this);
-
-    showMenu();
-
-    return true;
-  }
-  return false;
+Game::Game() {
+  PlayState::setGame(this);
+  MenuState::setGame(this);
+  PauseState::setGame(this);
+  GameOverState::setGame(this);
 }
 
 void
-Game::handleEvents() {
-  inputHandler.update(this);
-  if (inputHandler.isKeyDown(SDL_SCANCODE_RETURN)) {
-    play();
+Game::update(UserInput *userInput, SDL_Renderer *renderer) {
+  stateMachine.update(userInput, renderer);
+  if (shouldQuit) {
+    userInput->shouldQuit = true;
   }
 }
 
 void
-Game::update() {
-  stateMachine.update(&inputHandler);
-}
-
-void
-Game::render() {
-  SDL_RenderClear(renderer);
-  stateMachine.render(textureManager, renderer);
-  SDL_RenderPresent(renderer);
+Game::render(SDL_Renderer *renderer) {
+  stateMachine.render(&textureManager, renderer);
 }
 
 void
 Game::clean() {
-  SDL_DestroyWindow(window);
-  SDL_DestroyRenderer(renderer);
-  SDL_Quit();
-}
-
-bool
-Game::isRunning() {
-  return running;
 }
 
 void
-Game::quit() {
-  running = false;
+Game::play(SDL_Renderer *renderer) {
+  stateMachine.changeState(playState, &textureManager, renderer);
 }
 
 void
-Game::play() {
-  stateMachine.changeState(playState, textureManager, renderer);
-}
-
-void
-Game::showMenu() {
-  stateMachine.changeState(menuState, textureManager, renderer);
+Game::showMenu(SDL_Renderer *renderer) {
+  stateMachine.changeState(menuState, &textureManager, renderer);
 }
 
 void
 Game::resumePlay() {
-  stateMachine.popState(textureManager);
+  stateMachine.popState(&textureManager);
 }
 
 void
-Game::pause() {
-  stateMachine.pushState(pauseState, textureManager, renderer);
+Game::pause(SDL_Renderer *renderer) {
+  stateMachine.pushState(pauseState, &textureManager, renderer);
 }
 
-void Game::resetInput() {
-  inputHandler.reset();
+void
+Game::gameOver(SDL_Renderer *renderer) {
+  stateMachine.changeState(gameOverState, &textureManager, renderer);
 }
 
-void Game::gameOver() {
-  stateMachine.changeState(gameOverState, textureManager, renderer);
+void
+Game::quit() {
+  shouldQuit = true;
 }

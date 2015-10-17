@@ -7,6 +7,7 @@
 
 #include <vector>
 #include "GameState.h"
+#include "UserInput.h"
 
 class Entity;
 class Game;
@@ -15,7 +16,7 @@ class Sprite;
 class PlayState : public GameState {
 
 public:
-  virtual void update(InputHandler *pHandler);
+  virtual void update(UserInput *userInput, SDL_Renderer *renderer);
 
   virtual void render(TextureManager *textureManager, SDL_Renderer *renderer);
 

@@ -10,19 +10,17 @@
 
 #include "GameState.h"
 #include "TextureManager.h"
-#include "InputHandler.h"
+#include "UserInput.h"
 
 class GameStateMachine {
 public:
-  void pushState(GameState& state, TextureManager *textureManager,
-                 SDL_Renderer *renderer);
+  void pushState(GameState& state, TextureManager *textureManager, SDL_Renderer *renderer);
 
-  void changeState(GameState& state, TextureManager *textureManager,
-                   SDL_Renderer *renderer);
+  void changeState(GameState& state, TextureManager *textureManager, SDL_Renderer *renderer);
 
   void popState(TextureManager *textureManager);
 
-  void update(InputHandler *inputHandler);
+  void update(UserInput *userInput, SDL_Renderer *renderer);
 
   void render(TextureManager *textureManager, SDL_Renderer *renderer);
 

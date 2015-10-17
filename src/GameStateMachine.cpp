@@ -6,7 +6,7 @@
 #include <assert.h>
 #include "GameStateMachine.h"
 #include "TextureManager.h"
-#include "InputHandler.h"
+#include "UserInput.h"
 
 void
 GameStateMachine::pushState(GameState& state, TextureManager *textureManager,
@@ -44,8 +44,8 @@ GameStateMachine::render(TextureManager *textureManager, SDL_Renderer *renderer)
 }
 
 void
-GameStateMachine::update(InputHandler *inputHandler) {
+GameStateMachine::update(UserInput *userInput, SDL_Renderer *renderer) {
   if (!gameStates.empty()) {
-    gameStates.back().get().update(inputHandler);
+    gameStates.back().get().update(userInput, renderer);
   }
 }

@@ -4,7 +4,7 @@
 
 #include <SDL2/SDL_timer.h>
 #include "AnimatedGraphic.h"
-#include "InputHandler.h"
+#include "UserInput.h"
 
 AnimatedGraphic::AnimatedGraphic(const LoaderParams &params, int animationSpeed)
   : sprite(params), animationSpeed(animationSpeed) {
@@ -20,7 +20,7 @@ AnimatedGraphic::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
 }
 
 void
-AnimatedGraphic::update(InputHandler *inputHandler) {
+AnimatedGraphic::update(UserInput *inputHandler) {
   if (animationSpeed) {
     sprite.setCurrentFrame(
         (int) ((SDL_GetTicks() / (1000 / animationSpeed)) % sprite.getTotalFrames()));

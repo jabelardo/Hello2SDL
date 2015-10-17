@@ -5,7 +5,6 @@
 #include <assert.h>
 #include "MenuState.h"
 #include "MenuButton.h"
-#include "InputHandler.h"
 #include "TextureManager.h"
 #include "LoaderParams.h"
 #include "Game.h"
@@ -14,9 +13,9 @@ Game*
 MenuState::game = 0;
 
 void
-MenuState::update(InputHandler *inputHandler) {
+MenuState::update(UserInput *inputHandler, SDL_Renderer *renderer) {
   for (auto &menuButton : menuButtons) {
-    menuButton.update(inputHandler);
+    menuButton.update(inputHandler, renderer);
   }
 }
 
@@ -65,14 +64,14 @@ MenuState::setGame(Game *game) {
 }
 
 void
-MenuState::menuToPlay() {
+MenuState::menuToPlay(SDL_Renderer *renderer) {
   assert(game);
-  game->play();
+  game->play(renderer);
 
 }
 
 void
-MenuState::exitFromMenu() {
+MenuState::exitFromMenu(SDL_Renderer *renderer) {
   assert(game);
   game->quit();
 }

@@ -5,58 +5,44 @@
 #ifndef HELLO2SDL_GAME_H
 #define HELLO2SDL_GAME_H
 
-#include "Entity.h"
-#include "InputHandler.h"
 #include "GameStateMachine.h"
-#include "PlayState.h"
 #include "MenuState.h"
+#include "PlayState.h"
 #include "PauseState.h"
 #include "GameOverState.h"
-
-class TextureManager;
+#include "TextureManager.h"
+#include "UserInput.h"
 
 class Game {
-
 public:
-  bool init(const char *title, int xpos, int ypos, int width, int height, Uint32 flags,
-            TextureManager *textureManager);
+  Game();
 
-  void handleEvents();
+  void update(UserInput *userInput, SDL_Renderer *renderer);
 
-  void update();
-
-  void render();
+  void render(SDL_Renderer *renderer);
 
   void clean();
 
-  bool isRunning();
+  void play(SDL_Renderer *renderer);
 
-  void quit();
-
-  void play();
-
-  void showMenu();
+  void showMenu(SDL_Renderer *renderer);
 
   void resumePlay();
 
-  void pause();
+  void pause(SDL_Renderer *renderer);
 
-  void resetInput();
+  void gameOver(SDL_Renderer *renderer);
 
-  void gameOver();
+  void quit();
 
 private:
-  TextureManager *textureManager = 0;
-  SDL_Window *window = 0;
-  SDL_Renderer *renderer = 0;
-  bool running = true;
-  InputHandler inputHandler = InputHandler{};
+  TextureManager textureManager;
   GameStateMachine stateMachine;
   PlayState playState;
   MenuState menuState;
   PauseState pauseState;
   GameOverState gameOverState;
+  bool shouldQuit = false;
 };
-
 
 #endif //HELLO2SDL_GAME_H

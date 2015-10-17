@@ -12,6 +12,7 @@
 #endif
 
 #include "Sprite.h"
+#include "UserInput.h"
 
 struct LoaderParams;
 class TextureManager;
@@ -24,7 +25,7 @@ public:
 
   void draw(TextureManager* textureManager, SDL_Renderer* renderer);
 
-  void update(InputHandler* inputHandler);
+  void update(UserInput *inputHandler);
 
   void clean();
 
