@@ -15,13 +15,13 @@ class Game;
 class PauseState : public GameState {
 
 public:
-  virtual void update(UserInput *userInput, SDL_Renderer *renderer);
+  virtual void update(GameContext* gameContext);
 
-  virtual void render(TextureManager *textureManager, SDL_Renderer *renderer);
+  virtual void render(SDL_Renderer* renderer);
 
-  virtual bool onEnter(TextureManager *textureManager, SDL_Renderer *renderer);
+  virtual bool onEnter(GameContext* gameContext);
 
-  virtual bool onExit(TextureManager *textureManager);
+  virtual bool onExit(GameContext* gameContext);
 
   virtual GameStateId getStateId() const;
 
@@ -31,8 +31,8 @@ private:
   static Game* game;
   std::vector<MenuButton> menuButtons;
 
-  static void pauseToMain(SDL_Renderer *renderer);
-  static void resumePlay(SDL_Renderer *renderer);
+  static void pauseToMain(GameContext* gameContext);
+  static void resumePlay(GameContext* gameContext);
 };
 
 

@@ -4,61 +4,63 @@
 
 #include <assert.h>
 #include "GameOverState.h"
-#include "TextureManager.h"
-#include "LoaderParams.h"
 #include "Game.h"
-#include "GameStateId.h"
+#include "TextureId.h"
 
 Game *
 GameOverState::game = 0;
 
 void
-GameOverState::update(UserInput *userInput, SDL_Renderer *renderer) {
+GameOverState::update(GameContext* gameContext) {
   for (auto &menuButton : menuButtons) {
-    menuButton.update(userInput, renderer);
+    menuButton.update(gameContext);
   }
-  if (gameOverGraphic) {
-    gameOverGraphic->update(userInput);
-  }
+
+    gameOverGraphic.update(gameContext->userInput);
+
 }
 
 void
-GameOverState::render(TextureManager *textureManager, SDL_Renderer *renderer) {
+GameOverState::render(SDL_Renderer* renderer) {
   for (auto &menuButton : menuButtons) {
-    menuButton.draw(textureManager, renderer);
+    menuButton.draw(renderer);
   }
-  if (gameOverGraphic) {
-    gameOverGraphic->draw(textureManager, renderer);
-  }
+
+    gameOverGraphic.draw(renderer);
+
 }
 
 bool
-GameOverState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
-  if (!textureManager->load(GAME_OVER_TEXT, "gameover.png", renderer)) {
+GameOverState::onEnter(GameContext* gameContext) {
+  if (!gameContext->functions.loadTexture(GAME_OVER_TEXT, "gameover.png", gameContext->renderer)) {
     return false;
   }
-  if (!textureManager->load(MAIN_BUTTON, "main.png", renderer)) {
+  if (!gameContext->functions.loadTexture(MAIN_BUTTON, "main.png", gameContext->renderer)) {
     return false;
   }
-  if (!textureManager->load(RESTART_BUTTON, "restart.png", renderer)) {
+  if (!gameContext->functions.loadTexture(RESTART_BUTTON, "restart.png", gameContext->renderer)) {
     return false;
   }
 
-  menuButtons.push_back(MenuButton(LoaderParams{MAIN_BUTTON, 200, 200, 200, 80, 3}, gameOverToMain));
+  SDL_Texture *mainButton = gameContext->functions.getTexture(MAIN_BUTTON);
+  SDL_Texture *restartButton = gameContext->functions.getTexture(RESTART_BUTTON);
+  SDL_Texture *gameOverText = gameContext->functions.getTexture(GAME_OVER_TEXT);
 
-  menuButtons.push_back(MenuButton(LoaderParams{RESTART_BUTTON, 200, 300, 200, 80, 3}, restartPlay));
+  menuButtons.push_back(MenuButton({mainButton, {200, 200}, 200, 80, 3, 1, 1}, gameOverToMain));
 
-  gameOverGraphic = std::make_unique<AnimatedGraphic>(LoaderParams{GAME_OVER_TEXT, 200, 100, 190, 30, 2}, 2);
+  menuButtons.push_back(MenuButton({restartButton, {200, 300}, 200, 80, 3, 1, 1}, restartPlay));
+
+  gameOverGraphic = AnimatedGraphic{{gameOverText, {200, 100}, 190, 30, 2, 1, 1}, 2};
 
   return true;
 }
 
 bool
-GameOverState::onExit(TextureManager *textureManager) {
+GameOverState::onExit(GameContext* gameContext) {
   menuButtons.clear();
-  textureManager->clearFromTextureMap(MAIN_BUTTON);
-  textureManager->clearFromTextureMap(RESTART_BUTTON);
-  textureManager->clearFromTextureMap(GAME_OVER_TEXT);
+  gameContext->functions.unloadTexture(MAIN_BUTTON);
+  gameContext->functions.unloadTexture(RESTART_BUTTON);
+  gameContext->functions.unloadTexture(GAME_OVER_TEXT);
   return true;
 }
 
@@ -73,13 +75,13 @@ GameOverState::setGame(Game *game) {
 }
 
 void
-GameOverState::gameOverToMain(SDL_Renderer *renderer) {
+GameOverState::gameOverToMain(GameContext* gameContext) {
   assert(game);
-  game->showMenu(renderer);
+  game->showMenu(gameContext);
 }
 
 void
-GameOverState::restartPlay(SDL_Renderer *renderer) {
+GameOverState::restartPlay(GameContext* gameContext) {
   assert(game);
-  game->play(renderer);
+  game->play(gameContext);
 }

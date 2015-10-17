@@ -13,17 +13,15 @@
 
 #include "GameStateId.h"
 #include "UserInput.h"
-
-class InputHandler;
-class TextureManager;
+#include "GameContext.h"
 
 class GameState {
 public:
   virtual ~GameState() {};
-  virtual void update(UserInput *userInput, SDL_Renderer *renderer) = 0;
-  virtual void render(TextureManager *textureManager, SDL_Renderer *renderer) = 0;
-  virtual bool onEnter(TextureManager *textureManager, SDL_Renderer *renderer) = 0;
-  virtual bool onExit(TextureManager *textureManager) = 0;
+  virtual void update(GameContext* gameContext) = 0;
+  virtual void render(SDL_Renderer* renderer) = 0;
+  virtual bool onEnter( GameContext* gameContext) = 0;
+  virtual bool onExit(GameContext* gameContext) = 0;
   virtual GameStateId getStateId() const = 0;
 };
 

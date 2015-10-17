@@ -10,31 +10,30 @@
 #include "PlayState.h"
 #include "PauseState.h"
 #include "GameOverState.h"
-#include "TextureManager.h"
+#include "RenderUtils.h"
 #include "UserInput.h"
 
 class Game {
 public:
   Game();
 
-  void update(UserInput *userInput, SDL_Renderer *renderer);
+  void update(GameContext* gameContext);
 
-  void render(SDL_Renderer *renderer);
+  void render(SDL_Renderer* renderer);
 
-  void play(SDL_Renderer *renderer);
+  void play(GameContext* gameContext);
 
-  void showMenu(SDL_Renderer *renderer);
+  void showMenu(GameContext* gameContext);
 
-  void resumePlay();
+  void resumePlay(GameContext* gameContext);
 
-  void pause(SDL_Renderer *renderer);
+  void pause(GameContext* gameContext);
 
-  void gameOver(SDL_Renderer *renderer);
+  void gameOver(GameContext* gameContext);
 
   void quit();
 
 private:
-  TextureManager textureManager;
   GameStateMachine stateMachine;
   PlayState playState;
   MenuState menuState;

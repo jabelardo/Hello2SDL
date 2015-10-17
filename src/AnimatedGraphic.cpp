@@ -6,13 +6,9 @@
 #include "AnimatedGraphic.h"
 #include "UserInput.h"
 
-AnimatedGraphic::AnimatedGraphic(const LoaderParams &params, int animationSpeed)
-  : sprite(params), animationSpeed(animationSpeed) {
-}
-
 void
-AnimatedGraphic::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
-  sprite.draw(textureManager, renderer);
+AnimatedGraphic::draw(SDL_Renderer* renderer) {
+  sprite.draw(renderer);
 }
 
 void

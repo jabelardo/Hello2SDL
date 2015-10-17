@@ -13,32 +13,21 @@
 
 #include "Sprite.h"
 #include "UserInput.h"
+#include "GameContext.h"
 
-struct LoaderParams;
-class TextureManager;
-class InputHandler;
+struct MenuButton {
 
-class MenuButton {
-public:
+  typedef void(CallbackFunc)(GameContext*);
 
-  using Callback = void(SDL_Renderer*);
-
-  MenuButton(const LoaderParams& params, Callback* callback);
-
-  void draw(TextureManager* textureManager, SDL_Renderer* renderer);
-
-  void update(UserInput *inputHandler, SDL_Renderer* renderer);
-
-  enum ButtonState {
-    MOUSE_OUT = 0,
-    MOUSE_OVER,
-    CLICKED
-  };
-
-private:
   Sprite sprite;
-  Callback* callback;
+  CallbackFunc* callback;
   bool buttonReleased;
+
+  MenuButton(const Sprite& sprite, CallbackFunc* callback);
+
+  void draw(SDL_Renderer* renderer);
+
+  void update(GameContext *gameContext);
 };
 
 

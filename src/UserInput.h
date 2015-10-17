@@ -12,6 +12,7 @@ extern "C" {
 typedef struct ButtonState {
   int halfTransitionCount;
   bool endedDown;
+  bool wasDown;
 } ButtonState;
 
 typedef struct UserInput {

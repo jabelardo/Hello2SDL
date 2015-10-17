@@ -4,49 +4,50 @@
 
 #include <assert.h>
 #include "MenuState.h"
-#include "MenuButton.h"
-#include "TextureManager.h"
-#include "LoaderParams.h"
 #include "Game.h"
+#include "TextureId.h"
 
 Game*
 MenuState::game = 0;
 
 void
-MenuState::update(UserInput *inputHandler, SDL_Renderer *renderer) {
+MenuState::update(GameContext* gameContext) {
   for (auto &menuButton : menuButtons) {
-    menuButton.update(inputHandler, renderer);
+    menuButton.update(gameContext);
   }
 }
 
 void
-MenuState::render(TextureManager *textureManager, SDL_Renderer *renderer) {
+MenuState::render(SDL_Renderer* renderer) {
   for (auto &menuButton : menuButtons) {
-    menuButton.draw(textureManager, renderer);
+    menuButton.draw(renderer);
   }
 }
 
 bool
-MenuState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
+MenuState::onEnter(GameContext* gameContext) {
 
-  if (!textureManager->load(PLAY_BUTTON, "button.png", renderer)) {
+  if (!gameContext->functions.loadTexture(PLAY_BUTTON, "button.png", gameContext->renderer)) {
     return false;
   }
-  if (!textureManager->load(EXIT_BUTTON, "exit.png", renderer)) {
+  if (!gameContext->functions.loadTexture(EXIT_BUTTON, "exit.png", gameContext->renderer)) {
     return false;
   }
 
-  menuButtons.push_back(MenuButton(LoaderParams{PLAY_BUTTON, 100, 100, 400, 100, 3}, menuToPlay));
-  menuButtons.push_back(MenuButton(LoaderParams{EXIT_BUTTON, 100, 300, 400, 100, 3}, exitFromMenu));
+  SDL_Texture *playButton = gameContext->functions.getTexture(PLAY_BUTTON);
+  SDL_Texture *exitButton = gameContext->functions.getTexture(EXIT_BUTTON);
+
+  menuButtons.push_back(MenuButton({playButton, {100, 100}, 400, 100, 3, 1, 1}, menuToPlay));
+  menuButtons.push_back(MenuButton({exitButton, {100, 300}, 400, 100, 3, 1, 1}, exitFromMenu));
 
   return true;
 }
 
 bool
-MenuState::onExit(TextureManager *textureManager) {
+MenuState::onExit(GameContext* gameContext) {
   menuButtons.clear();
-  textureManager->clearFromTextureMap(PLAY_BUTTON);
-  textureManager->clearFromTextureMap(EXIT_BUTTON);
+  gameContext->functions.unloadTexture(PLAY_BUTTON);
+  gameContext->functions.unloadTexture(EXIT_BUTTON);
   return true;
 }
 
@@ -61,14 +62,14 @@ MenuState::setGame(Game *game) {
 }
 
 void
-MenuState::menuToPlay(SDL_Renderer *renderer) {
+MenuState::menuToPlay(GameContext* gameContext) {
   assert(game);
-  game->play(renderer);
+  game->play(gameContext);
 
 }
 
 void
-MenuState::exitFromMenu(SDL_Renderer *renderer) {
+MenuState::exitFromMenu(GameContext* gameContext) {
   assert(game);
   game->quit();
 }

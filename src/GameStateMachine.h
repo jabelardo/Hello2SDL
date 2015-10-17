@@ -5,27 +5,25 @@
 #ifndef HELLO2SDL_GAMESTATEMACHINE_H
 #define HELLO2SDL_GAMESTATEMACHINE_H
 
-#include <vector>
-#include <memory>
-
 #include "GameState.h"
-#include "TextureManager.h"
-#include "UserInput.h"
 
 class GameStateMachine {
 public:
-  void pushState(GameState& state, TextureManager *textureManager, SDL_Renderer *renderer);
+  void pushState(GameState* state, GameContext* gameContext);
 
-  void changeState(GameState& state, TextureManager *textureManager, SDL_Renderer *renderer);
+  void changeState(GameState* state, GameContext* gameContext);
 
-  void popState(TextureManager *textureManager);
+  void popState(GameContext* gameContext);
 
-  void update(UserInput *userInput, SDL_Renderer *renderer);
+  void update(GameContext* gameContext);
 
-  void render(TextureManager *textureManager, SDL_Renderer *renderer);
+  void render(SDL_Renderer* renderer);
+
+  void clear(GameContext* gameContext);
 
 private:
-  std::vector<std::reference_wrapper<GameState>> gameStates;
+  int currentGameState = -1;
+  GameState* gameStates[2];
 
 };
 

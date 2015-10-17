@@ -14,17 +14,11 @@
 #include "UserInput.h"
 #include "Entity.h"
 
-struct LoaderParams;
-class TextureManager;
-class InputHandler;
+struct Player {
 
-struct Player : Sprite {
-  Vector2D velocity;
-  Vector2D acceleration;
+  Sprite sprite;
 
-  Player(const LoaderParams& params);
-
-  void draw(TextureManager* textureManager, SDL_Renderer* renderer);
+  void draw(SDL_Renderer* renderer);
 
   void update(UserInput *userInput);
 };

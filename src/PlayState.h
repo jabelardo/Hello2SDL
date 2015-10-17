@@ -8,21 +8,21 @@
 #include <vector>
 #include "GameState.h"
 #include "UserInput.h"
+#include "Player.h"
+#include "Entity.h"
 
-struct Player;
-struct Entity;
 class Game;
 
 class PlayState : public GameState {
 
 public:
-  virtual void update(UserInput *userInput, SDL_Renderer *renderer);
+  virtual void update(GameContext* gameContext);
 
-  virtual void render(TextureManager *textureManager, SDL_Renderer *renderer);
+  virtual void render(SDL_Renderer* renderer);
 
-  virtual bool onEnter(TextureManager *textureManager, SDL_Renderer *renderer);
+  virtual bool onEnter(GameContext* gameContext);
 
-  virtual bool onExit(TextureManager *textureManager);
+  virtual bool onExit(GameContext* gameContext);
 
   virtual GameStateId getStateId() const;
 
@@ -30,8 +30,8 @@ public:
 
 private:
   static Game* game;
-  std::unique_ptr<Player> player;
-  std::vector<std::unique_ptr<Entity>> entities;
+  Player player;
+  std::vector<Entity> entities;
 };
 
 

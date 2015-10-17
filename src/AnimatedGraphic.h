@@ -14,22 +14,13 @@
 #include "Sprite.h"
 #include "UserInput.h"
 
-struct LoaderParams;
-class TextureManager;
-class InputHandler;
-
-
-class AnimatedGraphic {
-public:
-  AnimatedGraphic(const LoaderParams& params, int animationSpeed);
-
-  void draw(TextureManager* textureManager, SDL_Renderer* renderer);
-
-  void update(UserInput *inputHandler);
-
-private:
+struct AnimatedGraphic {
   Sprite sprite;
   int animationSpeed;
+
+  void draw(SDL_Renderer* renderer);
+
+  void update(UserInput *inputHandler);
 };
 
 

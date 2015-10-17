@@ -15,19 +15,19 @@
 #include "PlayState.cpp"
 #include "MenuState.cpp"
 #include "Sprite.cpp"
-#include "TextureManager.cpp"
+#include "RenderUtils.cpp"
 #include "GameContext.h"
 
 std::unique_ptr<Game> game;
 
 extern "C" void
-gameUpdateAndRender(GameContext *gameContext, UserInput *userInput, SDL_Renderer *renderer) {
+gameUpdateAndRender(GameContext *gameContext) {
 
   if (!gameContext->isInitialized) {
     game = std::make_unique<Game>();
-    game->showMenu(renderer);
+    game->showMenu(gameContext);
     gameContext->isInitialized = true;
   }
-  game->update(userInput, renderer);
-  game->render(renderer);
+  game->update(gameContext);
+  game->render(gameContext->renderer);
 }

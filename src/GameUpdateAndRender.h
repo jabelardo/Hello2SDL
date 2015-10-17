@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-void gameUpdateAndRender(GameContext *gameContext, UserInput *userInput, SDL_Renderer *renderer);
+void gameUpdateAndRender(GameContext *gameContext);
 
 
 #ifdef __cplusplus

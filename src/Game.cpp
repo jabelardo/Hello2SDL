@@ -9,7 +9,6 @@
 #endif
 
 #include "Game.h"
-#include "LoaderParams.h"
 #include "Entity.h"
 #include "UserInput.h"
 
@@ -22,41 +21,47 @@ Game::Game() {
 }
 
 void
-Game::update(UserInput *userInput, SDL_Renderer *renderer) {
-  stateMachine.update(userInput, renderer);
+Game::update(GameContext* gameContext) {
+  stateMachine.update(gameContext);
   if (shouldQuit) {
-    userInput->shouldQuit = true;
+    gameContext->userInput->shouldQuit = true;
   }
 }
 
 void
-Game::render(SDL_Renderer *renderer) {
-  stateMachine.render(&textureManager, renderer);
+Game::render(SDL_Renderer* renderer) {
+  stateMachine.render(renderer);
 }
 
 void
-Game::play(SDL_Renderer *renderer) {
-  stateMachine.changeState(playState, &textureManager, renderer);
+Game::play(GameContext* gameContext) {
+  *gameContext->userInput = UserInput{};
+  stateMachine.changeState(&playState, gameContext);
 }
 
 void
-Game::showMenu(SDL_Renderer *renderer) {
-  stateMachine.changeState(menuState, &textureManager, renderer);
+Game::showMenu(GameContext* gameContext) {
+  *gameContext->userInput = UserInput{};
+  stateMachine.clear(gameContext);
+  stateMachine.changeState(&menuState, gameContext);
 }
 
 void
-Game::resumePlay() {
-  stateMachine.popState(&textureManager);
+Game::resumePlay(GameContext* gameContext) {
+  *gameContext->userInput = UserInput{};
+  stateMachine.popState(gameContext);
 }
 
 void
-Game::pause(SDL_Renderer *renderer) {
-  stateMachine.pushState(pauseState, &textureManager, renderer);
+Game::pause(GameContext* gameContext) {
+  *gameContext->userInput = UserInput{};
+  stateMachine.pushState(&pauseState, gameContext);
 }
 
 void
-Game::gameOver(SDL_Renderer *renderer) {
-  stateMachine.changeState(gameOverState, &textureManager, renderer);
+Game::gameOver(GameContext* gameContext) {
+  *gameContext->userInput = UserInput{};
+  stateMachine.changeState(&gameOverState, gameContext);
 }
 
 void

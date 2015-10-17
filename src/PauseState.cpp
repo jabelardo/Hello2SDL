@@ -4,49 +4,50 @@
 
 #include <assert.h>
 #include "PauseState.h"
-#include "MenuButton.h"
-#include "TextureManager.h"
-#include "LoaderParams.h"
 #include "Game.h"
+#include "TextureId.h"
 
 Game*
 PauseState::game = 0;
 
 void
-PauseState::update(UserInput *inputHandler, SDL_Renderer *renderer) {
+PauseState::update(GameContext* gameContext) {
   for (auto &menuButton : menuButtons) {
-    menuButton.update(inputHandler, renderer);
+    menuButton.update(gameContext);
   }
 }
 
 void
-PauseState::render(TextureManager *textureManager, SDL_Renderer *renderer) {
+PauseState::render(SDL_Renderer* renderer) {
   for (auto &menuButton : menuButtons) {
-    menuButton.draw(textureManager, renderer);
+    menuButton.draw(renderer);
   }
 }
 
 bool
-PauseState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
-  if (!textureManager->load(MAIN_BUTTON, "main.png", renderer)) {
+PauseState::onEnter(GameContext* gameContext) {
+  if (!gameContext->functions.loadTexture(MAIN_BUTTON, "main.png", gameContext->renderer)) {
     return false;
   }
-  if (!textureManager->load(RESUME_BUTTON, "resume.png", renderer)) {
+  if (!gameContext->functions.loadTexture(RESUME_BUTTON, "resume.png", gameContext->renderer)) {
     return false;
   }
 
-  menuButtons.push_back(MenuButton(LoaderParams{MAIN_BUTTON, 200, 100, 200, 80, 3}, pauseToMain));
-  menuButtons.push_back(MenuButton(LoaderParams{RESUME_BUTTON, 200, 300, 200, 80, 3}, resumePlay));
+  SDL_Texture *mainButton = gameContext->functions.getTexture(MAIN_BUTTON);
+  SDL_Texture *resumeButton = gameContext->functions.getTexture(RESUME_BUTTON);
+
+  menuButtons.push_back(MenuButton(Sprite{mainButton, {200, 100}, 200, 80, 3, 1, 1}, pauseToMain));
+  menuButtons.push_back(MenuButton(Sprite{resumeButton, {200, 300}, 200, 80, 3, 1, 1}, resumePlay));
 
   return true;
 }
 
 bool
-PauseState::onExit(TextureManager *textureManager) {
+PauseState::onExit(GameContext* gameContext) {
   assert(game);
   menuButtons.clear();
-  textureManager->clearFromTextureMap(MAIN_BUTTON);
-  textureManager->clearFromTextureMap(RESUME_BUTTON);
+  gameContext->functions.unloadTexture(MAIN_BUTTON);
+  gameContext->functions.unloadTexture(RESUME_BUTTON);
 
   return true;
 }
@@ -62,13 +63,13 @@ PauseState::setGame(Game *game) {
 }
 
 void
-PauseState::pauseToMain(SDL_Renderer *renderer) {
+PauseState::pauseToMain(GameContext* gameContext) {
   assert(game);
-  game->showMenu(renderer);
+  game->showMenu(gameContext);
 }
 
 void
-PauseState::resumePlay(SDL_Renderer *renderer) {
+PauseState::resumePlay(GameContext* gameContext) {
   assert(game);
-  game->resumePlay();
+  game->resumePlay(gameContext);
 }

@@ -12,26 +12,20 @@
 #endif
 
 #include "Vector2D.h"
-#include "TextureId.h"
-
-struct LoaderParams;
-class TextureManager;
-class InputHandler;
 
 struct Sprite {
 
-  Sprite(const LoaderParams& params);
-
-  TextureId textureId;
+  SDL_Texture* texture;
   Vector2D position;
   int width;
   int height;
+  int totalFrames;
   int currentFrame;
   int currentRow;
-  int totalFrames;
+  Vector2D velocity;
+  Vector2D acceleration;
 
-  void draw(TextureManager* textureManager, SDL_Renderer* renderer,
-            SDL_RendererFlip flip = SDL_FLIP_NONE);
+  void draw(SDL_Renderer* renderer, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
   static bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
 

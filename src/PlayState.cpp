@@ -5,62 +5,63 @@
 #include <assert.h>
 #include "Player.h"
 #include "PlayState.h"
-#include "TextureManager.h"
-#include "LoaderParams.h"
 #include "Game.h"
-#include "Sprite.h"
-#include "Entity.h"
+#include "TextureId.h"
 
 Game *
 PlayState::game = 0;
 
 void
-PlayState::update(UserInput *userInput, SDL_Renderer *renderer) {
+PlayState::update(GameContext* gameContext) {
   assert(game);
-  if (userInput->back.endedDown) {
-    game->pause(renderer);
+  if (gameContext->userInput->back.endedDown) {
+    game->pause(gameContext);
+    return;
   }
-  player->update(userInput);
+  player.update(gameContext->userInput);
   for (auto &entity : entities) {
-    entity->update(userInput);
+    entity.update(gameContext->userInput);
   }
-  if (Sprite::checkCollision(*entities[0], *player)) {
-    game->gameOver(renderer);
+  if (Sprite::checkCollision(entities[0].sprite, player.sprite)) {
+    game->gameOver(gameContext);
   }
 }
 
 void
-PlayState::render(TextureManager *textureManager, SDL_Renderer *renderer) {
-  player->draw(textureManager, renderer);
+PlayState::render(SDL_Renderer* renderer) {
+  player.draw(renderer);
   for (auto &entity : entities) {
-    entity->draw(textureManager, renderer);
+    entity.draw(renderer);
   }
 }
 
 bool
-PlayState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
+PlayState::onEnter(GameContext* gameContext) {
 
-  if (!textureManager->load(HELICOPTER, "helicopter.png", renderer)) {
+  if (!gameContext->functions.loadTexture(HELICOPTER, "helicopter.png", gameContext->renderer)) {
     return false;
   }
-  if (!textureManager->load(HELICOPTER2, "helicopter2.png", renderer)) {
+  if (!gameContext->functions.loadTexture(HELICOPTER2, "helicopter2.png", gameContext->renderer)) {
     return false;
   }
 
-  player = std::make_unique<Player>(LoaderParams{HELICOPTER, 500, 100, 128, 55, 5});
+  SDL_Texture *helicopter = gameContext->functions.getTexture(HELICOPTER);
+  SDL_Texture *helicopter2 = gameContext->functions.getTexture(HELICOPTER2);
 
-  entities.push_back(std::make_unique<Entity>(LoaderParams{HELICOPTER2, 0, 100, 128, 55, 5}));
-  entities.back()->velocity = {2, .33f};
-  entities.back()->acceleration = {0, .33f};
+  player = Player{{helicopter, {500, 100}, 128, 55, 5, 1, 1}};
+
+  entities.push_back(Entity{{helicopter2, {0, 100}, 128, 55, 5, 1, 1}});
+  entities.back().sprite.velocity = {2, .33f};
+  entities.back().sprite.acceleration = {0, .33f};
 
   return true;
 }
 
 bool
-PlayState::onExit(TextureManager *textureManager) {
+PlayState::onExit(GameContext* gameContext) {
   entities.clear();
-  textureManager->clearFromTextureMap(HELICOPTER);
-  textureManager->clearFromTextureMap(HELICOPTER2);
+  gameContext->functions.unloadTexture(HELICOPTER);
+  gameContext->functions.unloadTexture(HELICOPTER2);
   return true;
 }
 

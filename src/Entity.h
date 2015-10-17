@@ -14,17 +14,11 @@
 #include "Sprite.h"
 #include "UserInput.h"
 
-struct LoaderParams;
-class TextureManager;
-class InputHandler;
+struct Entity {
 
-struct Entity : Sprite {
-  Vector2D velocity;
-  Vector2D acceleration;
+  Sprite sprite;
 
-  Entity(const LoaderParams& params);
-
-  void draw(TextureManager* textureManager, SDL_Renderer* renderer);
+  void draw(SDL_Renderer* renderer);
   
   void update(UserInput *userInput);
 };

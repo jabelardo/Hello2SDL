@@ -12,37 +12,31 @@
 #endif
 
 #include "Entity.h"
-#include "LoaderParams.h"
-#include "TextureManager.h"
 #include "UserInput.h"
 
-Entity::Entity(const LoaderParams &params) 
-  : Sprite(params), velocity(0, 0), acceleration(0, 0) {
-}
-
 void
-Entity::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
-  if (velocity.x > 0) {
-    Sprite::draw(textureManager, renderer, SDL_FLIP_HORIZONTAL);
+Entity::draw(SDL_Renderer* renderer) {
+  if (sprite.velocity.x > 0) {
+    sprite.draw(renderer, SDL_FLIP_HORIZONTAL);
   } else {
-    Sprite::draw(textureManager, renderer);
+    sprite.draw(renderer);
   }
 }
 
 void
 Entity::update(UserInput *userInput) {
-  currentFrame = (int) ((SDL_GetTicks() / 100) % totalFrames);
-  if (position.y < 0) {
-    velocity = Vector2D{2, .33f};
-    acceleration = Vector2D{0, .33f};
+  sprite.currentFrame = (int) ((SDL_GetTicks() / 100) % sprite.totalFrames);
+  if (sprite.position.y < 0) {
+    sprite.velocity = Vector2D{2, .33f};
+    sprite.acceleration = Vector2D{0, .33f};
 
-  } else if (position.y > 400) {
-    velocity = Vector2D{2, -.33f};
-    acceleration = Vector2D{0, -.33f};
+  } else if (sprite.position.y > 400) {
+    sprite.velocity = Vector2D{2, -.33f};
+    sprite.acceleration = Vector2D{0, -.33f};
   }
-  if (position.x > 640) {
-    position.x = 0;
+  if (sprite.position.x > 640) {
+    sprite.position.x = 0;
   }
-  velocity += acceleration;
-  position += velocity;
+  sprite.velocity += sprite.acceleration;
+  sprite.position += sprite.velocity;
 }

@@ -31,11 +31,11 @@ set(SOURCE_FILES
         src/Player.h
         src/PlayState.cpp
         src/PlayState.h
+        src/RenderUtils.cpp
+        src/RenderUtils.h
         src/Sprite.cpp
         src/Sprite.h
         src/TextureId.h
-        src/TextureManager.cpp
-        src/TextureManager.h
         src/UserInput.h
         src/Vector2D.h)
 

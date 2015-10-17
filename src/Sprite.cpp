@@ -3,20 +3,12 @@
 //
 
 #include "Sprite.h"
-#include "LoaderParams.h"
-#include "TextureManager.h"
-
-Sprite::Sprite(const LoaderParams &params)
-: textureId(params.textureId),
-  position(params.x, params.y),
-  width(params.width), height(params.height),
-  currentFrame(1), currentRow(1), totalFrames(params.frames) {
-}
+#include "RenderUtils.h"
 
 void
-Sprite::draw(TextureManager *textureManager, SDL_Renderer *renderer, SDL_RendererFlip flip) {
-  textureManager->drawFrame(textureId, (int) position.x, (int) position.y, width, height,
-                            currentRow, currentFrame, renderer, flip);
+Sprite::draw(SDL_Renderer* renderer, SDL_RendererFlip flip) {
+  drawFrame(renderer, texture, (int) position.x, (int) position.y, width, height, currentRow,
+            currentFrame, flip);
 }
 
 bool

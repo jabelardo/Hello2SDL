@@ -16,13 +16,13 @@ class Game;
 class GameOverState : public GameState {
 
 public:
-  virtual void update(UserInput *userInput, SDL_Renderer *renderer);
+  virtual void update(GameContext* gameContext);
 
-  virtual void render(TextureManager *textureManager,SDL_Renderer *renderer);
+  virtual void render(SDL_Renderer* renderer);
 
-  virtual bool onEnter(TextureManager *textureManager,SDL_Renderer *renderer);
+  virtual bool onEnter(GameContext* gameContext);
 
-  virtual bool onExit(TextureManager *textureManager);
+  virtual bool onExit(GameContext* gameContext);
 
   virtual GameStateId getStateId() const;
 
@@ -31,11 +31,11 @@ public:
 private:
   static Game* game;
   std::vector<MenuButton> menuButtons;
-  std::unique_ptr<AnimatedGraphic> gameOverGraphic;
+  AnimatedGraphic gameOverGraphic;
 
-  static void gameOverToMain(SDL_Renderer *renderer);
+  static void gameOverToMain(GameContext* gameContext);
 
-  static void restartPlay(SDL_Renderer *renderer);
+  static void restartPlay(GameContext* gameContext);
 };
 
 
