@@ -44,9 +44,6 @@ MenuState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
 
 bool
 MenuState::onExit(TextureManager *textureManager) {
-  for (auto &menuButton : menuButtons) {
-    menuButton.clean();
-  }
   menuButtons.clear();
   textureManager->clearFromTextureMap(PLAY_BUTTON);
   textureManager->clearFromTextureMap(EXIT_BUTTON);

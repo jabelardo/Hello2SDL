@@ -18,34 +18,10 @@ struct LoaderParams;
 class TextureManager;
 class InputHandler;
 
-class Sprite {
-public:
+struct Sprite {
+
   Sprite(const LoaderParams& params);
 
-  void draw(TextureManager* textureManager, SDL_Renderer* renderer,
-            SDL_RendererFlip flip = SDL_FLIP_NONE);
-
-  const Vector2D& getPosition() const;
-
-  void setPosition(const Vector2D& position);
-
-  int getCurrentFrame() const;
-
-  void setCurrentFrame(int currentFrame);
-
-  int getWidth() const;
-
-  int getHeight() const;
-
-  TextureId getTextureId() const;
-
-  int getCurrentRow() const;
-
-  int getTotalFrames() const;
-
-  static bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
-
-private:
   TextureId textureId;
   Vector2D position;
   int width;
@@ -53,6 +29,12 @@ private:
   int currentFrame;
   int currentRow;
   int totalFrames;
+
+  void draw(TextureManager* textureManager, SDL_Renderer* renderer,
+            SDL_RendererFlip flip = SDL_FLIP_NONE);
+
+  static bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
+
 };
 
 

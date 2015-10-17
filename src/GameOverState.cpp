@@ -55,12 +55,6 @@ GameOverState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
 
 bool
 GameOverState::onExit(TextureManager *textureManager) {
-  for (auto &menuButton : menuButtons) {
-    menuButton.clean();
-  }
-  if (gameOverGraphic) {
-    gameOverGraphic->clean();
-  }
   menuButtons.clear();
   textureManager->clearFromTextureMap(MAIN_BUTTON);
   textureManager->clearFromTextureMap(RESTART_BUTTON);

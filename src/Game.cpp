@@ -35,10 +35,6 @@ Game::render(SDL_Renderer *renderer) {
 }
 
 void
-Game::clean() {
-}
-
-void
 Game::play(SDL_Renderer *renderer) {
   stateMachine.changeState(playState, &textureManager, renderer);
 }

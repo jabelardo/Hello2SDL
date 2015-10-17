@@ -11,10 +11,6 @@ AnimatedGraphic::AnimatedGraphic(const LoaderParams &params, int animationSpeed)
 }
 
 void
-AnimatedGraphic::clean() {
-}
-
-void
 AnimatedGraphic::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
   sprite.draw(textureManager, renderer);
 }
@@ -22,7 +18,6 @@ AnimatedGraphic::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
 void
 AnimatedGraphic::update(UserInput *inputHandler) {
   if (animationSpeed) {
-    sprite.setCurrentFrame(
-        (int) ((SDL_GetTicks() / (1000 / animationSpeed)) % sprite.getTotalFrames()));
+    sprite.currentFrame = (int) ((SDL_GetTicks() / (1000 / animationSpeed)) % sprite.totalFrames);
   }
 }

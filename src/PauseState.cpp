@@ -44,13 +44,9 @@ PauseState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
 bool
 PauseState::onExit(TextureManager *textureManager) {
   assert(game);
-  for (auto& menuButton : menuButtons) {
-    menuButton.clean();
-  }
   menuButtons.clear();
   textureManager->clearFromTextureMap(MAIN_BUTTON);
   textureManager->clearFromTextureMap(RESUME_BUTTON);
-  // TODO game->resetInput();
 
   return true;
 }

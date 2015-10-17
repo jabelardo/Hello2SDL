@@ -1,9 +1,9 @@
 //
-// Created by Jose Gutierrez on 10/14/15.
+// Created by Jose Gutierrez on 10/17/15.
 //
 
-#ifndef HELLO2SDL_ENTITY_H
-#define HELLO2SDL_ENTITY_H
+#ifndef HELLO2SDL_PLAYER_H
+#define HELLO2SDL_PLAYER_H
 
 #ifdef __APPLE__
 #include <SDL2/SDL_render.h>
@@ -11,23 +11,23 @@
 #include <SDL_render.h>
 #endif
 
-#include "Sprite.h"
 #include "UserInput.h"
+#include "Entity.h"
 
 struct LoaderParams;
 class TextureManager;
 class InputHandler;
 
-struct Entity : Sprite {
+struct Player : Sprite {
   Vector2D velocity;
   Vector2D acceleration;
 
-  Entity(const LoaderParams& params);
+  Player(const LoaderParams& params);
 
   void draw(TextureManager* textureManager, SDL_Renderer* renderer);
-  
+
   void update(UserInput *userInput);
 };
 
 
-#endif //HELLO2SDL_ENTITY_H
+#endif //HELLO2SDL_PLAYER_H

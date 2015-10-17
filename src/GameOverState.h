@@ -18,11 +18,9 @@ class GameOverState : public GameState {
 public:
   virtual void update(UserInput *userInput, SDL_Renderer *renderer);
 
-  virtual void render(TextureManager *textureManager,
-                      SDL_Renderer *renderer);
+  virtual void render(TextureManager *textureManager,SDL_Renderer *renderer);
 
-  virtual bool onEnter(TextureManager *textureManager,
-                       SDL_Renderer *renderer);
+  virtual bool onEnter(TextureManager *textureManager,SDL_Renderer *renderer);
 
   virtual bool onExit(TextureManager *textureManager);
 

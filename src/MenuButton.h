@@ -29,8 +29,6 @@ public:
 
   void update(UserInput *inputHandler, SDL_Renderer* renderer);
 
-  void clean();
-
   enum ButtonState {
     MOUSE_OUT = 0,
     MOUSE_OVER,

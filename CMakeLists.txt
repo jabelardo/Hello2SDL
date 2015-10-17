@@ -10,9 +10,13 @@ set(SOURCE_FILES
         src/Entity.h
         src/Game.cpp
         src/Game.h
+        src/GameContext.h
         src/GameOverState.cpp
         src/GameOverState.h
+        src/GameUpdateAndRender.cpp
+        src/GameUpdateAndRender.h
         src/GameState.h
+        src/GameStateId.h
         src/GameStateMachine.cpp
         src/GameStateMachine.h
         src/LoaderParams.h
@@ -23,6 +27,8 @@ set(SOURCE_FILES
         src/MenuState.h
         src/PauseState.cpp
         src/PauseState.h
+        src/Player.cpp
+        src/Player.h
         src/PlayState.cpp
         src/PlayState.h
         src/Sprite.cpp
@@ -30,7 +36,8 @@ set(SOURCE_FILES
         src/TextureId.h
         src/TextureManager.cpp
         src/TextureManager.h
-        src/Vector2D.h src/GameStateId.h src/UserInput.h src/GameUpdateAndRender.cpp src/GameUpdateAndRender.h src/GameContext.h)
+        src/UserInput.h
+        src/Vector2D.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

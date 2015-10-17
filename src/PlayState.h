@@ -9,9 +9,9 @@
 #include "GameState.h"
 #include "UserInput.h"
 
-class Entity;
+struct Player;
+struct Entity;
 class Game;
-class Sprite;
 
 class PlayState : public GameState {
 
@@ -30,6 +30,7 @@ public:
 
 private:
   static Game* game;
+  std::unique_ptr<Player> player;
   std::vector<std::unique_ptr<Entity>> entities;
 };
 

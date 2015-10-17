@@ -7,7 +7,7 @@
 
 MenuButton::MenuButton(const LoaderParams &params, Callback* callback)
 : sprite(params), callback(callback), buttonReleased(false) {
-  sprite.setCurrentFrame(MOUSE_OUT);
+  sprite.currentFrame = MOUSE_OUT;
 }
 
 void
@@ -16,28 +16,23 @@ MenuButton::draw(TextureManager *textureManager, SDL_Renderer *renderer) {
 }
 
 void
-MenuButton::clean() {
-
-}
-
-void
 MenuButton::update(UserInput *userInput, SDL_Renderer *renderer) {
   auto mousePositionX = userInput->mousePositionX;
   auto mousePositionY = userInput->mousePositionY;
-  if (mousePositionX < (sprite.getPosition().x + sprite.getWidth())
-     && mousePositionX > sprite.getPosition().x
-     && mousePositionY < (sprite.getPosition().y + sprite.getHeight())
-     && mousePositionY > sprite.getPosition().y) {
+  if (mousePositionX < (sprite.position.x + sprite.width)
+     && mousePositionX > sprite.position.x
+     && mousePositionY < (sprite.position.y + sprite.height)
+     && mousePositionY > sprite.position.y) {
 
     if (userInput->mouseButtonLeft.endedDown && buttonReleased) {
-      sprite.setCurrentFrame(CLICKED);
+      sprite.currentFrame = CLICKED;
       callback(renderer);
       buttonReleased = false;
     } else if (userInput->mouseButtonLeft.endedDown) {
       buttonReleased = true;
-      sprite.setCurrentFrame(MOUSE_OVER);
+      sprite.currentFrame = MOUSE_OVER;
     }
   } else {
-    sprite.setCurrentFrame(MOUSE_OUT);
+    sprite.currentFrame = MOUSE_OUT;
   }
 }

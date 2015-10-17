@@ -3,6 +3,7 @@
 //
 
 #include <assert.h>
+#include "Player.h"
 #include "PlayState.h"
 #include "TextureManager.h"
 #include "LoaderParams.h"
@@ -19,16 +20,18 @@ PlayState::update(UserInput *userInput, SDL_Renderer *renderer) {
   if (userInput->back.endedDown) {
     game->pause(renderer);
   }
+  player->update(userInput);
   for (auto &entity : entities) {
     entity->update(userInput);
   }
-  if (Sprite::checkCollision(entities[0]->getSprite(), entities[1]->getSprite())) {
+  if (Sprite::checkCollision(*entities[0], *player)) {
     game->gameOver(renderer);
   }
 }
 
 void
 PlayState::render(TextureManager *textureManager, SDL_Renderer *renderer) {
+  player->draw(textureManager, renderer);
   for (auto &entity : entities) {
     entity->draw(textureManager, renderer);
   }
@@ -44,20 +47,17 @@ PlayState::onEnter(TextureManager *textureManager, SDL_Renderer *renderer) {
     return false;
   }
 
-  entities.push_back(std::make_unique<Entity>(Entity::PLAYER_TYPE,
-                                              LoaderParams{HELICOPTER, 500, 100, 128, 55, 5}));
+  player = std::make_unique<Player>(LoaderParams{HELICOPTER, 500, 100, 128, 55, 5});
 
-  entities.push_back(std::make_unique<Entity>(Entity::ENEMY_TYPE,
-                                              LoaderParams{HELICOPTER2, 0, 100, 128, 55, 5}));
+  entities.push_back(std::make_unique<Entity>(LoaderParams{HELICOPTER2, 0, 100, 128, 55, 5}));
+  entities.back()->velocity = {2, .33f};
+  entities.back()->acceleration = {0, .33f};
 
   return true;
 }
 
 bool
 PlayState::onExit(TextureManager *textureManager) {
-  for (auto &entity : entities) {
-    entity->clean();
-  }
   entities.clear();
   textureManager->clearFromTextureMap(HELICOPTER);
   textureManager->clearFromTextureMap(HELICOPTER2);

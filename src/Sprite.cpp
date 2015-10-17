@@ -8,7 +8,7 @@
 
 Sprite::Sprite(const LoaderParams &params)
 : textureId(params.textureId),
-  position{params.x, params.y},
+  position(params.x, params.y),
   width(params.width), height(params.height),
   currentFrame(1), currentRow(1), totalFrames(params.frames) {
 }
@@ -19,62 +19,17 @@ Sprite::draw(TextureManager *textureManager, SDL_Renderer *renderer, SDL_Rendere
                             currentRow, currentFrame, renderer, flip);
 }
 
-const Vector2D&
-Sprite::getPosition() const {
-  return position;
-}
-
-void
-Sprite::setPosition(const Vector2D& position) {
-  this->position = position;
-}
-
-int
-Sprite::getCurrentFrame() const {
-  return currentFrame;
-}
-
-void
-Sprite::setCurrentFrame(int currentFrame) {
-  this->currentFrame = currentFrame;
-}
-
-int
-Sprite::getWidth() const {
-  return width;
-}
-
-int
-Sprite::getHeight() const {
-  return height;
-}
-
-TextureId
-Sprite::getTextureId() const {
-  return textureId;
-}
-
-int
-Sprite::getCurrentRow() const {
-  return currentRow;
-}
-
-int
-Sprite::getTotalFrames() const {
-  return totalFrames;
-}
-
 bool
 Sprite::checkCollision(const Sprite &sprite1, const Sprite &sprite2) {
-  auto leftA = sprite1.getPosition().x;
-  auto rightA = sprite1.getPosition().x + sprite1.getWidth();
-  auto topA = sprite1.getPosition().y;
-  auto bottomA = sprite1.getPosition().y + sprite1.getHeight();
+  auto leftA = sprite1.position.x;
+  auto rightA = sprite1.position.x + sprite1.width;
+  auto topA = sprite1.position.y;
+  auto bottomA = sprite1.position.y + sprite1.height;
   //Calculate the sides of rect B
-  auto leftB = sprite2.getPosition().x;
-  auto rightB = sprite2.getPosition().x + sprite2.getWidth();
-  auto topB = sprite2.getPosition().y;
-  auto bottomB = sprite2.getPosition().y + sprite2.getHeight();
+  auto leftB = sprite2.position.x;
+  auto rightB = sprite2.position.x + sprite2.width;
+  auto topB = sprite2.position.y;
+  auto bottomB = sprite2.position.y + sprite2.height;
   //If any of the sides from A are outside of B
   if (bottomA <= topB) { return false; }
   if (topA >= bottomB) { return false; }

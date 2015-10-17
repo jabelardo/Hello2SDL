@@ -27,8 +27,6 @@ public:
 
   void update(UserInput *inputHandler);
 
-  void clean();
-
 private:
   Sprite sprite;
   int animationSpeed;

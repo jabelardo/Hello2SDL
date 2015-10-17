@@ -11,6 +11,7 @@
 #include "GameStateMachine.cpp"
 #include "MenuButton.cpp"
 #include "PauseState.cpp"
+#include "Player.cpp"
 #include "PlayState.cpp"
 #include "MenuState.cpp"
 #include "Sprite.cpp"

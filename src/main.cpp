@@ -190,21 +190,19 @@ main(int argc, char *args[]) {
 
     SDL_RenderClear(renderer);
     gameUpdateAndRender(&gameContext, &userInput, renderer);
-    SDL_RenderPresent(renderer);
 
     auto secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
     if (secondsElapsedForFrame < targetSecondsPerFrame) {
-      auto timeToSleep = (Sint32) ((targetSecondsPerFrame - secondsElapsedForFrame) * 1000) - 1;
+      auto timeToSleep = (Uint32) (targetSecondsPerFrame - secondsElapsedForFrame) * 1000;
       if (timeToSleep > 0) {
 //        printf("timeToSleep %d\n", timeToSleep);
         SDL_Delay(timeToSleep);
       }
-      while (secondsElapsedForFrame < targetSecondsPerFrame) {
-        secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
-      }
     } else {
       printf("MISSED FRAME RATE!\n");
     }
+
+    SDL_RenderPresent(renderer);
 
     auto endCounter = SDL_GetPerformanceCounter();
 

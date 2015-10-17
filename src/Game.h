@@ -21,8 +21,6 @@ public:
 
   void render(SDL_Renderer *renderer);
 
-  void clean();
-
   void play(SDL_Renderer *renderer);
 
   void showMenu(SDL_Renderer *renderer);
