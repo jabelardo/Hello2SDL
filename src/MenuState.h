@@ -5,6 +5,8 @@
 #ifndef HELLO2SDL_MENUSTATE_H
 #define HELLO2SDL_MENUSTATE_H
 
+#include <libxml/tree.h>
+
 #include "GameState.h"
 #include "MenuButton.h"
 #include "UserInput.h"
@@ -12,7 +14,7 @@
 class MenuState : public GameState {
 
 public:
-  virtual bool init(tinyxml2::XMLDocument *xmlDoc, GameContext *gameContext);
+  bool init(xmlDoc *doc, GameContext *gameContext) ;
 
   virtual bool init(GameContext *gameContext);
 

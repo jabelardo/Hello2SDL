@@ -16,13 +16,10 @@
 #include "GameStateId.h"
 #include "UserInput.h"
 #include "GameContext.h"
-#include "tinyxml2.h"
 
 class GameState {
 
 public:
-  virtual bool init(tinyxml2::XMLDocument *xmlDocument, GameContext *gameContext) = 0;
-
   virtual bool init(GameContext *gameContext) = 0;
 
   virtual ~GameState() { };

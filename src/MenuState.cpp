@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "MenuState.h"
 #include "TextureId.h"
+#include "XmlUtils.h"
 
 bool
 MenuState::init(GameContext *gameContext) {
@@ -41,17 +42,28 @@ MenuState::init(GameContext *gameContext) {
 }
 
 bool
-MenuState::init(tinyxml2::XMLDocument *xmlDoc, GameContext *gameContext) {
-  auto states = xmlDoc->FirstChildElement("STATES");
-  auto menu = states->FirstChildElement("MENU");
-  auto textures = menu->FirstChildElement("TEXTURES");
-
-  for (auto e = textures->FirstChildElement(); e; e = e->NextSiblingElement()) {
-    auto id = e->Attribute("id");
-    auto filename = e->Attribute("filename");
-    auto textureId = getTextureId(id);
-    if (!gameContext->functions.loadTexture(textureId, filename, gameContext->renderer)) {
-      return false;
+MenuState::init(xmlDoc *doc, GameContext *gameContext) {
+  auto root = xmlDocGetRootElement(doc);
+  auto menu = getXmlElement(root, (const xmlChar *) "MENU");
+  if (!menu) {
+    return false;
+  }
+  auto textures = getXmlElement(menu, (const xmlChar *) "TEXTURES");
+  if (!textures) {
+    return false;
+  }
+  for (auto e = textures->children; e; e = e->next) {
+    if (e->type == XML_ELEMENT_NODE && xmlStrcmp(e->name, (const xmlChar *) "texture") == 0) {
+      auto id = (char *) xmlGetProp(e, (const xmlChar *) "id");
+      auto filename = (char *) xmlGetProp(e, (const xmlChar *) "filename");
+      auto textureId = getTextureId(id);
+      if (!gameContext->functions.loadTexture(textureId, filename, gameContext->renderer)) {
+        xmlFree(id);
+        xmlFree(filename);
+        return false;
+      }
+      xmlFree(id);
+      xmlFree(filename);
     }
   }
 
@@ -70,28 +82,41 @@ MenuState::init(tinyxml2::XMLDocument *xmlDoc, GameContext *gameContext) {
   callbacks[0] = menuToPlay;
   callbacks[1] = exitFromGame;
 
-  auto objects = menu->FirstChildElement("OBJECTS");
-
-  for (auto e = objects->FirstChildElement(); e; e = e->NextSiblingElement()) {
-    auto type = e->Attribute("type");
-    if (strcmp(type, "MenuButton") == 0) {
-      auto idx = atoi(e->Attribute("id"));
-      auto x = atoi(e->Attribute("x"));
-      auto y = atoi(e->Attribute("y"));
-      auto textureId = e->Attribute("textureId");
-      auto width = atoi(e->Attribute("width"));
-      auto height = atoi(e->Attribute("height"));
-      auto totalFrames = atoi(e->Attribute("totalFrames"));
-      auto currentFrame = atoi(e->Attribute("currentFrame"));
-      auto currentRow = atoi(e->Attribute("currentRow"));
-
-      menuButtons[idx] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-          MenuButton{x, y,
-                     {textureArray[idx], width, height, totalFrames, currentFrame, currentRow},
-                     callbacks[idx]};
+  auto objects = getXmlElement(menu, (const xmlChar *) "OBJECTS");
+  if (!objects) {
+    return false;
+  }
+  for (auto e = objects->children; e; e = e->next) {
+    if (e->type == XML_ELEMENT_NODE && xmlStrcmp(e->name, (const xmlChar *) "object") == 0) {
+      auto type = xmlGetProp(e, (const xmlChar *) "type");
+      if (xmlStrcmp(type, (const xmlChar *) "MenuButton") == 0) {
+        auto id = (char *) xmlGetProp(e, (const xmlChar *) "id");
+        auto idx = atoi(id);
+        auto x = (char *) xmlGetProp(e, (const xmlChar *) "x");
+        auto y = (char *) xmlGetProp(e, (const xmlChar *) "y");
+        auto textureId = (char *) xmlGetProp(e, (const xmlChar *) "textureId");
+        auto width = (char *) xmlGetProp(e, (const xmlChar *) "width");
+        auto height = (char *) xmlGetProp(e, (const xmlChar *) "height");
+        auto totalFrames = (char *) xmlGetProp(e, (const xmlChar *) "totalFrames");
+        auto currentFrame = (char *) xmlGetProp(e, (const xmlChar *) "currentFrame");
+        auto currentRow = (char *) xmlGetProp(e, (const xmlChar *) "currentRow");
+        menuButtons[idx] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
+            MenuButton{atoi(x), atoi(y),
+                       {textureArray[idx], atoi(width), atoi(height), atoi(totalFrames),
+                        atoi(currentFrame), atoi(currentRow)},
+                       callbacks[idx]};
+        xmlFree(id);
+        xmlFree(x);
+        xmlFree(y);
+        xmlFree(textureId);
+        xmlFree(width);
+        xmlFree(height);
+        xmlFree(totalFrames);
+        xmlFree(currentFrame);
+        xmlFree(currentRow);
+      }
     }
   }
-
   return false;
 }
 

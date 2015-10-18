@@ -361,5 +361,7 @@ main(int argc, char *args[]) {
     lastCounter = endCounter;
   }
 
+  // TODO: xmlCleanupParser();
+
   return 0;
 }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(Hello2SDL)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -I/usr/include/libxml2")
 
 set(SOURCE_FILES
         src/AnimatedGraphic.cpp
@@ -37,12 +37,21 @@ set(SOURCE_FILES
         src/RenderUtils.h
         src/TextureId.cpp
         src/TextureId.h
-        src/tinyxml2.cpp
-        src/tinyxml2.h
+        src/tmx.c
+        src/tmx.h
+        src/tmx_err.c
+        src/tmx_sdl_test.c
+        src/tmx_utils.c
+        src/tmx_utils.h
+        src/tmx_xml.c
         src/UserInput.h
-        src/V2D.h)
+        src/V2D.h
+        src/XmlUtils.cpp
+        src/XmlUtils.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
+
+target_compile_definitions(CLION_PLACEHOLDER PUBLIC "TMXEXPORT=")
 
 add_custom_target(Hello2SDL
         COMMAND ${Hello2SDL_SOURCE_DIR}/src/build.sh ${Hello2SDL_SOURCE_DIR}/src)

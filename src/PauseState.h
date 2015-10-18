@@ -12,8 +12,6 @@
 class PauseState : public GameState {
 
 public:
-  virtual bool init(tinyxml2::XMLDocument *xmlDocument, GameContext *gameContext) { return false; }
-
   virtual bool init(GameContext *gameContext);
 
   virtual void update(GameContext *gameContext);

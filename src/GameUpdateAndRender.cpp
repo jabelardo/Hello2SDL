@@ -17,7 +17,17 @@
 #include "PlayState.cpp"
 #include "RenderUtils.cpp"
 #include "TextureId.cpp"
-#include "tinyxml2.cpp"
+
+#include "XmlUtils.cpp"
+
+extern "C" {
+#include "tmx.c"
+#include "tmx_err.c"
+#include "tmx_utils.c"
+#include "tmx_xml.c"
+#include "tmx_sdl_test.c"
+}
+
 #include "GameContext.h"
 
 Game *game;
@@ -42,9 +52,10 @@ gameUpdateAndRender(GameContext *gameContext) {
     game = PLACEMENT_NEW(&gameContext->permanentMemory, Game)
         Game(menuState, playState, pauseState, gameOverState);
 
-//    tinyxml2::XMLDocument xmlDoc;
-//    auto xmlErr = xmlDoc.LoadFile("/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/test.xml");
-//    menuState->init(&xmlDoc, gameContext);
+//    auto doc = xmlReadFile("/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/test.xml", 0, 0);
+//    menuState->init(doc, gameContext);
+//    xmlFreeDoc(doc);
+
     menuState->init(gameContext);
     playState->init(gameContext);
     pauseState->init(gameContext);

@@ -1,16 +1,16 @@
 <?xml version="1.0" ?>
 <STATES>
-<MENU>
-<TEXTURES>
-    <texture id="PLAY_BUTTON" filename="button.png"/>
-    <texture id="EXIT_BUTTON" filename="exit.png"/>
-</TEXTURES>
-<OBJECTS>
-    <object id="0" type="MenuButton" x="100" y="100" textureId="PLAY_BUTTON"
-            width="400" height="100" totalFrames="3" currentFrame="1" currentRow="1"/>
+    <MENU>
+        <TEXTURES>
+            <texture id="PLAY_BUTTON" filename="button.png"/>
+            <texture id="EXIT_BUTTON" filename="exit.png"/>
+        </TEXTURES>
+        <OBJECTS>
+            <object id="0" type="MenuButton" x="100" y="100" textureId="PLAY_BUTTON"
+                    width="400" height="100" totalFrames="3" currentFrame="1" currentRow="1"/>
 
-    <object id="1" type="MenuButton" x="100" y="300" textureId="EXIT_BUTTON"
-            width="400" height="100" totalFrames="3" currentFrame="1" currentRow="1"/>
-</OBJECTS>
-</MENU>
+            <object id="1" type="MenuButton" x="100" y="300" textureId="EXIT_BUTTON"
+                    width="400" height="100" totalFrames="3" currentFrame="1" currentRow="1"/>
+        </OBJECTS>
+    </MENU>
 </STATES>
