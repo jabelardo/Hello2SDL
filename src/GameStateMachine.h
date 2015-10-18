@@ -9,22 +9,21 @@
 
 class GameStateMachine {
 public:
-  void pushState(GameState* state, GameContext* gameContext);
+  void pushState(GameState* state);
 
-  void changeState(GameState* state, GameContext* gameContext);
+  void changeState(GameState* state);
 
-  void popState(GameContext* gameContext);
+  void popState();
 
   void update(GameContext* gameContext);
 
   void render(SDL_Renderer* renderer);
 
-  void clear(GameContext* gameContext);
+  void clearStates();
 
 private:
   int currentGameState = -1;
   GameState* gameStates[2];
-
 };
 
 

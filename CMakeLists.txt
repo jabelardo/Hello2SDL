@@ -19,8 +19,8 @@ set(SOURCE_FILES
         src/GameStateId.h
         src/GameStateMachine.cpp
         src/GameStateMachine.h
-        src/LoaderParams.h
         src/main.cpp
+        src/MemoryPartitionPlacementNew.h
         src/MenuButton.cpp
         src/MenuButton.h
         src/MenuState.cpp

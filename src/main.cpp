@@ -75,7 +75,9 @@ sdlGetResourcePath(const std::string &filename) {
 
 bool
 sdlLoadTexture(int textureId, const char* fileName, SDL_Renderer *renderer) {
-  assert(G_textureMap.count(textureId) == 0);
+  if (G_textureMap.count(textureId)) {
+    return true;
+  }
   auto resource = sdlGetResourcePath(fileName);
   if (resource.empty()) {
     return false;
@@ -91,8 +93,8 @@ sdlLoadTexture(int textureId, const char* fileName, SDL_Renderer *renderer) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
     return false;
   }
-  auto result = G_textureMap.insert({textureId, texture});
-  return result.second;
+  G_textureMap.insert({textureId, texture});
+  return true;
 }
 
 SDL_Texture*
@@ -269,19 +271,29 @@ main(int argc, char *args[]) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating renderer: %s\n", SDL_GetError());
     return 1;
   }
-//#if BUILD_INTERNAL
-//  void *baseAddress = (void *) GIGABYTES(1);
-//#else
-//  void *baseAddress = (void *) 0;
-//#endif
-//  auto gameMemory = GameMemory{};
 
+  auto completeSharedMemory = MemoryPartition{MEGABYTES(32) + MEGABYTES(32)};
+
+#if _MSC_VER
+  completeSharedMemory.gameMemoryBlock = VirtualAlloc(0, completeSharedMemory.totalSize,
+                                                      MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+#else
+  completeSharedMemory.base = mmap(0, completeSharedMemory.totalSize,
+                                  PROT_READ | PROT_WRITE,
+                                  MAP_ANON | MAP_PRIVATE,
+                                  -1, 0);
+#endif
+
+  auto permanentMemory = MemoryPartition{MEGABYTES(32), 0, completeSharedMemory.base};
+  auto transientMemory = MemoryPartition{MEGABYTES(32), 0, (int8_t*) completeSharedMemory.base + permanentMemory.totalSize};
 
   auto lastCounter = SDL_GetPerformanceCounter();
   auto monitorRefreshHz = sdlGetWindowRefreshRate(window);
   auto targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
   auto userInput = UserInput{};
   auto gameContext = GameContext{false, &userInput, renderer,
+                                 permanentMemory,
+                                 transientMemory,
                                  PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
   userInput.shouldQuit = false;
 

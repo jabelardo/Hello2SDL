@@ -12,12 +12,10 @@
 #include "Entity.h"
 #include "UserInput.h"
 
-
-Game::Game() {
-  PlayState::setGame(this);
-  MenuState::setGame(this);
-  PauseState::setGame(this);
-  GameOverState::setGame(this);
+Game::Game(MenuState *menuState, PlayState *playState, PauseState *pauseState,
+           GameOverState *gameOverState)
+    : menuState(menuState), playState(playState), pauseState(pauseState),
+      gameOverState(gameOverState) {
 }
 
 void
@@ -36,32 +34,32 @@ Game::render(SDL_Renderer* renderer) {
 void
 Game::play(GameContext* gameContext) {
   *gameContext->userInput = UserInput{};
-  stateMachine.changeState(&playState, gameContext);
+  stateMachine.changeState(playState);
 }
 
 void
 Game::showMenu(GameContext* gameContext) {
   *gameContext->userInput = UserInput{};
-  stateMachine.clear(gameContext);
-  stateMachine.changeState(&menuState, gameContext);
+  stateMachine.clearStates();
+  stateMachine.changeState(menuState);
 }
 
 void
 Game::resumePlay(GameContext* gameContext) {
   *gameContext->userInput = UserInput{};
-  stateMachine.popState(gameContext);
+  stateMachine.popState();
 }
 
 void
 Game::pause(GameContext* gameContext) {
   *gameContext->userInput = UserInput{};
-  stateMachine.pushState(&pauseState, gameContext);
+  stateMachine.pushState(pauseState);
 }
 
 void
 Game::gameOver(GameContext* gameContext) {
   *gameContext->userInput = UserInput{};
-  stateMachine.changeState(&gameOverState, gameContext);
+  stateMachine.changeState(gameOverState);
 }
 
 void

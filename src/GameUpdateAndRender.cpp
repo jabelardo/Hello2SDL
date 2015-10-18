@@ -18,13 +18,33 @@
 #include "RenderUtils.cpp"
 #include "GameContext.h"
 
-std::unique_ptr<Game> game;
+Game *game;
 
 extern "C" void
 gameUpdateAndRender(GameContext *gameContext) {
 
   if (!gameContext->isInitialized) {
-    game = std::make_unique<Game>();
+
+    auto menuState = PLACEMENT_NEW(&gameContext->permanentMemory, MenuState)
+        MenuState;
+
+    auto playState = PLACEMENT_NEW(&gameContext->permanentMemory, PlayState)
+        PlayState;
+
+    auto pauseState = PLACEMENT_NEW(&gameContext->permanentMemory, PauseState)
+        PauseState;
+
+    auto gameOverState = PLACEMENT_NEW(&gameContext->permanentMemory, GameOverState)
+        GameOverState;
+
+    game = PLACEMENT_NEW(&gameContext->permanentMemory, Game)
+    Game(menuState, playState, pauseState, gameOverState);
+
+    menuState->init(game, gameContext);
+    playState->init(game, gameContext);
+    pauseState->init(game, gameContext);
+    gameOverState->init(game, gameContext);
+
     game->showMenu(gameContext);
     gameContext->isInitialized = true;
   }

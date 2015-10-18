@@ -15,13 +15,10 @@
 #include "UserInput.h"
 #include "GameContext.h"
 
-class GameState {
-public:
+struct GameState {
   virtual ~GameState() {};
   virtual void update(GameContext* gameContext) = 0;
   virtual void render(SDL_Renderer* renderer) = 0;
-  virtual bool onEnter( GameContext* gameContext) = 0;
-  virtual bool onExit(GameContext* gameContext) = 0;
   virtual GameStateId getStateId() const = 0;
 };
 

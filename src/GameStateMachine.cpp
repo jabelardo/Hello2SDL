@@ -7,29 +7,26 @@
 #include "GameStateMachine.h"
 
 void
-GameStateMachine::pushState(GameState* state, GameContext* gameContext) {
+GameStateMachine::pushState(GameState* state) {
   assert(SDL_arraysize(gameStates) > currentGameState + 1);
   gameStates[++currentGameState] = state;
-  state->onEnter(gameContext);
 }
 
 void
-GameStateMachine::changeState(GameState* state, GameContext* gameContext) {
+GameStateMachine::changeState(GameState* state) {
   if (currentGameState > -1) {
     if (gameStates[currentGameState]->getStateId() == state->getStateId()) {
       return;
     }
-    popState(gameContext);
+    popState();
   }
-  pushState(state, gameContext);
+  pushState(state);
 }
 
 void
-GameStateMachine::popState(GameContext* gameContext) {
+GameStateMachine::popState() {
   if (currentGameState > -1) {
-    if (gameStates[currentGameState]->onExit(gameContext)) {
-      --currentGameState;
-    }
+    --currentGameState;
   }
 }
 
@@ -47,8 +44,6 @@ GameStateMachine::update(GameContext* gameContext) {
   }
 }
 
-void GameStateMachine::clear(GameContext* gameContext) {
-  while (currentGameState > -1) {
-    gameStates[currentGameState--]->onExit(gameContext);
-  }
+void GameStateMachine::clearStates() {
+  currentGameState = -1;
 }

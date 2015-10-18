@@ -5,7 +5,6 @@
 #ifndef HELLO2SDL_GAMEOVERSTATE_H
 #define HELLO2SDL_GAMEOVERSTATE_H
 
-#include <vector>
 #include "GameState.h"
 #include "MenuButton.h"
 #include "AnimatedGraphic.h"
@@ -16,22 +15,18 @@ class Game;
 class GameOverState : public GameState {
 
 public:
+  bool init(Game* game, GameContext* gameContext);
+
   virtual void update(GameContext* gameContext);
 
   virtual void render(SDL_Renderer* renderer);
 
-  virtual bool onEnter(GameContext* gameContext);
-
-  virtual bool onExit(GameContext* gameContext);
-
   virtual GameStateId getStateId() const;
-
-  static void setGame(Game *game);
 
 private:
   static Game* game;
-  std::vector<MenuButton> menuButtons;
-  AnimatedGraphic gameOverGraphic;
+  MenuButton* menuButtons[2];
+  AnimatedGraphic* gameOverGraphic;
 
   static void gameOverToMain(GameContext* gameContext);
 

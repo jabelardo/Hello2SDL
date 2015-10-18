@@ -16,22 +16,18 @@ class Game;
 class PlayState : public GameState {
 
 public:
+  bool init(Game* game, GameContext* gameContext);
+
   virtual void update(GameContext* gameContext);
 
   virtual void render(SDL_Renderer* renderer);
 
-  virtual bool onEnter(GameContext* gameContext);
-
-  virtual bool onExit(GameContext* gameContext);
-
   virtual GameStateId getStateId() const;
-
-  static void setGame(Game *game);
 
 private:
   static Game* game;
-  Player player;
-  std::vector<Entity> entities;
+  Player* player;
+  Entity* enemy;
 };
 
 

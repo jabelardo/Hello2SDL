@@ -15,7 +15,9 @@
 
 class Game {
 public:
-  Game();
+
+  Game(MenuState *menuState, PlayState *playState, PauseState *pauseState,
+       GameOverState *gameOverState);
 
   void update(GameContext* gameContext);
 
@@ -34,11 +36,11 @@ public:
   void quit();
 
 private:
+  MenuState* menuState;
+  PlayState* playState;
+  PauseState* pauseState;
+  GameOverState* gameOverState;
   GameStateMachine stateMachine;
-  PlayState playState;
-  MenuState menuState;
-  PauseState pauseState;
-  GameOverState gameOverState;
   bool shouldQuit = false;
 };
 

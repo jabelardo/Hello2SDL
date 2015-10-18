@@ -6,26 +6,16 @@
 #include "PauseState.h"
 #include "Game.h"
 #include "TextureId.h"
+#include "MemoryPartitionPlacementNew.h"
 
 Game*
 PauseState::game = 0;
 
-void
-PauseState::update(GameContext* gameContext) {
-  for (auto &menuButton : menuButtons) {
-    menuButton.update(gameContext);
-  }
-}
-
-void
-PauseState::render(SDL_Renderer* renderer) {
-  for (auto &menuButton : menuButtons) {
-    menuButton.draw(renderer);
-  }
-}
-
 bool
-PauseState::onEnter(GameContext* gameContext) {
+PauseState::init(Game* game, GameContext* gameContext) {
+
+  this->game = game;
+
   if (!gameContext->functions.loadTexture(MAIN_BUTTON, "main.png", gameContext->renderer)) {
     return false;
   }
@@ -34,32 +24,39 @@ PauseState::onEnter(GameContext* gameContext) {
   }
 
   SDL_Texture *mainButton = gameContext->functions.getTexture(MAIN_BUTTON);
+  if (!mainButton) {
+    return false;
+  }
   SDL_Texture *resumeButton = gameContext->functions.getTexture(RESUME_BUTTON);
+  if (!resumeButton) {
+    return false;
+  }
+  menuButtons[0] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
+      MenuButton(Sprite{mainButton, {200, 100}, 200, 80, 3, 1, 1}, pauseToMain);
 
-  menuButtons.push_back(MenuButton(Sprite{mainButton, {200, 100}, 200, 80, 3, 1, 1}, pauseToMain));
-  menuButtons.push_back(MenuButton(Sprite{resumeButton, {200, 300}, 200, 80, 3, 1, 1}, resumePlay));
+  menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
+      MenuButton(Sprite{resumeButton, {200, 300}, 200, 80, 3, 1, 1}, resumePlay);
 
   return true;
 }
 
-bool
-PauseState::onExit(GameContext* gameContext) {
-  assert(game);
-  menuButtons.clear();
-  gameContext->functions.unloadTexture(MAIN_BUTTON);
-  gameContext->functions.unloadTexture(RESUME_BUTTON);
+void
+PauseState::update(GameContext* gameContext) {
+  for (auto &menuButton : menuButtons) {
+    menuButton->update(gameContext);
+  }
+}
 
-  return true;
+void
+PauseState::render(SDL_Renderer* renderer) {
+  for (auto &menuButton : menuButtons) {
+    menuButton->draw(renderer);
+  }
 }
 
 GameStateId
 PauseState::getStateId() const {
   return PAUSE_STATE;
-}
-
-void
-PauseState::setGame(Game *game) {
-  PauseState::game = game;
 }
 
 void

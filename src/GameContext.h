@@ -21,10 +21,18 @@ typedef struct PlatformFunctions {
   UnloadTextureFunc* unloadTexture;
 } PlatformFunctions;
 
+typedef struct MemoryPartition {
+  size_t totalSize;
+  size_t usedSize;
+  void* base;
+} MemoryPartition;
+
 typedef struct GameContext {
   bool isInitialized;
   UserInput *userInput;
   SDL_Renderer *renderer;
+  MemoryPartition permanentMemory;
+  MemoryPartition transientMemory;
   PlatformFunctions functions;
 } GameContext;
 
