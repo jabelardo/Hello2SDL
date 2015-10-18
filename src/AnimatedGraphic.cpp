@@ -1,8 +1,11 @@
 //
 // Created by Jose Gutierrez on 10/16/15.
 //
-
+#ifdef __APPLE__
 #include <SDL2/SDL_timer.h>
+#else
+#include <SDL_timer.h>
+#endif
 #include "AnimatedGraphic.h"
 #include "UserInput.h"
 

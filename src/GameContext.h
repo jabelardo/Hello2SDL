@@ -5,27 +5,27 @@
 #ifndef HELLO2SDL_GAMECONTEXT_H
 #define HELLO2SDL_GAMECONTEXT_H
 
-#include "UserInput.h"
+#include <stdint.h>
+#include <new>
+#include <assert.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "UserInput.h"
 
 typedef bool (LoadTextureFunc)(int textureId, const char* fileName, SDL_Renderer *renderer);
 typedef SDL_Texture* GetTextureFunc(int textureId);
 typedef bool UnloadTextureFunc(int textureId);
 
-typedef struct PlatformFunctions {
+struct PlatformFunctions {
   LoadTextureFunc* loadTexture;
   GetTextureFunc* getTexture;
   UnloadTextureFunc* unloadTexture;
-} PlatformFunctions;
+};
 
-typedef struct MemoryPartition {
+struct MemoryPartition {
   size_t totalSize;
   size_t usedSize;
   void* base;
-} MemoryPartition;
+};
 
 enum GameStateChange {
   NONE = 0,
@@ -37,7 +37,7 @@ enum GameStateChange {
   GAME_OVER
 };
 
-typedef struct GameContext {
+struct GameContext {
   bool isInitialized;
   UserInput *userInput;
   SDL_Renderer *renderer;
@@ -45,10 +45,16 @@ typedef struct GameContext {
   MemoryPartition transientMemory;
   PlatformFunctions functions;
   GameStateChange stateChange;
-} GameContext;
+};
 
-#ifdef __cplusplus
+inline int8_t *
+reserveMemory(MemoryPartition *partition, size_t memorySize) {
+  assert(memorySize < partition->totalSize - partition->usedSize);
+  auto result = (int8_t *) partition->base + partition->usedSize;
+  partition->usedSize += memorySize;
+  return result;
 }
-#endif
+
+#define PLACEMENT_NEW(MEMORY, TYPE) new(reserveMemory(MEMORY, sizeof(TYPE)))
 
 #endif //HELLO2SDL_GAMECONTEXT_H

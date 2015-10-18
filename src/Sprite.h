@@ -14,7 +14,6 @@
 #include "Vector2D.h"
 
 struct Sprite {
-
   SDL_Texture* texture;
   Vector2D position;
   int width;
@@ -28,7 +27,6 @@ struct Sprite {
   void draw(SDL_Renderer* renderer, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
   static bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
-
 };
 
 

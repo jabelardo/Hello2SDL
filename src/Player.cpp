@@ -2,13 +2,8 @@
 // Created by Jose Gutierrez on 10/17/15.
 //
 
-
 #ifdef __APPLE__
-
 #include <SDL2/SDL_timer.h>
-#include <assert.h>
-#include <SDL2/SDL_scancode.h>
-
 #else
 #include <SDL_timer.h>
 #endif

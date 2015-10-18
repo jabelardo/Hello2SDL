@@ -5,7 +5,7 @@
 #ifndef HELLO2SDL_TEXTUREID_H
 #define HELLO2SDL_TEXTUREID_H
 
-using TextureId = enum {
+enum TextureId  {
   GAME_OVER_TEXT = 0,
   PLAY_BUTTON,
   EXIT_BUTTON,

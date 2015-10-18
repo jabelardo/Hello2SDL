@@ -5,7 +5,6 @@
 #ifndef HELLO2SDL_PLAYSTATE_H
 #define HELLO2SDL_PLAYSTATE_H
 
-#include <vector>
 #include "GameState.h"
 #include "UserInput.h"
 #include "Player.h"

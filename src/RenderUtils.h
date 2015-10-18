@@ -5,8 +5,6 @@
 #ifndef HELLO2SDL_RENDERUTILS_H
 #define HELLO2SDL_RENDERUTILS_H
 
-#include <string>
-
 #ifdef __APPLE__
 #include <SDL2/SDL_render.h>
 #else

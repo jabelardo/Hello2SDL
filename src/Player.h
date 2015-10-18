@@ -11,8 +11,8 @@
 #include <SDL_render.h>
 #endif
 
+#include "Sprite.h"
 #include "UserInput.h"
-#include "Entity.h"
 
 struct Player {
 

@@ -5,7 +5,6 @@
 #include <assert.h>
 #include "MenuState.h"
 #include "TextureId.h"
-#include "MemoryPartitionPlacementNew.h"
 
 bool
 MenuState::init(GameContext* gameContext) {

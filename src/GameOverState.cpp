@@ -5,7 +5,6 @@
 #include <assert.h>
 #include "GameOverState.h"
 #include "TextureId.h"
-#include "MemoryPartitionPlacementNew.h"
 
 bool
 GameOverState::init(GameContext *gameContext) {

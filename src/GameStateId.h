@@ -5,7 +5,7 @@
 #ifndef HELLO2SDL_GAMESTATEID_H
 #define HELLO2SDL_GAMESTATEID_H
 
-using GameStateId = enum {
+enum GameStateId {
   GAME_OVER_STATE = 0,
   MENU_STATE,
   PAUSE_STATE,

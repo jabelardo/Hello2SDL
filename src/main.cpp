@@ -13,7 +13,6 @@
 #endif
 
 #include <assert.h>
-#include <unordered_map>
 
 #include "UserInput.h"
 
@@ -22,8 +21,6 @@
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
 // On the vast majority of those systems, one can use MAP_ANON instead.
-// Huge thanks to Adam Rosenfield for investigating this, and suggesting this
-// workaround:
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
@@ -43,46 +40,65 @@ const auto DEFAULT_REFRESH_RATE = 60;
 #define KILOBYTES(value) ((value) * 1024LL)
 #define MEGABYTES(value) (KILOBYTES(value) * 1024LL)
 #define GIGABYTES(value) (MEGABYTES(value) * 1024LL)
-#define TERABYTES(value) (GIGABYTES(value) * 1024LL)
 
-std::string G_baseResourcePath;
+struct TextureList {
+  int textureId;
+  SDL_Texture* texture;
+  TextureList* next;
+};
 
-std::unordered_map<int, SDL_Texture*> G_textureMap;
+char G_baseResourcePath[FILENAME_MAX] = {0};
+char G_resourcePath[FILENAME_MAX] = {0};
+GameContext G_gameContext = {};
+TextureList* G_textureList = 0;
 
-std::string
-sdlGetResourcePath(const std::string &filename) {
-  if (G_baseResourcePath.empty()) {
-    auto basePathRaw = SDL_GetBasePath();
-    if (!basePathRaw) {
+const char *
+sdlGetResourcePath(const char* filename) {
+  if (G_baseResourcePath[0] == 0) {
+    auto basePath = SDL_GetBasePath();
+    if (!basePath) {
       SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
-      return "";
+      return 0;
     }
-    auto basePath = std::string{basePathRaw};
-    SDL_free(basePathRaw);
-    auto pos = basePath.find("build");
-    if (pos == std::string::npos) {
-      G_baseResourcePath = basePath + ASSETS_FOLDER + PATH_SEP;
-    } else {
-      G_baseResourcePath = basePath.substr(0, pos) + ASSETS_FOLDER + PATH_SEP;
-    }
+    auto pos = strstr(basePath, "build");
+    size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
+    strncat(G_baseResourcePath, basePath, basePathLen);
+    strcat(G_baseResourcePath, ASSETS_FOLDER);
+    strcat(G_baseResourcePath, PATH_SEP);
+    SDL_free(basePath);
   }
-  auto result = G_baseResourcePath;
-  if (!filename.empty()) {
-    result += filename;
+  if (!filename || !strlen(filename)) {
+    return G_baseResourcePath;
   }
-  return result;
+  strcpy(G_resourcePath, G_baseResourcePath);
+  strcat(G_resourcePath, filename);
+  return G_resourcePath;
 }
 
 bool
 sdlLoadTexture(int textureId, const char* fileName, SDL_Renderer *renderer) {
-  if (G_textureMap.count(textureId)) {
-    return true;
+  if (!G_textureList) {
+    G_textureList = (TextureList*) reserveMemory(&G_gameContext.permanentMemory,
+                                                 sizeof(TextureList));
+    G_textureList->textureId = 0;
+    G_textureList->next = 0;
+  }
+  auto availableNode = (TextureList*) 0;
+  auto lastNode = (TextureList*) 0;
+  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
+    if (currentNode->textureId == textureId) {
+      return true;
+    }
+    if (!availableNode && !currentNode->texture) {
+      availableNode = currentNode;
+    }
+    lastNode = currentNode;
   }
   auto resource = sdlGetResourcePath(fileName);
-  if (resource.empty()) {
+  if (!strlen(resource)) {
     return false;
   }
-  auto tempSurface = IMG_Load(resource.c_str());
+  auto tempSurface = IMG_Load(resource);
   if (!tempSurface) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error IMG_Load: %s\n", SDL_GetError());
     return false;
@@ -93,29 +109,46 @@ sdlLoadTexture(int textureId, const char* fileName, SDL_Renderer *renderer) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
     return false;
   }
-  G_textureMap.insert({textureId, texture});
+  if (availableNode) {
+    availableNode->texture = texture;
+    availableNode->textureId = textureId;
+    return true;
+  }
+  if (!lastNode->texture) {
+    lastNode->texture = texture;
+    lastNode->textureId = textureId;
+    return true;
+  }
+  lastNode->next = (TextureList*) reserveMemory(&G_gameContext.permanentMemory,
+                                                   sizeof(TextureList));
+  lastNode->next->texture = texture;
+  lastNode->next->textureId = textureId;
+  lastNode->next->next = 0;
   return true;
 }
 
 SDL_Texture*
 sdlGetTexture(int textureId) {
-  assert(G_textureMap.count(textureId) == 1);
-  auto found = G_textureMap.find(textureId);
-  if (found == G_textureMap.end()) {
-    return 0;
+  assert(G_textureList);
+  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
+    if (currentNode->textureId == textureId) {
+      return currentNode->texture;
+    }
   }
-  return found->second;
+  return 0;
 }
 
 bool
 sdlUnloadTexture(int textureId) {
-  auto texture = sdlGetTexture(textureId);
-  if (!texture) {
-    return false;
+  assert(G_textureList);
+  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
+    if (currentNode->textureId == textureId) {
+      SDL_DestroyTexture(currentNode->texture);
+      currentNode->texture = 0;
+      return true;
+    }
   }
-  SDL_DestroyTexture(texture);
-  G_textureMap.erase(textureId);
-  return true;
+  return false;
 }
 
 int
@@ -291,10 +324,8 @@ main(int argc, char *args[]) {
   auto monitorRefreshHz = sdlGetWindowRefreshRate(window);
   auto targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
   auto userInput = UserInput{};
-  auto gameContext = GameContext{false, &userInput, renderer,
-                                 permanentMemory,
-                                 transientMemory,
-                                 PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
+  G_gameContext = GameContext{false, &userInput, renderer, permanentMemory, transientMemory,
+                              PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
   userInput.shouldQuit = false;
 
   while (!userInput.shouldQuit) {
@@ -304,7 +335,7 @@ main(int argc, char *args[]) {
     }
 
     SDL_RenderClear(renderer);
-    gameUpdateAndRender(&gameContext);
+    gameUpdateAndRender(&G_gameContext);
 
     auto secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
     if (secondsElapsedForFrame < targetSecondsPerFrame) {
@@ -314,7 +345,7 @@ main(int argc, char *args[]) {
         SDL_Delay(timeToSleep);
       }
     } else {
-      printf("MISSED FRAME RATE!\n");
+//      printf("MISSED FRAME RATE!\n");
     }
 
     SDL_RenderPresent(renderer);

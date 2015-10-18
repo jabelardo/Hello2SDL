@@ -6,7 +6,6 @@
 #include "Player.h"
 #include "PlayState.h"
 #include "TextureId.h"
-#include "MemoryPartitionPlacementNew.h"
 
 bool
 PlayState::init(GameContext *gameContext) {

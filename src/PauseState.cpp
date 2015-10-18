@@ -5,7 +5,6 @@
 #include <assert.h>
 #include "PauseState.h"
 #include "TextureId.h"
-#include "MemoryPartitionPlacementNew.h"
 
 bool
 PauseState::init(GameContext* gameContext) {
