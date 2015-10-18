@@ -32,8 +32,9 @@ Game::render(SDL_Renderer* renderer) {
 }
 
 void
-Game::play(GameContext* gameContext) {
+Game::restartPlay(GameContext* gameContext) {
   *gameContext->userInput = UserInput{};
+  playState->init(this, gameContext);
   stateMachine.changeState(playState);
 }
 

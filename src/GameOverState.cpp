@@ -79,5 +79,5 @@ GameOverState::gameOverToMain(GameContext* gameContext) {
 void
 GameOverState::restartPlay(GameContext* gameContext) {
   assert(game);
-  game->play(gameContext);
+  game->restartPlay(gameContext);
 }

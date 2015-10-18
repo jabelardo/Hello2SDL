@@ -23,7 +23,7 @@ public:
 
   void render(SDL_Renderer* renderer);
 
-  void play(GameContext* gameContext);
+  void restartPlay(GameContext* gameContext);
 
   void showMenu(GameContext* gameContext);
 

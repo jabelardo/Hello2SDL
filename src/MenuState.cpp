@@ -61,7 +61,7 @@ MenuState::getStateId() const {
 
 void
 MenuState::menuToPlay(GameContext* gameContext) {
-  game->play(gameContext);
+  game->restartPlay(gameContext);
 }
 
 void
