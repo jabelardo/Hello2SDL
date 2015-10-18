@@ -5,7 +5,6 @@
 #ifndef HELLO2SDL_GAMECONTEXT_H
 #define HELLO2SDL_GAMECONTEXT_H
 
-#include <stdint.h>
 #include <new>
 #include <assert.h>
 
@@ -47,9 +46,9 @@ struct GameContext {
   GameStateChange stateChange;
 };
 
-inline int8_t *
+inline void *
 reserveMemory(MemoryPartition *partition, size_t memorySize) {
-  assert(memorySize < partition->totalSize - partition->usedSize);
+  assert(memorySize <= partition->totalSize - partition->usedSize);
   auto result = (int8_t *) partition->base + partition->usedSize;
   partition->usedSize += memorySize;
   return result;

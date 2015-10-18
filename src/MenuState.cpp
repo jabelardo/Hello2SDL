@@ -25,10 +25,10 @@ MenuState::init(GameContext* gameContext) {
   }
 
   menuButtons[0] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton({playButton, {100, 100}, 400, 100, 3, 1, 1}, menuToPlay);
+      MenuButton{100, 100, {playButton, 400, 100, 3, 1, 1}, menuToPlay};
 
   menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton({exitButton, {100, 300}, 400, 100, 3, 1, 1}, exitFromGame);
+      MenuButton{100, 300, {exitButton, 400, 100, 3, 1, 1}, exitFromGame};
 
   return true;
 }

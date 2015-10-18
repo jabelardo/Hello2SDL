@@ -6,6 +6,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 set(SOURCE_FILES
         src/AnimatedGraphic.cpp
         src/AnimatedGraphic.h
+        src/Bitmap.h
+        src/Enemy.cpp
+        src/Enemy.h
         src/Entity.cpp
         src/Entity.h
         src/Game.cpp
@@ -13,12 +16,12 @@ set(SOURCE_FILES
         src/GameContext.h
         src/GameOverState.cpp
         src/GameOverState.h
-        src/GameUpdateAndRender.cpp
-        src/GameUpdateAndRender.h
         src/GameState.h
         src/GameStateId.h
         src/GameStateMachine.cpp
         src/GameStateMachine.h
+        src/GameUpdateAndRender.cpp
+        src/GameUpdateAndRender.h
         src/main.cpp
         src/MenuButton.cpp
         src/MenuButton.h
@@ -32,11 +35,11 @@ set(SOURCE_FILES
         src/PlayState.h
         src/RenderUtils.cpp
         src/RenderUtils.h
-        src/Sprite.cpp
-        src/Sprite.h
         src/TextureId.h
+        src/tinyxml2.cpp
+        src/tinyxml2.h
         src/UserInput.h
-        src/Vector2D.h)
+        src/V2D.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

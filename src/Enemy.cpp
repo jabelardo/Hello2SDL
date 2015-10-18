@@ -1,5 +1,5 @@
 //
-// Created by Jose Gutierrez on 10/17/15.
+// Created by Jose Gutierrez on 10/18/15.
 //
 
 #ifdef __APPLE__
@@ -8,11 +8,11 @@
 #include <SDL_timer.h>
 #endif
 
-#include "Player.h"
 #include "RenderUtils.h"
+#include "Enemy.h"
 
 void
-Player::draw(SDL_Renderer* renderer) {
+Enemy::draw(SDL_Renderer *renderer) {
   if (entity.velocity.x > 0) {
     drawBitmap(renderer, (int) entity.position.x, (int) entity.position.y, &entity.bitmap,
                SDL_FLIP_HORIZONTAL);
@@ -22,13 +22,19 @@ Player::draw(SDL_Renderer* renderer) {
 }
 
 void
-Player::update(UserInput *userInput) {
+Enemy::update(UserInput *userInput) {
   entity.bitmap.currentFrame = (int) ((SDL_GetTicks() / 100) % entity.bitmap.totalFrames);
-  entity.velocity = V2D{0, 0};
+  if (entity.position.y < 0) {
+    entity.velocity = V2D{2, .33f};
+    entity.acceleration = V2D{0, .33f};
 
-  auto target = V2D{(float) userInput->mousePositionX, (float) userInput->mousePositionY};
-  entity.velocity = (target - entity.position) / 50;
-
+  } else if (entity.position.y > 400) {
+    entity.velocity = V2D{2, -.33f};
+    entity.acceleration = V2D{0, -.33f};
+  }
+  if (entity.position.x > 640) {
+    entity.position.x = 0;
+  }
   entity.velocity += entity.acceleration;
   entity.position += entity.velocity;
 }

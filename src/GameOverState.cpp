@@ -31,13 +31,13 @@ GameOverState::init(GameContext *gameContext) {
     return false;
   }
   menuButtons[0] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton({mainButton, {200, 200}, 200, 80, 3, 1, 1}, gameOverToMain);
+      MenuButton{200, 200, {mainButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1}, gameOverToMain};
 
   menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton({restartButton, {200, 300}, 200, 80, 3, 1, 1}, restartPlay);
+      MenuButton{200, 300, {restartButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1}, restartPlay};
 
   gameOverGraphic = PLACEMENT_NEW(&gameContext->permanentMemory, AnimatedGraphic)
-      AnimatedGraphic{{gameOverText, {200, 100}, 190, 30, 2, 1, 1}, 2};
+      AnimatedGraphic{200, 100, {gameOverText, 190, 30, 2, 1, 1}, 2};
 
   return true;
 }

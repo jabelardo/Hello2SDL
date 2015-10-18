@@ -8,7 +8,7 @@
 #include "GameState.h"
 #include "UserInput.h"
 #include "Player.h"
-#include "Entity.h"
+#include "Enemy.h"
 
 class PlayState : public GameState {
 
@@ -23,7 +23,7 @@ public:
 
 private:
   Player* player;
-  Entity* enemy;
+  Enemy* enemy;
 };
 
 

@@ -5,17 +5,18 @@
 #include "GameUpdateAndRender.h"
 
 #include "AnimatedGraphic.cpp"
+#include "Enemy.cpp"
 #include "Entity.cpp"
 #include "Game.cpp"
 #include "GameOverState.cpp"
 #include "GameStateMachine.cpp"
 #include "MenuButton.cpp"
+#include "MenuState.cpp"
 #include "PauseState.cpp"
 #include "Player.cpp"
 #include "PlayState.cpp"
-#include "MenuState.cpp"
-#include "Sprite.cpp"
 #include "RenderUtils.cpp"
+#include "tinyxml2.cpp"
 #include "GameContext.h"
 
 Game *game;

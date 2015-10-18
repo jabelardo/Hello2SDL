@@ -11,10 +11,20 @@
 #include <SDL_render.h>
 #endif
 
-void draw(SDL_Renderer * renderer, SDL_Texture * texture, int x, int y, int width, int height,
-          SDL_RendererFlip flip = SDL_FLIP_NONE);
+#include "Bitmap.h"
 
-void drawFrame(SDL_Renderer * renderer, SDL_Texture * texture, int x, int y, int width, int height,
-               int currentRow, int currentFrame, SDL_RendererFlip flip = SDL_FLIP_NONE);
+void
+drawBitmap(SDL_Renderer* renderer,
+           int x, int y, Bitmap* bitmap,
+           SDL_RendererFlip flip = SDL_FLIP_NONE);
+
+void drawTexture(SDL_Renderer * renderer, SDL_Texture * texture,
+                 int x, int y, int width, int height,
+                 SDL_RendererFlip flip = SDL_FLIP_NONE);
+
+void drawTextureFrame(SDL_Renderer * renderer, SDL_Texture * texture,
+                      int x, int y, int width, int height,
+                      int currentRow, int currentFrame,
+                      SDL_RendererFlip flip = SDL_FLIP_NONE);
 
 #endif //HELLO2SDL_RENDERUTILS_H

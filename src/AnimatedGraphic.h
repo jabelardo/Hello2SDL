@@ -11,11 +11,13 @@
 #include <SDL_render.h>
 #endif
 
-#include "Sprite.h"
+#include "Bitmap.h"
 #include "UserInput.h"
 
 struct AnimatedGraphic {
-  Sprite sprite;
+  int x;
+  int y;
+  Bitmap bitmap;
   int animationSpeed;
 
   void draw(SDL_Renderer* renderer);

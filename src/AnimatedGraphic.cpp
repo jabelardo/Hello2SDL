@@ -6,17 +6,18 @@
 #else
 #include <SDL_timer.h>
 #endif
+
 #include "AnimatedGraphic.h"
-#include "UserInput.h"
+#include "RenderUtils.h"
 
 void
 AnimatedGraphic::draw(SDL_Renderer* renderer) {
-  sprite.draw(renderer);
+  drawBitmap(renderer, x, y, &bitmap);
 }
 
 void
 AnimatedGraphic::update(UserInput *inputHandler) {
   if (animationSpeed) {
-    sprite.currentFrame = (int) ((SDL_GetTicks() / (1000 / animationSpeed)) % sprite.totalFrames);
+    bitmap.currentFrame = (int) ((SDL_GetTicks() / (1000 / animationSpeed)) % bitmap.totalFrames);
   }
 }

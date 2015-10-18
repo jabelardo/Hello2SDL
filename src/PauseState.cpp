@@ -25,10 +25,10 @@ PauseState::init(GameContext* gameContext) {
     return false;
   }
   menuButtons[0] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton(Sprite{mainButton, {200, 100}, 200, 80, 3, 1, 1}, pauseToMain);
+      MenuButton{200, 100, {mainButton, 200, 80, 3, 1, 1}, pauseToMain};
 
   menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton(Sprite{resumeButton, {200, 300}, 200, 80, 3, 1, 1}, resumePlay);
+      MenuButton{200, 300, {resumeButton, 200, 80, 3, 1, 1}, resumePlay};
 
   return true;
 }

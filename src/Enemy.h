@@ -1,9 +1,10 @@
 //
-// Created by Jose Gutierrez on 10/17/15.
+// Created by Jose Gutierrez on 10/18/15.
 //
 
-#ifndef HELLO2SDL_PLAYER_H
-#define HELLO2SDL_PLAYER_H
+#ifndef HELLO2SDL_ENEMY_H
+#define HELLO2SDL_ENEMY_H
+
 
 #ifdef __APPLE__
 #include <SDL2/SDL_render.h>
@@ -14,7 +15,7 @@
 #include "Entity.h"
 #include "UserInput.h"
 
-struct Player {
+struct Enemy {
   Entity entity;
 
   void draw(SDL_Renderer* renderer);
@@ -23,4 +24,4 @@ struct Player {
 };
 
 
-#endif //HELLO2SDL_PLAYER_H
+#endif //HELLO2SDL_ENEMY_H

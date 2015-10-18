@@ -27,13 +27,10 @@ PlayState::init(GameContext *gameContext) {
   }
 
   player = PLACEMENT_NEW(&gameContext->permanentMemory, Player)
-      Player{{helicopter, {500, 100}, 128, 55, 5, 1, 1}};
+      Player{{{500, 100}, {helicopter, 128, 55, 5, 1, 1}}};
 
   enemy = PLACEMENT_NEW(&gameContext->permanentMemory, Entity)
-      Entity{{helicopter2, {0, 100}, 128, 55, 5, 1, 1}};
-
-  enemy->sprite.velocity = {2, .33f};
-  enemy->sprite.acceleration = {0, .33f};
+      Enemy{{{0, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f}, {0, .33f}}};
 
   return true;
 }
@@ -47,7 +44,7 @@ PlayState::update(GameContext* gameContext) {
   player->update(gameContext->userInput);
   enemy->update(gameContext->userInput);
 
-  if (Sprite::checkCollision(enemy->sprite, player->sprite)) {
+  if (checkCollision(&enemy->entity, &player->entity)) {
     gameContext->stateChange = GAME_OVER;
   }
 }

@@ -5,23 +5,16 @@
 #ifndef HELLO2SDL_ENTITY_H
 #define HELLO2SDL_ENTITY_H
 
-#ifdef __APPLE__
-#include <SDL2/SDL_render.h>
-#else
-#include <SDL_render.h>
-#endif
-
-#include "Sprite.h"
-#include "UserInput.h"
+#include "Bitmap.h"
+#include "V2D.h"
 
 struct Entity {
-
-  Sprite sprite;
-
-  void draw(SDL_Renderer* renderer);
-  
-  void update(UserInput *userInput);
+  V2D position;
+  Bitmap bitmap;
+  V2D velocity;
+  V2D acceleration;
 };
 
+bool checkCollision(Entity* entity1, Entity* entity2);
 
 #endif //HELLO2SDL_ENTITY_H

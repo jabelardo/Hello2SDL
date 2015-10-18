@@ -11,19 +11,24 @@
 #include <SDL_render.h>
 #endif
 
-#include "Sprite.h"
+#include "Bitmap.h"
 #include "UserInput.h"
 #include "GameContext.h"
 
 struct MenuButton {
+  using CallbackFunc = void(GameContext*);
 
-  typedef void(CallbackFunc)(GameContext*);
+  enum MouseButtonFrame {
+    MOUSE_OUT = 0,
+    MOUSE_OVER,
+    CLICKED
+  };
 
-  Sprite sprite;
+  int x;
+  int y;
+  Bitmap bitmap;
   CallbackFunc* callback;
   bool buttonReleased;
-
-  MenuButton(const Sprite& sprite, CallbackFunc* callback);
 
   void draw(SDL_Renderer* renderer);
 
