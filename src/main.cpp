@@ -1,6 +1,8 @@
 #ifdef __APPLE__
+
 #include <SDL2/SDL.h>
 #include <SDL2_image/SDL_image.h>
+
 #else
 #include <SDL.h>
 #include <SDL_image.h>
@@ -9,7 +11,9 @@
 #if _MSC_VER
 #include <windows.h>
 #else
+
 #include <sys/mman.h>
+
 #endif
 
 #include <assert.h>
@@ -43,17 +47,17 @@ const auto DEFAULT_REFRESH_RATE = 60;
 
 struct TextureList {
   int textureId;
-  SDL_Texture* texture;
-  TextureList* next;
+  SDL_Texture *texture;
+  TextureList *next;
 };
 
 char G_baseResourcePath[FILENAME_MAX] = {0};
 char G_resourcePath[FILENAME_MAX] = {0};
 GameContext G_gameContext = {};
-TextureList* G_textureList = 0;
+TextureList *G_textureList = 0;
 
 const char *
-sdlGetResourcePath(const char* filename) {
+sdlGetResourcePath(const char *filename) {
   if (G_baseResourcePath[0] == 0) {
     auto basePath = SDL_GetBasePath();
     if (!basePath) {
@@ -76,15 +80,15 @@ sdlGetResourcePath(const char* filename) {
 }
 
 bool
-sdlLoadTexture(int textureId, const char* fileName, SDL_Renderer *renderer) {
+sdlLoadTexture(int textureId, const char *fileName, SDL_Renderer *renderer) {
   if (!G_textureList) {
-    G_textureList = (TextureList*) reserveMemory(&G_gameContext.permanentMemory,
-                                                 sizeof(TextureList));
+    G_textureList = (TextureList *) reserveMemory(&G_gameContext.permanentMemory,
+                                                  sizeof(TextureList));
     G_textureList->textureId = 0;
     G_textureList->next = 0;
   }
-  auto availableNode = (TextureList*) 0;
-  auto lastNode = (TextureList*) 0;
+  auto availableNode = (TextureList *) 0;
+  auto lastNode = (TextureList *) 0;
   for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
     if (currentNode->textureId == textureId) {
       return true;
@@ -106,7 +110,8 @@ sdlLoadTexture(int textureId, const char* fileName, SDL_Renderer *renderer) {
   auto texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
   SDL_FreeSurface(tempSurface);
   if (!texture) {
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error SDL_CreateTextureFromSurface: %s\n",
+                 SDL_GetError());
     return false;
   }
   if (availableNode) {
@@ -119,15 +124,15 @@ sdlLoadTexture(int textureId, const char* fileName, SDL_Renderer *renderer) {
     lastNode->textureId = textureId;
     return true;
   }
-  lastNode->next = (TextureList*) reserveMemory(&G_gameContext.permanentMemory,
-                                                   sizeof(TextureList));
+  lastNode->next = (TextureList *) reserveMemory(&G_gameContext.permanentMemory,
+                                                 sizeof(TextureList));
   lastNode->next->texture = texture;
   lastNode->next->textureId = textureId;
   lastNode->next->next = 0;
   return true;
 }
 
-SDL_Texture*
+SDL_Texture *
 sdlGetTexture(int textureId) {
   assert(G_textureList);
   for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
@@ -152,7 +157,7 @@ sdlUnloadTexture(int textureId) {
 }
 
 int
-sdlGetWindowRefreshRate(SDL_Window* window) {
+sdlGetWindowRefreshRate(SDL_Window *window) {
   auto displayIndex = SDL_GetWindowDisplayIndex(window);
 
   // If we can't find the refresh rate, we'll return DEFAULT_REFRESH_RATE
@@ -167,7 +172,7 @@ sdlGetWindowRefreshRate(SDL_Window* window) {
 }
 
 void
-sdlProcessKeyPress(ButtonState* newState, bool isDown, bool wasDown) {
+sdlProcessKeyPress(ButtonState *newState, bool isDown, bool wasDown) {
   if (newState->endedDown != isDown) {
     newState->endedDown = isDown;
     ++newState->halfTransitionCount;
@@ -176,7 +181,7 @@ sdlProcessKeyPress(ButtonState* newState, bool isDown, bool wasDown) {
 }
 
 void
-sdlHandleEvent(SDL_Event* event, UserInput* userInput) {
+sdlHandleEvent(SDL_Event *event, UserInput *userInput) {
   switch (event->type) {
     case SDL_QUIT: {
       userInput->shouldQuit = true;
@@ -312,13 +317,14 @@ main(int argc, char *args[]) {
                                                       MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 #else
   completeSharedMemory.base = mmap(0, completeSharedMemory.totalSize,
-                                  PROT_READ | PROT_WRITE,
-                                  MAP_ANON | MAP_PRIVATE,
-                                  -1, 0);
+                                   PROT_READ | PROT_WRITE,
+                                   MAP_ANON | MAP_PRIVATE,
+                                   -1, 0);
 #endif
 
   auto permanentMemory = MemoryPartition{MEGABYTES(32), 0, completeSharedMemory.base};
-  auto transientMemory = MemoryPartition{MEGABYTES(32), 0, (int8_t*) completeSharedMemory.base + permanentMemory.totalSize};
+  auto transientMemory = MemoryPartition{MEGABYTES(32), 0, (int8_t *) completeSharedMemory.base +
+                                                           permanentMemory.totalSize};
 
   auto lastCounter = SDL_GetPerformanceCounter();
   auto monitorRefreshHz = sdlGetWindowRefreshRate(window);
