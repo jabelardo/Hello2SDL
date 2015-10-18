@@ -6,7 +6,9 @@
 #define HELLO2SDL_PLAYER_H
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_render.h>
+
 #else
 #include <SDL_render.h>
 #endif
@@ -17,7 +19,7 @@
 struct Player {
   Entity entity;
 
-  void draw(SDL_Renderer* renderer);
+  void draw(SDL_Renderer *renderer);
 
   void update(UserInput *userInput);
 };

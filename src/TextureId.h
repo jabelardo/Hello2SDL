@@ -5,8 +5,9 @@
 #ifndef HELLO2SDL_TEXTUREID_H
 #define HELLO2SDL_TEXTUREID_H
 
-enum TextureId  {
-  GAME_OVER_TEXT = 0,
+enum TextureId {
+  NULL_TEXTURE = -1,
+  GAME_OVER_TEXT,
   PLAY_BUTTON,
   EXIT_BUTTON,
   HELICOPTER,
@@ -16,5 +17,7 @@ enum TextureId  {
   RESTART_BUTTON,
 };
 
+TextureId
+    getTextureId(const char *);
 
 #endif //HELLO2SDL_TEXTUREID_H

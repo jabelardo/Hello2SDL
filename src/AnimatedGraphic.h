@@ -6,7 +6,9 @@
 #define HELLO2SDL_ANIMATEDGRAPHIC_H
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_render.h>
+
 #else
 #include <SDL_render.h>
 #endif
@@ -20,7 +22,7 @@ struct AnimatedGraphic {
   Bitmap bitmap;
   int animationSpeed;
 
-  void draw(SDL_Renderer* renderer);
+  void draw(SDL_Renderer *renderer);
 
   void update(UserInput *inputHandler);
 };

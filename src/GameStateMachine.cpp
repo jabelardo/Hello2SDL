@@ -6,13 +6,13 @@
 #include "GameStateMachine.h"
 
 void
-GameStateMachine::pushState(GameState* state) {
+GameStateMachine::pushState(GameState *state) {
   assert(SDL_arraysize(gameStates) > currentGameState + 1);
   gameStates[++currentGameState] = state;
 }
 
 void
-GameStateMachine::changeState(GameState* state) {
+GameStateMachine::changeState(GameState *state) {
   if (currentGameState > -1) {
     if (gameStates[currentGameState]->getStateId() == state->getStateId()) {
       return;
@@ -30,14 +30,14 @@ GameStateMachine::popState() {
 }
 
 void
-GameStateMachine::render(SDL_Renderer* renderer) {
+GameStateMachine::render(SDL_Renderer *renderer) {
   if (currentGameState > -1) {
     gameStates[currentGameState]->render(renderer);
   }
 }
 
 void
-GameStateMachine::update(GameContext* gameContext) {
+GameStateMachine::update(GameContext *gameContext) {
   if (currentGameState > -1) {
     gameStates[currentGameState]->update(gameContext);
   }

@@ -6,7 +6,9 @@
 #define HELLO2SDL_MENUBUTTON_H
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_render.h>
+
 #else
 #include <SDL_render.h>
 #endif
@@ -16,7 +18,6 @@
 #include "GameContext.h"
 
 struct MenuButton {
-  using CallbackFunc = void(GameContext*);
 
   enum MouseButtonFrame {
     MOUSE_OUT = 0,
@@ -27,10 +28,10 @@ struct MenuButton {
   int x;
   int y;
   Bitmap bitmap;
-  CallbackFunc* callback;
+  GameContextCallbackFunc *callback;
   bool buttonReleased;
 
-  void draw(SDL_Renderer* renderer);
+  void draw(SDL_Renderer *renderer);
 
   void update(GameContext *gameContext);
 };

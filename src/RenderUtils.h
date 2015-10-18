@@ -6,7 +6,9 @@
 #define HELLO2SDL_RENDERUTILS_H
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_render.h>
+
 #else
 #include <SDL_render.h>
 #endif
@@ -14,15 +16,15 @@
 #include "Bitmap.h"
 
 void
-drawBitmap(SDL_Renderer* renderer,
-           int x, int y, Bitmap* bitmap,
-           SDL_RendererFlip flip = SDL_FLIP_NONE);
+    drawBitmap(SDL_Renderer *renderer,
+               int x, int y, Bitmap *bitmap,
+               SDL_RendererFlip flip = SDL_FLIP_NONE);
 
-void drawTexture(SDL_Renderer * renderer, SDL_Texture * texture,
+void drawTexture(SDL_Renderer *renderer, SDL_Texture *texture,
                  int x, int y, int width, int height,
                  SDL_RendererFlip flip = SDL_FLIP_NONE);
 
-void drawTextureFrame(SDL_Renderer * renderer, SDL_Texture * texture,
+void drawTextureFrame(SDL_Renderer *renderer, SDL_Texture *texture,
                       int x, int y, int width, int height,
                       int currentRow, int currentFrame,
                       SDL_RendererFlip flip = SDL_FLIP_NONE);

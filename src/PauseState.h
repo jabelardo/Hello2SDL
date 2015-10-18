@@ -12,19 +12,22 @@
 class PauseState : public GameState {
 
 public:
-  virtual bool init(GameContext* gameContext);
+  virtual bool init(tinyxml2::XMLDocument *xmlDocument, GameContext *gameContext) { return false; }
 
-  virtual void update(GameContext* gameContext);
+  virtual bool init(GameContext *gameContext);
 
-  virtual void render(SDL_Renderer* renderer);
+  virtual void update(GameContext *gameContext);
+
+  virtual void render(SDL_Renderer *renderer);
 
   virtual GameStateId getStateId() const;
 
 private:
-  MenuButton* menuButtons[2];
+  MenuButton *menuButtons[2];
 
-  static void pauseToMain(GameContext* gameContext);
-  static void resumePlay(GameContext* gameContext);
+  static void pauseToMain(GameContext *gameContext);
+
+  static void resumePlay(GameContext *gameContext);
 };
 
 

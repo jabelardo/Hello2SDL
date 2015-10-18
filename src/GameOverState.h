@@ -13,21 +13,23 @@
 class GameOverState : public GameState {
 
 public:
-  virtual bool init(GameContext* gameContext);
+  virtual bool init(tinyxml2::XMLDocument *xmlDocument, GameContext *gameContext) { return false; }
 
-  virtual void update(GameContext* gameContext);
+  virtual bool init(GameContext *gameContext);
 
-  virtual void render(SDL_Renderer* renderer);
+  virtual void update(GameContext *gameContext);
+
+  virtual void render(SDL_Renderer *renderer);
 
   virtual GameStateId getStateId() const;
 
 private:
-  MenuButton* menuButtons[2];
-  AnimatedGraphic* gameOverGraphic;
+  MenuButton *menuButtons[2];
+  AnimatedGraphic *gameOverGraphic;
 
-  static void gameOverToMain(GameContext* gameContext);
+  static void gameOverToMain(GameContext *gameContext);
 
-  static void restartPlay(GameContext* gameContext);
+  static void restartPlay(GameContext *gameContext);
 };
 
 

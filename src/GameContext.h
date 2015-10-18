@@ -10,20 +10,20 @@
 
 #include "UserInput.h"
 
-typedef bool (LoadTextureFunc)(int textureId, const char* fileName, SDL_Renderer *renderer);
-typedef SDL_Texture* GetTextureFunc(int textureId);
-typedef bool UnloadTextureFunc(int textureId);
+using LoadTextureFunc = bool(int textureId, const char *fileName, SDL_Renderer *renderer);
+using GetTextureFunc = SDL_Texture *(int textureId);
+using UnloadTextureFunc = bool(int textureId);
 
 struct PlatformFunctions {
-  LoadTextureFunc* loadTexture;
-  GetTextureFunc* getTexture;
-  UnloadTextureFunc* unloadTexture;
+  LoadTextureFunc *loadTexture;
+  GetTextureFunc *getTexture;
+  UnloadTextureFunc *unloadTexture;
 };
 
 struct MemoryPartition {
   size_t totalSize;
   size_t usedSize;
-  void* base;
+  void *base;
 };
 
 enum GameStateChange {
@@ -45,6 +45,8 @@ struct GameContext {
   PlatformFunctions functions;
   GameStateChange stateChange;
 };
+
+using GameContextCallbackFunc = void(GameContext *);
 
 inline void *
 reserveMemory(MemoryPartition *partition, size_t memorySize) {

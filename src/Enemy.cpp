@@ -3,7 +3,9 @@
 //
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_timer.h>
+
 #else
 #include <SDL_timer.h>
 #endif

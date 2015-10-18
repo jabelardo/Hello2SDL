@@ -6,13 +6,15 @@
 #define HELLO2SDL_BITMAP_H
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_render.h>
+
 #else
 #include <SDL_render.h>
 #endif
 
 struct Bitmap {
-  SDL_Texture* texture;
+  SDL_Texture *texture;
   int width;
   int height;
   int totalFrames;

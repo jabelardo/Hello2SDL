@@ -35,6 +35,7 @@ set(SOURCE_FILES
         src/PlayState.h
         src/RenderUtils.cpp
         src/RenderUtils.h
+        src/TextureId.cpp
         src/TextureId.h
         src/tinyxml2.cpp
         src/tinyxml2.h

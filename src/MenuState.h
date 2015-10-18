@@ -12,19 +12,22 @@
 class MenuState : public GameState {
 
 public:
-  virtual bool init(GameContext* gameContext);
+  virtual bool init(tinyxml2::XMLDocument *xmlDoc, GameContext *gameContext);
 
-  virtual void update(GameContext* gameContext);
+  virtual bool init(GameContext *gameContext);
 
-  virtual void render(SDL_Renderer* renderer);
+  virtual void update(GameContext *gameContext);
+
+  virtual void render(SDL_Renderer *renderer);
 
   virtual GameStateId getStateId() const;
 
 private:
-  MenuButton* menuButtons[2];
+  MenuButton *menuButtons[2];
 
-  static void menuToPlay(GameContext* gameContext);
-  static void exitFromGame(GameContext* gameContext);
+  static void menuToPlay(GameContext *gameContext);
+
+  static void exitFromGame(GameContext *gameContext);
 };
 
 

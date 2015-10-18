@@ -15,6 +15,6 @@ struct Entity {
   V2D acceleration;
 };
 
-bool checkCollision(Entity* entity1, Entity* entity2);
+bool checkCollision(Entity *entity1, Entity *entity2);
 
 #endif //HELLO2SDL_ENTITY_H

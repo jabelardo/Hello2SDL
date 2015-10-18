@@ -7,7 +7,9 @@
 
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_render.h>
+
 #else
 #include <SDL_render.h>
 #endif
@@ -18,7 +20,7 @@
 struct Enemy {
   Entity entity;
 
-  void draw(SDL_Renderer* renderer);
+  void draw(SDL_Renderer *renderer);
 
   void update(UserInput *userInput);
 };

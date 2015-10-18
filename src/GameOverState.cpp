@@ -43,7 +43,7 @@ GameOverState::init(GameContext *gameContext) {
 }
 
 void
-GameOverState::update(GameContext* gameContext) {
+GameOverState::update(GameContext *gameContext) {
   for (auto &menuButton : menuButtons) {
     menuButton->update(gameContext);
   }
@@ -51,7 +51,7 @@ GameOverState::update(GameContext* gameContext) {
 }
 
 void
-GameOverState::render(SDL_Renderer* renderer) {
+GameOverState::render(SDL_Renderer *renderer) {
   for (auto &menuButton : menuButtons) {
     menuButton->draw(renderer);
   }
@@ -64,11 +64,11 @@ GameOverState::getStateId() const {
 }
 
 void
-GameOverState::gameOverToMain(GameContext* gameContext) {
+GameOverState::gameOverToMain(GameContext *gameContext) {
   gameContext->stateChange = SHOW_MAIN_MENU;
 }
 
 void
-GameOverState::restartPlay(GameContext* gameContext) {
+GameOverState::restartPlay(GameContext *gameContext) {
   gameContext->stateChange = RESTART_PLAY;
 }

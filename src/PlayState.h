@@ -13,17 +13,19 @@
 class PlayState : public GameState {
 
 public:
-  virtual bool init(GameContext* gameContext);
+  virtual bool init(tinyxml2::XMLDocument *xmlDocument, GameContext *gameContext) { return false; }
 
-  virtual void update(GameContext* gameContext);
+  virtual bool init(GameContext *gameContext);
 
-  virtual void render(SDL_Renderer* renderer);
+  virtual void update(GameContext *gameContext);
+
+  virtual void render(SDL_Renderer *renderer);
 
   virtual GameStateId getStateId() const;
 
 private:
-  Player* player;
-  Enemy* enemy;
+  Player *player;
+  Enemy *enemy;
 };
 
 

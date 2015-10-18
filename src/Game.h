@@ -19,27 +19,27 @@ public:
   Game(MenuState *menuState, PlayState *playState, PauseState *pauseState,
        GameOverState *gameOverState);
 
-  void update(GameContext* gameContext);
+  void update(GameContext *gameContext);
 
-  void render(SDL_Renderer* renderer);
+  void render(SDL_Renderer *renderer);
 
-  void restartPlay(GameContext* gameContext);
+  void restartPlay(GameContext *gameContext);
 
   void showMainMenu(GameContext *gameContext);
 
-  void resumePlay(GameContext* gameContext);
+  void resumePlay(GameContext *gameContext);
 
   void pausePlay(GameContext *gameContext);
 
-  void gameOver(GameContext* gameContext);
+  void gameOver(GameContext *gameContext);
 
   void processStateChange(GameContext *gameContext);
 
 private:
-  MenuState* menuState;
-  PlayState* playState;
-  PauseState* pauseState;
-  GameOverState* gameOverState;
+  MenuState *menuState;
+  PlayState *playState;
+  PauseState *pauseState;
+  GameOverState *gameOverState;
   GameStateMachine stateMachine;
 };
 

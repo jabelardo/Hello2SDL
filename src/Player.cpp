@@ -3,7 +3,9 @@
 //
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_timer.h>
+
 #else
 #include <SDL_timer.h>
 #endif
@@ -12,7 +14,7 @@
 #include "RenderUtils.h"
 
 void
-Player::draw(SDL_Renderer* renderer) {
+Player::draw(SDL_Renderer *renderer) {
   if (entity.velocity.x > 0) {
     drawBitmap(renderer, (int) entity.position.x, (int) entity.position.y, &entity.bitmap,
                SDL_FLIP_HORIZONTAL);

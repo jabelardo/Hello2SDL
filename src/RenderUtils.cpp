@@ -5,14 +5,14 @@
 #include "RenderUtils.h"
 
 void
-drawBitmap(SDL_Renderer* renderer, int x, int y, Bitmap* bitmap, SDL_RendererFlip flip) {
+drawBitmap(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, SDL_RendererFlip flip) {
   drawTextureFrame(renderer, bitmap->texture, x, y, bitmap->width, bitmap->height,
                    bitmap->currentRow, bitmap->currentFrame, flip);
 }
 
 void
-drawTexture(SDL_Renderer * renderer, SDL_Texture * texture, int x, int y, int width, int height,
-     SDL_RendererFlip flip) {
+drawTexture(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y, int width, int height,
+            SDL_RendererFlip flip) {
   auto srcRect = SDL_Rect{};
   auto destRect = SDL_Rect{};
   srcRect.x = 0;
@@ -25,8 +25,8 @@ drawTexture(SDL_Renderer * renderer, SDL_Texture * texture, int x, int y, int wi
 }
 
 void
-drawTextureFrame(SDL_Renderer * renderer, SDL_Texture * texture, int x, int y, int width, int height,
-          int currentRow, int currentFrame, SDL_RendererFlip flip) {
+drawTextureFrame(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y, int width, int height,
+                 int currentRow, int currentFrame, SDL_RendererFlip flip) {
   auto srcRect = SDL_Rect{};
   auto destRect = SDL_Rect{};
   srcRect.x = width * currentFrame;

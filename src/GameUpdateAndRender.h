@@ -6,7 +6,9 @@
 #define HELLO2SDL_GAMEUPDATEANDRENDER_H
 
 #ifdef __APPLE__
+
 #include <SDL2/SDL_render.h>
+
 #else
 #include <SDL_render.h>
 #endif

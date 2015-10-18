@@ -5,7 +5,7 @@
 #include "Entity.h"
 
 bool
-checkCollision(Entity* entity1, Entity* entity2) {
+checkCollision(Entity *entity1, Entity *entity2) {
   auto leftA = entity1->position.x;
   auto rightA = entity1->position.x + entity1->bitmap.width;
   auto topA = entity1->position.y;

@@ -16,6 +16,7 @@
 #include "Player.cpp"
 #include "PlayState.cpp"
 #include "RenderUtils.cpp"
+#include "TextureId.cpp"
 #include "tinyxml2.cpp"
 #include "GameContext.h"
 
@@ -39,8 +40,11 @@ gameUpdateAndRender(GameContext *gameContext) {
         GameOverState;
 
     game = PLACEMENT_NEW(&gameContext->permanentMemory, Game)
-    Game(menuState, playState, pauseState, gameOverState);
+        Game(menuState, playState, pauseState, gameOverState);
 
+//    tinyxml2::XMLDocument xmlDoc;
+//    auto xmlErr = xmlDoc.LoadFile("/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/test.xml");
+//    menuState->init(&xmlDoc, gameContext);
     menuState->init(gameContext);
     playState->init(gameContext);
     pauseState->init(gameContext);

@@ -40,16 +40,16 @@ struct V2D {
     return V2D{x * scalar, y * scalar};
   }
 
-  V2D & operator*=(float scalar) {
+  V2D &operator*=(float scalar) {
     *this = *this * scalar;
     return *this;
   }
 
-  V2D operator-(const V2D & v2) const {
+  V2D operator-(const V2D &v2) const {
     return V2D{x - v2.x, y - v2.y};
   }
 
-  V2D & operator-=(const V2D & v2) {
+  V2D &operator-=(const V2D &v2) {
     *this = *this - v2;
     return *this;
   }
@@ -58,7 +58,7 @@ struct V2D {
     return V2D{x / scalar, y / scalar};
   }
 
-  V2D & operator/=(float scalar) {
+  V2D &operator/=(float scalar) {
     *this = *this / scalar;
     return *this;
   }

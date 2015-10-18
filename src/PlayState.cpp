@@ -36,7 +36,7 @@ PlayState::init(GameContext *gameContext) {
 }
 
 void
-PlayState::update(GameContext* gameContext) {
+PlayState::update(GameContext *gameContext) {
   if (gameContext->userInput->back.endedDown) {
     gameContext->stateChange = PAUSE_PLAY;
     return;
@@ -50,7 +50,7 @@ PlayState::update(GameContext* gameContext) {
 }
 
 void
-PlayState::render(SDL_Renderer* renderer) {
+PlayState::render(SDL_Renderer *renderer) {
   player->draw(renderer);
   enemy->draw(renderer);
 }

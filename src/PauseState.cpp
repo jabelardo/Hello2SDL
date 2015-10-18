@@ -7,7 +7,7 @@
 #include "TextureId.h"
 
 bool
-PauseState::init(GameContext* gameContext) {
+PauseState::init(GameContext *gameContext) {
 
   if (!gameContext->functions.loadTexture(MAIN_BUTTON, "main.png", gameContext->renderer)) {
     return false;
@@ -34,14 +34,14 @@ PauseState::init(GameContext* gameContext) {
 }
 
 void
-PauseState::update(GameContext* gameContext) {
+PauseState::update(GameContext *gameContext) {
   for (auto &menuButton : menuButtons) {
     menuButton->update(gameContext);
   }
 }
 
 void
-PauseState::render(SDL_Renderer* renderer) {
+PauseState::render(SDL_Renderer *renderer) {
   for (auto &menuButton : menuButtons) {
     menuButton->draw(renderer);
   }
@@ -53,11 +53,11 @@ PauseState::getStateId() const {
 }
 
 void
-PauseState::pauseToMain(GameContext* gameContext) {
+PauseState::pauseToMain(GameContext *gameContext) {
   gameContext->stateChange = SHOW_MAIN_MENU;
 }
 
 void
-PauseState::resumePlay(GameContext* gameContext) {
+PauseState::resumePlay(GameContext *gameContext) {
   gameContext->stateChange = RESUME_PLAY;
 }
