@@ -4,17 +4,11 @@
 
 #include <assert.h>
 #include "PauseState.h"
-#include "Game.h"
 #include "TextureId.h"
 #include "MemoryPartitionPlacementNew.h"
 
-Game*
-PauseState::game = 0;
-
 bool
-PauseState::init(Game* game, GameContext* gameContext) {
-
-  this->game = game;
+PauseState::init(GameContext* gameContext) {
 
   if (!gameContext->functions.loadTexture(MAIN_BUTTON, "main.png", gameContext->renderer)) {
     return false;
@@ -61,12 +55,10 @@ PauseState::getStateId() const {
 
 void
 PauseState::pauseToMain(GameContext* gameContext) {
-  assert(game);
-  game->showMenu(gameContext);
+  gameContext->stateChange = SHOW_MAIN_MENU;
 }
 
 void
 PauseState::resumePlay(GameContext* gameContext) {
-  assert(game);
-  game->resumePlay(gameContext);
+  gameContext->stateChange = RESUME_PLAY;
 }

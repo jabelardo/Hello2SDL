@@ -2,7 +2,6 @@
 // Created by Jose Gutierrez on 10/15/15.
 //
 
-#include <SDL2/SDL_render.h>
 #include <assert.h>
 #include "GameStateMachine.h"
 
@@ -26,7 +25,7 @@ GameStateMachine::changeState(GameState* state) {
 void
 GameStateMachine::popState() {
   if (currentGameState > -1) {
-    --currentGameState;
+    gameStates[currentGameState--] = 0;
   }
 }
 
@@ -44,6 +43,9 @@ GameStateMachine::update(GameContext* gameContext) {
   }
 }
 
-void GameStateMachine::clearStates() {
+void
+GameStateMachine::clearStates() {
+  gameStates[0] = 0;
+  gameStates[1] = 0;
   currentGameState = -1;
 }

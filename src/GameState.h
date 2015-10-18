@@ -15,7 +15,10 @@
 #include "UserInput.h"
 #include "GameContext.h"
 
-struct GameState {
+class GameState {
+
+public:
+  virtual bool init(GameContext* gameContext) = 0;
   virtual ~GameState() {};
   virtual void update(GameContext* gameContext) = 0;
   virtual void render(SDL_Renderer* renderer) = 0;

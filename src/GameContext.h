@@ -27,6 +27,16 @@ typedef struct MemoryPartition {
   void* base;
 } MemoryPartition;
 
+enum GameStateChange {
+  NONE = 0,
+  RESTART_PLAY,
+  EXIT_FROM_GAME,
+  SHOW_MAIN_MENU,
+  RESUME_PLAY,
+  PAUSE_PLAY,
+  GAME_OVER
+};
+
 typedef struct GameContext {
   bool isInitialized;
   UserInput *userInput;
@@ -34,6 +44,7 @@ typedef struct GameContext {
   MemoryPartition permanentMemory;
   MemoryPartition transientMemory;
   PlatformFunctions functions;
+  GameStateChange stateChange;
 } GameContext;
 
 #ifdef __cplusplus

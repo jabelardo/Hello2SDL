@@ -5,16 +5,10 @@
 #include <assert.h>
 #include "MenuState.h"
 #include "TextureId.h"
-#include "Game.h"
 #include "MemoryPartitionPlacementNew.h"
 
-Game*
-MenuState::game = 0;
-
 bool
-MenuState::init(Game* game, GameContext* gameContext) {
-
-  this->game = game;
+MenuState::init(GameContext* gameContext) {
 
   if (!gameContext->functions.loadTexture(PLAY_BUTTON, "button.png", gameContext->renderer)) {
     return false;
@@ -35,7 +29,7 @@ MenuState::init(Game* game, GameContext* gameContext) {
       MenuButton({playButton, {100, 100}, 400, 100, 3, 1, 1}, menuToPlay);
 
   menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton({exitButton, {100, 300}, 400, 100, 3, 1, 1}, exitFromMenu);
+      MenuButton({exitButton, {100, 300}, 400, 100, 3, 1, 1}, exitFromGame);
 
   return true;
 }
@@ -61,10 +55,10 @@ MenuState::getStateId() const {
 
 void
 MenuState::menuToPlay(GameContext* gameContext) {
-  game->restartPlay(gameContext);
+  gameContext->stateChange = RESTART_PLAY;
 }
 
 void
-MenuState::exitFromMenu(GameContext* gameContext) {
-  game->quit();
+MenuState::exitFromGame(GameContext* gameContext) {
+  gameContext->stateChange = EXIT_FROM_GAME;
 }

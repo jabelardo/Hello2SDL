@@ -4,17 +4,11 @@
 
 #include <assert.h>
 #include "GameOverState.h"
-#include "Game.h"
 #include "TextureId.h"
 #include "MemoryPartitionPlacementNew.h"
 
-Game *
-GameOverState::game = 0;
-
 bool
-GameOverState::init(Game *game, GameContext *gameContext) {
-
-  this->game = game;
+GameOverState::init(GameContext *gameContext) {
 
   if (!gameContext->functions.loadTexture(GAME_OVER_TEXT, "gameover.png", gameContext->renderer)) {
     return false;
@@ -72,12 +66,10 @@ GameOverState::getStateId() const {
 
 void
 GameOverState::gameOverToMain(GameContext* gameContext) {
-  assert(game);
-  game->showMenu(gameContext);
+  gameContext->stateChange = SHOW_MAIN_MENU;
 }
 
 void
 GameOverState::restartPlay(GameContext* gameContext) {
-  assert(game);
-  game->restartPlay(gameContext);
+  gameContext->stateChange = RESTART_PLAY;
 }

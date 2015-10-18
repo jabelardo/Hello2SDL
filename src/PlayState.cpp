@@ -5,17 +5,11 @@
 #include <assert.h>
 #include "Player.h"
 #include "PlayState.h"
-#include "Game.h"
 #include "TextureId.h"
 #include "MemoryPartitionPlacementNew.h"
 
-Game *
-PlayState::game = 0;
-
 bool
-PlayState::init(Game *game, GameContext *gameContext) {
-
-  this->game = game;
+PlayState::init(GameContext *gameContext) {
 
   if (!gameContext->functions.loadTexture(HELICOPTER, "helicopter.png", gameContext->renderer)) {
     return false;
@@ -47,16 +41,15 @@ PlayState::init(Game *game, GameContext *gameContext) {
 
 void
 PlayState::update(GameContext* gameContext) {
-  assert(game);
   if (gameContext->userInput->back.endedDown) {
-    game->pause(gameContext);
+    gameContext->stateChange = PAUSE_PLAY;
     return;
   }
   player->update(gameContext->userInput);
   enemy->update(gameContext->userInput);
 
   if (Sprite::checkCollision(enemy->sprite, player->sprite)) {
-    game->gameOver(gameContext);
+    gameContext->stateChange = GAME_OVER;
   }
 }
 

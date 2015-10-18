@@ -9,12 +9,10 @@
 #include "MenuButton.h"
 #include "UserInput.h"
 
-class Game;
-
 class PauseState : public GameState {
 
 public:
-  bool init(Game* game, GameContext* gameContext);
+  virtual bool init(GameContext* gameContext);
 
   virtual void update(GameContext* gameContext);
 
@@ -23,7 +21,6 @@ public:
   virtual GameStateId getStateId() const;
 
 private:
-  static Game* game;
   MenuButton* menuButtons[2];
 
   static void pauseToMain(GameContext* gameContext);

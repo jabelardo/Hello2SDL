@@ -11,12 +11,10 @@
 #include "Player.h"
 #include "Entity.h"
 
-class Game;
-
 class PlayState : public GameState {
 
 public:
-  bool init(Game* game, GameContext* gameContext);
+  virtual bool init(GameContext* gameContext);
 
   virtual void update(GameContext* gameContext);
 
@@ -25,7 +23,6 @@ public:
   virtual GameStateId getStateId() const;
 
 private:
-  static Game* game;
   Player* player;
   Entity* enemy;
 };

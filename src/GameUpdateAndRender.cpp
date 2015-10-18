@@ -40,12 +40,12 @@ gameUpdateAndRender(GameContext *gameContext) {
     game = PLACEMENT_NEW(&gameContext->permanentMemory, Game)
     Game(menuState, playState, pauseState, gameOverState);
 
-    menuState->init(game, gameContext);
-    playState->init(game, gameContext);
-    pauseState->init(game, gameContext);
-    gameOverState->init(game, gameContext);
+    menuState->init(gameContext);
+    playState->init(gameContext);
+    pauseState->init(gameContext);
+    gameOverState->init(gameContext);
 
-    game->showMenu(gameContext);
+    game->showMainMenu(gameContext);
     gameContext->isInitialized = true;
   }
   game->update(gameContext);

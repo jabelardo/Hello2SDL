@@ -25,15 +25,15 @@ public:
 
   void restartPlay(GameContext* gameContext);
 
-  void showMenu(GameContext* gameContext);
+  void showMainMenu(GameContext *gameContext);
 
   void resumePlay(GameContext* gameContext);
 
-  void pause(GameContext* gameContext);
+  void pausePlay(GameContext *gameContext);
 
   void gameOver(GameContext* gameContext);
 
-  void quit();
+  void processStateChange(GameContext *gameContext);
 
 private:
   MenuState* menuState;
@@ -41,7 +41,6 @@ private:
   PauseState* pauseState;
   GameOverState* gameOverState;
   GameStateMachine stateMachine;
-  bool shouldQuit = false;
 };
 
 #endif //HELLO2SDL_GAME_H
