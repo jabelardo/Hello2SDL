@@ -47,7 +47,7 @@ set(SOURCE_FILES
         src/UserInput.h
         src/V2D.h
         src/XmlUtils.cpp
-        src/XmlUtils.h)
+        src/XmlUtils.h src/Level.cpp src/Level.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

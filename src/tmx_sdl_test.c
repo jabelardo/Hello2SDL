@@ -8,6 +8,7 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keyboard.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2_image/SDL_image.h>
 
 #define fatal_error(str)  { fputs(str, stderr); goto errquit; }
 #define fatal_error2(str) { fputs(str, stderr);  return NULL; }
@@ -157,7 +158,7 @@ Uint32 timer_func(Uint32 interval, void *param) {
 	return(interval);
 }
 
-int main________(int argc, char **argv) {
+int main_____(int argc, char **argv) {
 	tmx_map *map = NULL;
 	SDL_Window *win;
 	SDL_Renderer *ren;
