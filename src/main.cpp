@@ -45,57 +45,6 @@ const auto DEFAULT_REFRESH_RATE = 60;
 #define MEGABYTES(value) (KILOBYTES(value) * 1024LL)
 #define GIGABYTES(value) (MEGABYTES(value) * 1024LL)
 
-// The following SuperFastHash function was taken from http://www.azillionmonkeys.com/qed/hash.html
-// under Paul Hsieh OLD BSD license http://www.azillionmonkeys.com/qed/license-oldbsd.html
-//
-#define get16bits(d) (*((const uint16_t *) (d)))
-//
-uint32_t 
-superFastHash(const char * data, size_t len) {
-  if (len <= 0 || data == 0) return 0;
-
-  int rem = ((int) len) & 3;
-  len >>= 2;
-
-  uint32_t hash = (uint32_t) len;
-  uint32_t tmp;
-
-  /* Main loop */
-  for (;len > 0; len--) {
-    hash  += get16bits (data);
-    tmp    = (get16bits (data+2) << 11) ^ hash;
-    hash   = (hash << 16) ^ tmp;
-    data  += 2*sizeof (uint16_t);
-    hash  += hash >> 11;
-  }
-
-  /* Handle end cases */
-  switch (rem) {
-    case 3: hash += get16bits (data);
-      hash ^= hash << 16;
-      hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
-      hash += hash >> 11;
-      break;
-    case 2: hash += get16bits (data);
-      hash ^= hash << 11;
-      hash += hash >> 17;
-      break;
-    case 1: hash += (signed char)*data;
-      hash ^= hash << 10;
-      hash += hash >> 1;
-  }
-
-  /* Force "avalanching" of final 127 bits */
-  hash ^= hash << 3;
-  hash += hash >> 5;
-  hash ^= hash << 4;
-  hash += hash >> 17;
-  hash ^= hash << 25;
-  hash += hash >> 6;
-
-  return hash;
-}
-
 struct TextureHashNode {
   char* name;
   SDL_Texture *texture;
@@ -106,6 +55,36 @@ char G_baseResourcePath[FILENAME_MAX] = {0};
 char G_resourcePath[FILENAME_MAX] = {0};
 GameContext G_gameContext = {};
 TextureHashNode* G_textureHash[4096] = {};
+
+// The following fastHash function is inspired from http://www.azillionmonkeys.com/qed/hash.html
+// under Paul Hsieh OLD BSD license http://www.azillionmonkeys.com/qed/license-oldbsd.html
+//
+uint32_t 
+fastHash(const char * data) {
+  if (data == 0 || *data == 0) {
+    return 0;
+  }
+
+  uint32_t hash = 0;
+  uint32_t tmp;
+
+  int i = 0;
+  while (*(data + i++)) {
+    hash  += data[i];
+    tmp    = ((data[i] + 1) << 5) ^ hash;
+    hash   = (hash << 8) ^ tmp;
+    hash  += hash >> 5;
+  }
+
+  hash ^= hash << 3;
+  hash += hash >> 5;
+  hash ^= hash << 4;
+  hash += hash >> 17;
+  hash ^= hash << 25;
+  hash += hash >> 6;
+
+  return hash;
+}
 
 const char *
 sdlGetResourcePath(const char *filename) {
@@ -132,9 +111,8 @@ sdlGetResourcePath(const char *filename) {
 
 bool
 sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *renderer) {
-  size_t textureNameLen = strlen(textureName);
-  uint32_t hashVal32 = superFastHash(textureName, textureNameLen);
-  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
+  auto hashVal32 = fastHash(textureName);
+  auto hashPos12 = hashVal32 & 0x00000FFF;
   assert(hashPos12 < SDL_arraysize(G_textureHash));
 
   auto node = G_textureHash[hashPos12];
@@ -171,6 +149,7 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
     return false;
   }
   node->texture = texture;
+  auto textureNameLen = strlen(textureName);
   node->name = (char*) reserveMemory(&G_gameContext.permanentMemory, textureNameLen + 1);
   strcpy(node->name, textureName);
   return true;
@@ -178,9 +157,8 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
 
 SDL_Texture *
 sdlGetTexture(const char * textureName) {
-  size_t textureNameLen = strlen(textureName);
-  uint32_t hashVal32 = superFastHash(textureName, textureNameLen);
-  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
+  auto hashVal32 = fastHash(textureName);
+  auto hashPos12 = hashVal32 & 0x00000FFF;
   assert(hashPos12 < SDL_arraysize(G_textureHash));
 
   auto node = G_textureHash[hashPos12];
