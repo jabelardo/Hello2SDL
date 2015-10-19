@@ -65,16 +65,50 @@ fastHash(const char * data) {
     return 0;
   }
 
-  uint32_t hash = 0;
-  uint32_t tmp;
+  auto pos = data;
+  auto tmp = uint32_t{};
+  auto hash = uint32_t{};
+  auto rem = 0;
 
-  for (int i = 0; *(data + i); ++i) {
-    hash  += data[i];
-    tmp    = ((data[i] + 1) << 5) ^ hash;
-    hash   = (hash << 8) ^ tmp;
-    hash  += hash >> 5;
+  // NOTE: this code is little endian, in big endian the order is reversed 
+  for (;;) {
+    tmp = *(uint32_t*) pos;
+    if (!(tmp & 0x000000FF)) {
+      rem = 0;
+      break;
+    } else if (!(tmp & 0x0000FF00)) {
+      rem = 1;
+      break;
+    } else if (!(tmp & 0x00FF0000)) {
+      rem = 2;
+      break;
+    } else if (!(tmp & 0xFF000000)) {
+      rem = 3;
+      break;
+    }
+    hash += (tmp >> 16);
+    tmp   = ((tmp & 0x0000FFFF) << 11) ^ hash;
+    hash   = (hash << 16) ^ tmp;
+    pos  += sizeof (uint32_t);
+    hash  += hash >> 11;
   }
-
+  switch (rem) {
+    case 3:
+      hash += (tmp >> 16);
+      hash ^= hash << 16;
+      hash ^= ((signed char) pos[sizeof (uint16_t)]) << 18;
+      hash += hash >> 11;
+      break;
+    case 2:
+      hash += (tmp >> 16);
+      hash ^= hash << 11;
+      hash += hash >> 17;
+      break;
+    case 1:
+      hash += (signed char) *pos;
+      hash ^= hash << 10;
+      hash += hash >> 1;
+  }
   hash ^= hash << 3;
   hash += hash >> 5;
   hash ^= hash << 4;
