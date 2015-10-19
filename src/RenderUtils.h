@@ -15,8 +15,10 @@
 
 #include "Bitmap.h"
 
-void
-    drawBitmap(SDL_Renderer *renderer,
+void drawTile(SDL_Renderer *renderer,
+              int margin, int spacing, int x, int y, Bitmap *bitmap);
+
+void drawBitmap(SDL_Renderer *renderer,
                int x, int y, Bitmap *bitmap,
                SDL_RendererFlip flip = SDL_FLIP_NONE);
 

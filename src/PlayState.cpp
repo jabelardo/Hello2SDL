@@ -10,18 +10,18 @@
 bool
 PlayState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture(HELICOPTER, "helicopter.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("HELICOPTER", "helicopter.png", gameContext->renderer)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture(HELICOPTER2, "helicopter2.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("HELICOPTER2", "helicopter2.png", gameContext->renderer)) {
     return false;
   }
 
-  SDL_Texture *helicopter = gameContext->functions.getTexture(HELICOPTER);
+  SDL_Texture *helicopter = gameContext->functions.getTexture("HELICOPTER");
   if (!helicopter) {
     return false;
   }
-  SDL_Texture *helicopter2 = gameContext->functions.getTexture(HELICOPTER2);
+  SDL_Texture *helicopter2 = gameContext->functions.getTexture("HELICOPTER2");
   if (!helicopter2) {
     return false;
   }

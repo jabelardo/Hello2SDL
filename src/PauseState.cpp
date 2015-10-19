@@ -9,18 +9,18 @@
 bool
 PauseState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture(MAIN_BUTTON, "main.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("MAIN_BUTTON", "main.png", gameContext->renderer)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture(RESUME_BUTTON, "resume.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("RESUME_BUTTON", "resume.png", gameContext->renderer)) {
     return false;
   }
 
-  SDL_Texture *mainButton = gameContext->functions.getTexture(MAIN_BUTTON);
+  SDL_Texture *mainButton = gameContext->functions.getTexture("MAIN_BUTTON");
   if (!mainButton) {
     return false;
   }
-  SDL_Texture *resumeButton = gameContext->functions.getTexture(RESUME_BUTTON);
+  SDL_Texture *resumeButton = gameContext->functions.getTexture("RESUME_BUTTON");
   if (!resumeButton) {
     return false;
   }

@@ -10,9 +10,9 @@
 
 #include "UserInput.h"
 
-using LoadTextureFunc = bool(int textureId, const char *fileName, SDL_Renderer *renderer);
-using GetTextureFunc = SDL_Texture *(int textureId);
-using UnloadTextureFunc = bool(int textureId);
+using LoadTextureFunc = bool(const char * textureName, const char *fileName, SDL_Renderer *renderer);
+using GetTextureFunc = SDL_Texture *(const char * textureName);
+using UnloadTextureFunc = bool(const char * textureName);
 
 struct PlatformFunctions {
   LoadTextureFunc *loadTexture;

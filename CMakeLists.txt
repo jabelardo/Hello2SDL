@@ -22,6 +22,8 @@ set(SOURCE_FILES
         src/GameStateMachine.h
         src/GameUpdateAndRender.cpp
         src/GameUpdateAndRender.h
+        src/Level.cpp
+        src/Level.h
         src/main.cpp
         src/MenuButton.cpp
         src/MenuButton.h
@@ -47,7 +49,7 @@ set(SOURCE_FILES
         src/UserInput.h
         src/V2D.h
         src/XmlUtils.cpp
-        src/XmlUtils.h src/Level.cpp src/Level.h)
+        src/XmlUtils.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

@@ -10,20 +10,20 @@
 bool
 MenuState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture(PLAY_BUTTON, "button.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("PLAY_BUTTON", "button.png", gameContext->renderer)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture(EXIT_BUTTON, "exit.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("EXIT_BUTTON", "exit.png", gameContext->renderer)) {
     return false;
   }
 
   SDL_Texture *textureArray[2] = {};
 
-  textureArray[0] = gameContext->functions.getTexture(PLAY_BUTTON);
+  textureArray[0] = gameContext->functions.getTexture("PLAY_BUTTON");
   if (!textureArray[0]) {
     return false;
   }
-  textureArray[1] = gameContext->functions.getTexture(EXIT_BUTTON);
+  textureArray[1] = gameContext->functions.getTexture("EXIT_BUTTON");
   if (!textureArray[1]) {
     return false;
   }
@@ -57,7 +57,7 @@ MenuState::init(xmlDoc *doc, GameContext *gameContext) {
       auto id = (char *) xmlGetProp(e, (const xmlChar *) "id");
       auto filename = (char *) xmlGetProp(e, (const xmlChar *) "filename");
       auto textureId = getTextureId(id);
-      if (!gameContext->functions.loadTexture(textureId, filename, gameContext->renderer)) {
+      if (!gameContext->functions.loadTexture("textureId", filename, gameContext->renderer)) {
         xmlFree(id);
         xmlFree(filename);
         return false;
@@ -69,11 +69,11 @@ MenuState::init(xmlDoc *doc, GameContext *gameContext) {
 
   SDL_Texture *textureArray[2] = {};
 
-  textureArray[0] = gameContext->functions.getTexture(PLAY_BUTTON);
+  textureArray[0] = gameContext->functions.getTexture("PLAY_BUTTON");
   if (!textureArray[0]) {
     return false;
   }
-  textureArray[1] = gameContext->functions.getTexture(EXIT_BUTTON);
+  textureArray[1] = gameContext->functions.getTexture("EXIT_BUTTON");
   if (!textureArray[1]) {
     return false;
   }

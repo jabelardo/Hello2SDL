@@ -45,16 +45,67 @@ const auto DEFAULT_REFRESH_RATE = 60;
 #define MEGABYTES(value) (KILOBYTES(value) * 1024LL)
 #define GIGABYTES(value) (MEGABYTES(value) * 1024LL)
 
-struct TextureList {
-  int textureId;
+// The following SuperFastHash function was taken from http://www.azillionmonkeys.com/qed/hash.html
+// under Paul Hsieh OLD BSD license http://www.azillionmonkeys.com/qed/license-oldbsd.html
+//
+#define get16bits(d) (*((const uint16_t *) (d)))
+//
+uint32_t 
+superFastHash(const char * data, size_t len) {
+  if (len <= 0 || data == 0) return 0;
+
+  int rem = ((int) len) & 3;
+  len >>= 2;
+
+  uint32_t hash = (uint32_t) len;
+  uint32_t tmp;
+
+  /* Main loop */
+  for (;len > 0; len--) {
+    hash  += get16bits (data);
+    tmp    = (get16bits (data+2) << 11) ^ hash;
+    hash   = (hash << 16) ^ tmp;
+    data  += 2*sizeof (uint16_t);
+    hash  += hash >> 11;
+  }
+
+  /* Handle end cases */
+  switch (rem) {
+    case 3: hash += get16bits (data);
+      hash ^= hash << 16;
+      hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
+      hash += hash >> 11;
+      break;
+    case 2: hash += get16bits (data);
+      hash ^= hash << 11;
+      hash += hash >> 17;
+      break;
+    case 1: hash += (signed char)*data;
+      hash ^= hash << 10;
+      hash += hash >> 1;
+  }
+
+  /* Force "avalanching" of final 127 bits */
+  hash ^= hash << 3;
+  hash += hash >> 5;
+  hash ^= hash << 4;
+  hash += hash >> 17;
+  hash ^= hash << 25;
+  hash += hash >> 6;
+
+  return hash;
+}
+
+struct TextureHashNode {
+  char* name;
   SDL_Texture *texture;
-  TextureList *next;
+  TextureHashNode *next;
 };
 
 char G_baseResourcePath[FILENAME_MAX] = {0};
 char G_resourcePath[FILENAME_MAX] = {0};
 GameContext G_gameContext = {};
-TextureList *G_textureList = 0;
+TextureHashNode* G_textureHash[4096] = {};
 
 const char *
 sdlGetResourcePath(const char *filename) {
@@ -80,24 +131,29 @@ sdlGetResourcePath(const char *filename) {
 }
 
 bool
-sdlLoadTexture(int textureId, const char *fileName, SDL_Renderer *renderer) {
-  if (!G_textureList) {
-    G_textureList = (TextureList *) reserveMemory(&G_gameContext.permanentMemory,
-                                                  sizeof(TextureList));
-    G_textureList->textureId = 0;
-    G_textureList->next = 0;
-  }
-  auto availableNode = (TextureList *) 0;
-  auto lastNode = (TextureList *) 0;
-  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
-    if (currentNode->textureId == textureId) {
+sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *renderer) {
+  size_t textureNameLen = strlen(textureName);
+  uint32_t hashVal32 = superFastHash(textureName, textureNameLen);
+  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
+  assert(hashPos12 < SDL_arraysize(G_textureHash));
+
+  auto node = G_textureHash[hashPos12];
+  auto parent = node;
+  while (node) {
+    if (strcmp(node->name, textureName) == 0) {
       return true;
     }
-    if (!availableNode && !currentNode->texture) {
-      availableNode = currentNode;
-    }
-    lastNode = currentNode;
+    parent = node;
+    node = node->next;
   }
+  node = (TextureHashNode *) reserveMemory(&G_gameContext.permanentMemory, sizeof(TextureHashNode));
+  *node = {};
+  if (parent) {
+    parent->next = node;
+  } else {
+    G_textureHash[hashPos12] = node;
+  }
+  
   auto resource = sdlGetResourcePath(fileName);
   if (!strlen(resource)) {
     return false;
@@ -114,45 +170,38 @@ sdlLoadTexture(int textureId, const char *fileName, SDL_Renderer *renderer) {
                  SDL_GetError());
     return false;
   }
-  if (availableNode) {
-    availableNode->texture = texture;
-    availableNode->textureId = textureId;
-    return true;
-  }
-  if (!lastNode->texture) {
-    lastNode->texture = texture;
-    lastNode->textureId = textureId;
-    return true;
-  }
-  lastNode->next = (TextureList *) reserveMemory(&G_gameContext.permanentMemory,
-                                                 sizeof(TextureList));
-  lastNode->next->texture = texture;
-  lastNode->next->textureId = textureId;
-  lastNode->next->next = 0;
+  node->texture = texture;
+  node->name = (char*) reserveMemory(&G_gameContext.permanentMemory, textureNameLen + 1);
+  strcpy(node->name, textureName);
   return true;
 }
 
 SDL_Texture *
-sdlGetTexture(int textureId) {
-  assert(G_textureList);
-  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
-    if (currentNode->textureId == textureId) {
-      return currentNode->texture;
+sdlGetTexture(const char * textureName) {
+  size_t textureNameLen = strlen(textureName);
+  uint32_t hashVal32 = superFastHash(textureName, textureNameLen);
+  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
+  assert(hashPos12 < SDL_arraysize(G_textureHash));
+
+  auto node = G_textureHash[hashPos12];
+  while (node) {
+    if (strcmp(node->name, textureName) == 0) {
+      return node->texture;
     }
+    node = node->next;
   }
   return 0;
 }
 
 bool
-sdlUnloadTexture(int textureId) {
-  assert(G_textureList);
-  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
-    if (currentNode->textureId == textureId) {
-      SDL_DestroyTexture(currentNode->texture);
-      currentNode->texture = 0;
-      return true;
-    }
-  }
+sdlUnloadTexture(const char * textureName) {
+//  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
+//    if (currentNode->textureId == textureId) {
+//      SDL_DestroyTexture(currentNode->texture);
+//      currentNode->texture = 0;
+//      return true;
+//    }
+//  }
   return false;
 }
 
