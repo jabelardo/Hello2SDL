@@ -68,8 +68,7 @@ fastHash(const char * data) {
   uint32_t hash = 0;
   uint32_t tmp;
 
-  int i = 0;
-  while (*(data + i++)) {
+  for (int i = 0; *(data + i); ++i) {
     hash  += data[i];
     tmp    = ((data[i] + 1) << 5) ^ hash;
     hash   = (hash << 8) ^ tmp;
