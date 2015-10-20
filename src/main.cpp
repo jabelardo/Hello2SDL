@@ -29,8 +29,6 @@
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-const auto DEFAULT_REFRESH_RATE = 60;
-
 #ifdef _WIN32
 #define PATH_SEP "\\"
 #else
@@ -45,6 +43,10 @@ const auto DEFAULT_REFRESH_RATE = 60;
 #define MEGABYTES(value) (KILOBYTES(value) * 1024LL)
 #define GIGABYTES(value) (MEGABYTES(value) * 1024LL)
 
+#define DEFAULT_REFRESH_RATE 60
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+
 struct TextureHashNode {
   char* name;
   SDL_Texture *texture;
@@ -56,7 +58,7 @@ char G_resourcePath[FILENAME_MAX] = {0};
 GameContext G_gameContext = {};
 TextureHashNode* G_textureHash[4096] = {};
 
-// The following fastHash function is inspired from http://www.azillionmonkeys.com/qed/hash.html
+// The following fastHash function is based on http://www.azillionmonkeys.com/qed/hash.html
 // under Paul Hsieh OLD BSD license http://www.azillionmonkeys.com/qed/license-oldbsd.html
 //
 uint32_t 
@@ -66,11 +68,11 @@ fastHash(const char * data) {
   }
 
   auto pos = data;
-  auto tmp = uint32_t{};
-  auto hash = uint32_t{};
+  auto tmp = uint32_t{0};
+  auto hash = uint32_t{0};
   auto rem = 0;
 
-  // NOTE: this code is little endian, in big endian the order is reversed 
+  // NOTE: this code is little endian, in big endian the order is reversed
   for (;;) {
     tmp = *(uint32_t*) pos;
     if (!(tmp & 0x000000FF)) {
@@ -128,7 +130,7 @@ sdlGetResourcePath(const char *filename) {
       return 0;
     }
     auto pos = strstr(basePath, "build");
-    size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
+    auto basePathLen = (pos) ? pos - basePath : strlen(basePath);
     strncat(G_baseResourcePath, basePath, basePathLen);
     strcat(G_baseResourcePath, ASSETS_FOLDER);
     strcat(G_baseResourcePath, PATH_SEP);
@@ -358,7 +360,7 @@ main(int argc, char *args[]) {
   atexit(SDL_Quit);
 
   auto window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                 640, 480, 0);
+                                 SCREEN_WIDTH, SCREEN_HEIGHT, 0);
   if (!window) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating window: %s\n", SDL_GetError());
     return 1;
@@ -390,7 +392,8 @@ main(int argc, char *args[]) {
   auto monitorRefreshHz = sdlGetWindowRefreshRate(window);
   auto targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
   auto userInput = UserInput{};
-  G_gameContext = GameContext{false, &userInput, renderer, permanentMemory, transientMemory,
+  G_gameContext = GameContext{SCREEN_WIDTH, SCREEN_HEIGHT, false, &userInput, renderer,
+                              permanentMemory, transientMemory,
                               PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
   userInput.shouldQuit = false;
 

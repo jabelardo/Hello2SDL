@@ -10,7 +10,7 @@
 #include "Game.cpp"
 #include "GameOverState.cpp"
 #include "GameStateMachine.cpp"
-#include "Level.cpp"
+#include "TileMap.cpp"
 #include "MenuButton.cpp"
 #include "MenuState.cpp"
 #include "PauseState.cpp"

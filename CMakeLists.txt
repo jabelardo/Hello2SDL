@@ -22,8 +22,8 @@ set(SOURCE_FILES
         src/GameStateMachine.h
         src/GameUpdateAndRender.cpp
         src/GameUpdateAndRender.h
-        src/Level.cpp
-        src/Level.h
+        src/TileMap.cpp
+        src/TileMap.h
         src/main.cpp
         src/MenuButton.cpp
         src/MenuButton.h

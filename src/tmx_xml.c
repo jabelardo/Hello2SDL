@@ -606,6 +606,11 @@ static int parse_tileset_sub(xmlTextReaderPtr reader, tmx_tileset *ts_addr, cons
 		tmx_free_func(value);
 	}
 
+	if ((value = (char*)xmlTextReaderGetAttribute(reader, (xmlChar*)"tilecount"))) { /* tile_count */
+		ts_addr->tile_count = atoi(value);
+		tmx_free_func(value);
+	}
+
 	/* Parse each child */
 	do {
 		if (xmlTextReaderRead(reader) != 1) return 0; /* error_handler has been called */

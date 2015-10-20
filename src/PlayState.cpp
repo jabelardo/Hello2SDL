@@ -26,6 +26,12 @@ PlayState::init(GameContext *gameContext) {
     return false;
   }
 
+  tileMap = (TileMap *) reserveMemory(&gameContext->permanentMemory, sizeof(TileMap));
+
+  if (!tileMap->init(gameContext, "/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/untitled.tmx")) {
+    return false;
+  }
+
   player = PLACEMENT_NEW(&gameContext->permanentMemory, Player)
       Player{{{500, 100}, {helicopter, 128, 55, 5, 1, 1}}};
 
@@ -41,6 +47,7 @@ PlayState::update(GameContext *gameContext) {
     gameContext->stateChange = PAUSE_PLAY;
     return;
   }
+  tileMap->update(gameContext);
   player->update(gameContext->userInput);
   enemy->update(gameContext->userInput);
 
@@ -51,6 +58,7 @@ PlayState::update(GameContext *gameContext) {
 
 void
 PlayState::render(SDL_Renderer *renderer) {
+  tileMap->draw(renderer);
   player->draw(renderer);
   enemy->draw(renderer);
 }

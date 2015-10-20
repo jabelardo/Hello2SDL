@@ -9,6 +9,7 @@
 #include "UserInput.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "TileMap.h"
 
 class PlayState : public GameState {
 
@@ -22,6 +23,7 @@ public:
   virtual GameStateId getStateId() const;
 
 private:
+  TileMap* tileMap;
   Player *player;
   Enemy *enemy;
 };

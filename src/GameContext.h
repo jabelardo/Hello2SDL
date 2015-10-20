@@ -37,6 +37,8 @@ enum GameStateChange {
 };
 
 struct GameContext {
+  int screenWidth;
+  int screenHeight;
   bool isInitialized;
   UserInput *userInput;
   SDL_Renderer *renderer;

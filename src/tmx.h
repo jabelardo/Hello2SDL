@@ -95,7 +95,7 @@ struct _tmx_tile { /* <tile> */
 struct _tmx_ts { /* <tileset> and <tileoffset> */
 	unsigned int firstgid;
 	char *name;
-	unsigned int tile_width, tile_height;
+	unsigned int tile_width, tile_height, tile_count;
 	unsigned int spacing, margin;
 	int x_offset, y_offset; /* tileoffset */
 	tmx_image *image;

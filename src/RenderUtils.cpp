@@ -14,8 +14,7 @@ drawTile(SDL_Renderer *renderer, int margin, int spacing, int x, int y, Bitmap *
   srcRect.h = destRect.h = bitmap->height;
   destRect.x = x;
   destRect.y = y;
-  SDL_RenderCopyEx(renderer, bitmap->texture, &srcRect,
-                   &destRect, 0, 0, SDL_FLIP_NONE);
+  SDL_RenderCopyEx(renderer, bitmap->texture, &srcRect, &destRect, 0, 0, SDL_FLIP_NONE);
 }
 
 void
