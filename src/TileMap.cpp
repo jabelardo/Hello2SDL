@@ -16,7 +16,19 @@ TileLayer::draw(SDL_Renderer *renderer) {
   auto y2 = (int) position.y % tileHeight;
   for (int i = 0; i < numRows; ++i) {
     for (int j = 0; j < numColumns; ++j) {
-      int idx = (i + y) * numColumns + j + x;
+      int deltaX = j + x;
+      if (deltaX >= numColumns) {
+        deltaX -= numColumns;
+      } else if (deltaX < 0) {
+        deltaX += numColumns;
+      }
+      int deltaY = i + y;
+      if (deltaY >= numRows) {
+        deltaY -= numRows;
+      } else if (deltaY < 0) {
+        deltaY += numRows;
+      }
+      int idx = deltaY * numColumns + deltaX;
       if (idx >= tileGidsCount) {
         continue;
       }
@@ -42,6 +54,12 @@ TileLayer::draw(SDL_Renderer *renderer) {
 void
 TileLayer::update(GameContext *gameContext) {
   position += velocity;
+  if (position.x == numColumns * tileWidth || position.x == -numColumns * tileWidth) {
+    position.x = 0;
+  }
+  if (position.y == numRows * tileHeight || position.y == -numRows * tileHeight) {
+    position.y = 0;
+  }
 }
 
 TileSet *
