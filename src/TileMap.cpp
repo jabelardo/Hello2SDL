@@ -14,8 +14,8 @@ TileLayer::draw(SDL_Renderer *renderer) {
   auto y = (int) position.y / tileHeight;
   auto x2 = (int) position.x % tileWidth;
   auto y2 = (int) position.y % tileHeight;
-  for (int i = 0; i < numRows; ++i) {
-    for (int j = 0; j < numColumns; ++j) {
+  for (int i = -1; i <= numRows; ++i) {
+    for (int j = -1; j <= numColumns; ++j) {
       int deltaX = j + x;
       if (deltaX >= numColumns) {
         deltaX -= numColumns;
