@@ -56,9 +56,10 @@ struct GameContext {
 
 using GameContextCallbackFunc = void(GameContext *);
 
-void *
-reserveMemory(MemoryPartition *partition, size_t memorySize);
+void * reserveMemory(MemoryPartition *partition, size_t memorySize);
 
 #define PLACEMENT_NEW(MEMORY, TYPE) new(reserveMemory(MEMORY, sizeof(TYPE)))
+
+bool freeMemory(MemoryPartition *partition, void* memory = 0);
 
 #endif //HELLO2SDL_GAMECONTEXT_H

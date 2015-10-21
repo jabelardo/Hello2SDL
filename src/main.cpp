@@ -366,8 +366,12 @@ reserveMemory(MemoryPartition *partition, size_t memorySize) {
     assert(memorySize + sizeof(ssize_t) <= partition->totalSize - partition->usedSize);
     auto memory = partition->base;
     do {
-      // memory is empty
+      // NOTE:
+      // each memory block is prefixed with ssize_t value indicating the block size, memory is free
+      // to use if the sign of the size header is negative
       if (sgn(*(ssize_t*) memory)) {
+        assert((int8_t *) memory + sizeof(ssize_t) + memorySize + sizeof(ssize_t)
+               <= (int8_t *) partition->base + partition->totalSize);
         auto result = (ssize_t *) memory + 1;
         partition->usedSize += memorySize + sizeof(ssize_t);
         *(ssize_t*) ((int8_t*) result + memorySize) = *(ssize_t*) memory + memorySize + sizeof(ssize_t);
@@ -380,6 +384,27 @@ reserveMemory(MemoryPartition *partition, size_t memorySize) {
   }
   assert(false);
   return 0;
+}
+
+bool
+freeMemory(MemoryPartition *partition, void* memory) {
+  if (partition->type == TRANSIENT_MEMORY) {
+    partition->usedSize = 0;
+    return true;
+
+  } else if (partition->type == PERMANENT_MEMORY) {
+    assert(memory);
+    ssize_t* memorySize = (ssize_t*) memory - 1;
+    // memory is already free
+    if (sgn(*memorySize)) {
+      return true;
+    }
+    *memorySize *= -1;
+    // TODO: join contiguous free blockss
+    return true;
+  }
+  assert(false);
+  return false;
 }
 
 int
