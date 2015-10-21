@@ -46,7 +46,11 @@ TileLayer::draw(SDL_Renderer *renderer) {
       auto currentRow = (id - (tileSet->firstGid - 1)) / tileSet->numColumns;
       auto bitmap = Bitmap{texture, tileWidth, tileHeight, 0, currentFrame, currentRow};
 
-      drawTile(renderer, 2, 2, (j * tileWidth) - x2, (i * tileHeight) - y2, &bitmap);
+      int x3 = (j * tileWidth) - x2;
+      int y3 = (i * tileHeight) - y2;
+      if (x3 >= -tileWidth && x3 <= screenWidth && y3 >= -tileHeight && y3 <= screenHeight) {
+        drawTile(renderer, 2, 2, x3, y3, &bitmap);
+      }
     }
   }
 }
@@ -152,6 +156,8 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
       tileLayerNode->tileGidsCount = map->height * map->width;
       tileLayerNode->tileWidth = tileWidth;
       tileLayerNode->tileHeight = tileHeight;
+      tileLayerNode->screenWidth = gameContext->screenWidth;
+      tileLayerNode->screenHeight = gameContext->screenWidth;
       tileLayerNode->numColumns = gameContext->screenWidth / tileWidth;
       tileLayerNode->numRows = gameContext->screenHeight / tileHeight;
       tileLayerNode->mapWidth = map->width;

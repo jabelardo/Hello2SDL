@@ -33,6 +33,8 @@ struct TileSet {
 };
 
 struct TileLayer {
+  int screenWidth;
+  int screenHeight;
   int mapWidth;
   int mapHeight;
   int tileWidth;
