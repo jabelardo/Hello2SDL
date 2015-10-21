@@ -355,32 +355,34 @@ bool sgn(T val) {
 }
 
 void *
-reserveMemory(MemoryPartition *partition, size_t memorySize) {
+reserveMemory(MemoryPartition *partition, size_t reserveSize) {
   if (partition->type == TRANSIENT_MEMORY) {
-    assert(memorySize <= partition->totalSize - partition->usedSize);
+    assert(reserveSize <= partition->totalSize - partition->usedSize);
     auto result = (int8_t *) partition->base + partition->usedSize;
-    partition->usedSize += memorySize;
+    partition->usedSize += reserveSize;
     return result;
 
   } else if (partition->type == PERMANENT_MEMORY) {
-    assert(memorySize + sizeof(ssize_t) <= partition->totalSize - partition->usedSize);
-    auto memory = partition->base;
+    assert(reserveSize + sizeof(ssize_t) <= partition->totalSize - partition->usedSize);
+    auto block = partition->base;
     do {
       // NOTE:
-      // each memory block is prefixed with ssize_t value indicating the block size, memory is free
-      // to use if the sign of the size header is negative
-      if (sgn(*(ssize_t*) memory)) {
-        assert((int8_t *) memory + sizeof(ssize_t) + memorySize + sizeof(ssize_t)
+      // each memory block is prefixed with a ssize_t value indicating the block size, the block is
+      // free to use if the sign of the size header is negative
+      ssize_t blockSize = *(ssize_t*) block;
+      if (sgn(blockSize) && blockSize <= -1 * (reserveSize + sizeof(ssize_t))) {
+        assert((int8_t *) block + sizeof(ssize_t) + reserveSize + sizeof(ssize_t)
                <= (int8_t *) partition->base + partition->totalSize);
-        auto result = (ssize_t *) memory + 1;
-        partition->usedSize += memorySize + sizeof(ssize_t);
-        *(ssize_t*) ((int8_t*) result + memorySize) = *(ssize_t*) memory + memorySize + sizeof(ssize_t);
-        *(ssize_t*) memory = memorySize;
-        return result;
+        auto resultAddress = (ssize_t *) block + 1;
+        partition->usedSize += reserveSize + sizeof(ssize_t);
+        *(ssize_t*) ((int8_t*) resultAddress + reserveSize) = blockSize + reserveSize + sizeof(ssize_t);
+        *(ssize_t*) block = reserveSize;
+        return resultAddress;
       }
-      memory = (int8_t*) memory + *(ssize_t *) memory + sizeof(ssize_t);
-    } while (memory < (int8_t*) partition->base + partition->totalSize);
+      block = (int8_t*) block + blockSize + sizeof(ssize_t);
+    } while (block < (int8_t*) partition->base + partition->totalSize);
     assert(false);
+    return 0;
   }
   assert(false);
   return 0;
@@ -393,7 +395,8 @@ freeMemory(MemoryPartition *partition, void* memory) {
     return true;
 
   } else if (partition->type == PERMANENT_MEMORY) {
-    assert(memory);
+    assert(memory >= partition->base);
+    assert(memory <= (int8_t*) partition->base + partition->totalSize);
     ssize_t* memorySize = (ssize_t*) memory - 1;
     // memory is already free
     if (sgn(*memorySize)) {

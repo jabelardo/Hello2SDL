@@ -56,7 +56,7 @@ struct GameContext {
 
 using GameContextCallbackFunc = void(GameContext *);
 
-void * reserveMemory(MemoryPartition *partition, size_t memorySize);
+void * reserveMemory(MemoryPartition *partition, size_t reserveSize);
 
 #define PLACEMENT_NEW(MEMORY, TYPE) new(reserveMemory(MEMORY, sizeof(TYPE)))
 
