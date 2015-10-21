@@ -20,7 +20,13 @@ struct PlatformFunctions {
   UnloadTextureFunc *unloadTexture;
 };
 
+enum MemoryPartitionType {
+  PERMANENT_MEMORY = 0,
+  TRANSIENT_MEMORY
+};
+
 struct MemoryPartition {
+  MemoryPartitionType type;
   size_t totalSize;
   size_t usedSize;
   void *base;
@@ -50,13 +56,8 @@ struct GameContext {
 
 using GameContextCallbackFunc = void(GameContext *);
 
-inline void *
-reserveMemory(MemoryPartition *partition, size_t memorySize) {
-  assert(memorySize <= partition->totalSize - partition->usedSize);
-  auto result = (int8_t *) partition->base + partition->usedSize;
-  partition->usedSize += memorySize;
-  return result;
-}
+void *
+reserveMemory(MemoryPartition *partition, size_t memorySize);
 
 #define PLACEMENT_NEW(MEMORY, TYPE) new(reserveMemory(MEMORY, sizeof(TYPE)))
 

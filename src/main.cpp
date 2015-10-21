@@ -39,9 +39,9 @@
 #define ASSETS_FOLDER "assets"
 #endif
 
-#define KILOBYTES(value) ((value) * 1024LL)
-#define MEGABYTES(value) (KILOBYTES(value) * 1024LL)
-#define GIGABYTES(value) (MEGABYTES(value) * 1024LL)
+#define KILOBYTES(value) ((value) * 1024ul)
+#define MEGABYTES(value) (KILOBYTES(value) * 1024ul)
+#define GIGABYTES(value) (MEGABYTES(value) * 1024ul)
 
 #define DEFAULT_REFRESH_RATE 60
 #define SCREEN_WIDTH 640
@@ -348,6 +348,40 @@ sdlGetSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
           (float) (SDL_GetPerformanceFrequency()));
 }
 
+template <typename T>
+bool sgn(T val) {
+  int result = (val > T(0)) - (val < T(0));
+  return result == -1;
+}
+
+void *
+reserveMemory(MemoryPartition *partition, size_t memorySize) {
+  if (partition->type == TRANSIENT_MEMORY) {
+    assert(memorySize <= partition->totalSize - partition->usedSize);
+    auto result = (int8_t *) partition->base + partition->usedSize;
+    partition->usedSize += memorySize;
+    return result;
+
+  } else if (partition->type == PERMANENT_MEMORY) {
+    assert(memorySize + sizeof(ssize_t) <= partition->totalSize - partition->usedSize);
+    auto memory = partition->base;
+    do {
+      // memory is empty
+      if (sgn(*(ssize_t*) memory)) {
+        auto result = (ssize_t *) memory + 1;
+        partition->usedSize += memorySize + sizeof(ssize_t);
+        *(ssize_t*) ((int8_t*) result + memorySize) = *(ssize_t*) memory + memorySize + sizeof(ssize_t);
+        *(ssize_t*) memory = memorySize;
+        return result;
+      }
+      memory = (int8_t*) memory + *(ssize_t *) memory + sizeof(ssize_t);
+    } while (memory < (int8_t*) partition->base + partition->totalSize);
+    assert(false);
+  }
+  assert(false);
+  return 0;
+}
+
 int
 main(int argc, char *args[]) {
 
@@ -372,21 +406,24 @@ main(int argc, char *args[]) {
     return 1;
   }
 
-  auto completeSharedMemory = MemoryPartition{MEGABYTES(32) + MEGABYTES(32)};
+  auto totalReservedMemorySize = MEGABYTES(32) + MEGABYTES(32);
 
 #if _MSC_VER
-  completeSharedMemory.gameMemoryBlock = VirtualAlloc(0, completeSharedMemory.totalSize,
-                                                      MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+  void* totalReservedMemory = VirtualAlloc(0, totalReservedMemorySize,
+                                           MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 #else
-  completeSharedMemory.base = mmap(0, completeSharedMemory.totalSize,
-                                   PROT_READ | PROT_WRITE,
-                                   MAP_ANON | MAP_PRIVATE,
-                                   -1, 0);
+  void* totalReservedMemory = mmap(0, totalReservedMemorySize,  PROT_READ | PROT_WRITE,
+                                   MAP_ANON | MAP_PRIVATE, -1, 0);
 #endif
 
-  auto permanentMemory = MemoryPartition{MEGABYTES(32), 0, completeSharedMemory.base};
-  auto transientMemory = MemoryPartition{MEGABYTES(32), 0, (int8_t *) completeSharedMemory.base +
-                                                           permanentMemory.totalSize};
+  auto permanentMemory = MemoryPartition{PERMANENT_MEMORY, MEGABYTES(32), 0, totalReservedMemory};
+
+  // init permanent memory
+  *(ssize_t *) permanentMemory.base = -MEGABYTES(32) + sizeof(ssize_t);
+  permanentMemory.usedSize = sizeof(ssize_t);
+
+  auto transientMemory = MemoryPartition{TRANSIENT_MEMORY, MEGABYTES(32), 0,
+                                         (int8_t *) totalReservedMemory + permanentMemory.totalSize};
 
   auto lastCounter = SDL_GetPerformanceCounter();
   auto monitorRefreshHz = sdlGetWindowRefreshRate(window);
