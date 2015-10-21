@@ -28,7 +28,7 @@ PlayState::init(GameContext *gameContext) {
 
   tileMap = (TileMap *) reserveMemory(&gameContext->permanentMemory, sizeof(TileMap));
 
-  if (!tileMap->init(gameContext, "/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/untitled.tmx")) {
+  if (!tileMap->init(gameContext, "/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/untitled2.tmx")) {
     return false;
   }
 

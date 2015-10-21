@@ -33,6 +33,8 @@ struct TileSet {
 };
 
 struct TileLayer {
+  int mapWidth;
+  int mapHeight;
   int tileWidth;
   int tileHeight;
   V2D position;

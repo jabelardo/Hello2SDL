@@ -14,21 +14,21 @@ TileLayer::draw(SDL_Renderer *renderer) {
   auto y = (int) position.y / tileHeight;
   auto x2 = (int) position.x % tileWidth;
   auto y2 = (int) position.y % tileHeight;
-  for (int i = -1; i <= numRows; ++i) {
-    for (int j = -1; j <= numColumns; ++j) {
+  for (int i = -1; i <= mapHeight; ++i) {
+    for (int j = -1; j <= mapWidth; ++j) {
       int deltaX = j + x;
-      if (deltaX >= numColumns) {
-        deltaX -= numColumns;
+      if (deltaX >= mapWidth) {
+        deltaX -= mapWidth;
       } else if (deltaX < 0) {
-        deltaX += numColumns;
+        deltaX += mapWidth;
       }
       int deltaY = i + y;
-      if (deltaY >= numRows) {
-        deltaY -= numRows;
+      if (deltaY >= mapHeight) {
+        deltaY -= mapHeight;
       } else if (deltaY < 0) {
-        deltaY += numRows;
+        deltaY += mapHeight;
       }
-      int idx = deltaY * numColumns + deltaX;
+      int idx = deltaY * mapWidth + deltaX;
       if (idx >= tileGidsCount) {
         continue;
       }
@@ -53,11 +53,12 @@ TileLayer::draw(SDL_Renderer *renderer) {
 
 void
 TileLayer::update(GameContext *gameContext) {
+  velocity.x = -2;
   position += velocity;
-  if (position.x == numColumns * tileWidth || position.x == -numColumns * tileWidth) {
+  if (position.x == mapWidth * tileWidth || position.x == -mapWidth * tileWidth) {
     position.x = 0;
   }
-  if (position.y == numRows * tileHeight || position.y == -numRows * tileHeight) {
+  if (position.y == mapHeight * tileHeight || position.y == -mapHeight * tileHeight) {
     position.y = 0;
   }
 }
@@ -153,6 +154,8 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
       tileLayerNode->tileHeight = tileHeight;
       tileLayerNode->numColumns = gameContext->screenWidth / tileWidth;
       tileLayerNode->numRows = gameContext->screenHeight / tileHeight;
+      tileLayerNode->mapWidth = map->width;
+      tileLayerNode->mapHeight = map->height;
       tileLayerNode->tileSetList = tileSetList;
     }
   }
