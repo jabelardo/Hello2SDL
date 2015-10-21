@@ -14,8 +14,8 @@ TileLayer::draw(SDL_Renderer *renderer) {
   auto y = (int) position.y / tileHeight;
   auto x2 = (int) position.x % tileWidth;
   auto y2 = (int) position.y % tileHeight;
-  for (int i = 0 - (y2 < 0 ? 1 : 0); i < screenRows + (y2 > 0 ? 1 : 0); ++i) {
-    for (int j = 0 - (x2 < 0 ? 1 : 0); j < screenColumns + (x2 > 0 ? 1 : 0); ++j) {
+  for (int i = (y2 < 0 ? -1 : 0); i < (y2 <= 0 ? screenRows : screenRows + 1); ++i) {
+    for (int j = (x2 < 0 ? -1 : 0); j < (x2 <= 0 ? screenColumns : screenColumns + 1); ++j) {
       int tileX = j + x;
       if (tileX >= mapWidth) {
         tileX -= mapWidth;
@@ -53,8 +53,7 @@ TileLayer::draw(SDL_Renderer *renderer) {
 
 void
 TileLayer::update(GameContext *gameContext) {
-  velocity.x = -2;
-//  position.x = 16;
+  velocity.x = 1;
   position += velocity;
   if (position.x == mapWidth * tileWidth || position.x == -mapWidth * tileWidth) {
     position.x = 0;
