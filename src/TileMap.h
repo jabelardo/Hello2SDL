@@ -42,8 +42,8 @@ struct TileLayer {
   V2D position;
   V2D velocity;
 
-  int numColumns;
-  int numRows;
+  int screenColumns;
+  int screenRows;
 
   TileSet* tileSetList;
   size_t tileGidsCount;
