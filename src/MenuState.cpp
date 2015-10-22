@@ -10,10 +10,12 @@
 bool
 MenuState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture("PLAY_BUTTON", "button.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("PLAY_BUTTON", "button.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture("EXIT_BUTTON", "exit.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("EXIT_BUTTON", "exit.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
 
@@ -57,7 +59,8 @@ MenuState::init(xmlDoc *doc, GameContext *gameContext) {
       auto id = (char *) xmlGetProp(e, (const xmlChar *) "id");
       auto filename = (char *) xmlGetProp(e, (const xmlChar *) "filename");
       auto textureId = getTextureId(id);
-      if (!gameContext->functions.loadTexture("textureId", filename, gameContext->renderer)) {
+      if (!gameContext->functions.loadTexture("textureId", filename, gameContext->renderer,
+                                              &gameContext->permanentMemory)) {
         xmlFree(id);
         xmlFree(filename);
         return false;

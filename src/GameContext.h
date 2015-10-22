@@ -10,19 +10,10 @@
 
 #include "UserInput.h"
 
-using LoadTextureFunc = bool(const char * textureName, const char *fileName, SDL_Renderer *renderer);
-using GetTextureFunc = SDL_Texture *(const char * textureName);
-using UnloadTextureFunc = bool(const char * textureName);
-
-struct PlatformFunctions {
-  LoadTextureFunc *loadTexture;
-  GetTextureFunc *getTexture;
-  UnloadTextureFunc *unloadTexture;
-};
-
 enum MemoryPartitionType {
   PERMANENT_MEMORY = 0,
-  TRANSIENT_MEMORY
+  LONG_TIME_MEMORY,
+  SHORT_TIME_MEMORY,
 };
 
 struct MemoryPartition {
@@ -42,6 +33,17 @@ enum GameStateChange {
   GAME_OVER
 };
 
+using LoadTextureFunc = bool(const char * textureName, const char *fileName, SDL_Renderer *renderer,
+                             MemoryPartition *partition);
+using GetTextureFunc = SDL_Texture *(const char * textureName);
+using UnloadTextureFunc = bool(const char * textureName);
+
+struct PlatformFunctions {
+  LoadTextureFunc *loadTexture;
+  GetTextureFunc *getTexture;
+  UnloadTextureFunc *unloadTexture;
+};
+
 struct GameContext {
   int screenWidth;
   int screenHeight;
@@ -49,7 +51,8 @@ struct GameContext {
   UserInput *userInput;
   SDL_Renderer *renderer;
   MemoryPartition permanentMemory;
-  MemoryPartition transientMemory;
+  MemoryPartition longTimeMemory;
+  MemoryPartition shortTimetMemory;
   PlatformFunctions functions;
   GameStateChange stateChange;
 };
@@ -60,6 +63,6 @@ void * reserveMemory(MemoryPartition *partition, size_t reserveSize);
 
 #define PLACEMENT_NEW(MEMORY, TYPE) new(reserveMemory(MEMORY, sizeof(TYPE)))
 
-bool freeMemory(MemoryPartition *partition, void* memory = 0);
+bool freeMemory(MemoryPartition *partition, void* memory);
 
 #endif //HELLO2SDL_GAMECONTEXT_H

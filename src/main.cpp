@@ -145,7 +145,8 @@ sdlGetResourcePath(const char *filename) {
 }
 
 bool
-sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *renderer) {
+sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *renderer,
+               MemoryPartition *partition) {
   auto hashVal32 = fastHash(textureName);
   auto hashPos12 = hashVal32 & 0x00000FFF;
   assert(hashPos12 < SDL_arraysize(G_textureHash));
@@ -159,7 +160,7 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
     parent = node;
     node = node->next;
   }
-  node = (TextureHashNode *) reserveMemory(&G_gameContext.permanentMemory, sizeof(TextureHashNode));
+  node = (TextureHashNode *) reserveMemory(partition, sizeof(TextureHashNode));
   *node = {};
   if (parent) {
     parent->next = node;
@@ -185,7 +186,7 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
   }
   node->texture = texture;
   auto textureNameLen = strlen(textureName);
-  node->name = (char*) reserveMemory(&G_gameContext.permanentMemory, textureNameLen + 1);
+  node->name = (char*) reserveMemory(partition, textureNameLen + 1);
   strcpy(node->name, textureName);
   return true;
 }
@@ -349,38 +350,41 @@ sdlGetSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
 }
 
 template <typename T>
-bool sgn(T val) {
+bool isNegative(T val) {
   int result = (val > T(0)) - (val < T(0));
   return result == -1;
 }
 
 void *
 reserveMemory(MemoryPartition *partition, size_t reserveSize) {
-  if (partition->type == TRANSIENT_MEMORY) {
+  if (partition->type == PERMANENT_MEMORY || partition->type == SHORT_TIME_MEMORY) {
     assert(reserveSize <= partition->totalSize - partition->usedSize);
     auto result = (int8_t *) partition->base + partition->usedSize;
     partition->usedSize += reserveSize;
     return result;
 
-  } else if (partition->type == PERMANENT_MEMORY) {
-    assert(reserveSize + sizeof(ssize_t) <= partition->totalSize - partition->usedSize);
+  } else if (partition->type == LONG_TIME_MEMORY) {
     auto block = partition->base;
-    do {
+    while (block < (int8_t*) partition->base + partition->totalSize) {
       // NOTE:
       // each memory block is prefixed with a ssize_t value indicating the block size, the block is
       // free to use if the sign of the size header is negative
       ssize_t blockSize = *(ssize_t*) block;
-      if (sgn(blockSize) && blockSize <= -1 * (reserveSize + sizeof(ssize_t))) {
-        assert((int8_t *) block + sizeof(ssize_t) + reserveSize + sizeof(ssize_t)
-               <= (int8_t *) partition->base + partition->totalSize);
-        auto resultAddress = (ssize_t *) block + 1;
-        partition->usedSize += reserveSize + sizeof(ssize_t);
-        *(ssize_t*) ((int8_t*) resultAddress + reserveSize) = blockSize + reserveSize + sizeof(ssize_t);
-        *(ssize_t*) block = reserveSize;
-        return resultAddress;
+      if (isNegative(blockSize)) {
+        if (-1 * blockSize >= reserveSize + sizeof(ssize_t)) {
+          assert((int8_t *) block + sizeof(ssize_t) + reserveSize + sizeof(ssize_t)
+                 <= (int8_t *) partition->base + partition->totalSize);
+          auto resultAddress = (ssize_t *) block + 1;
+          partition->usedSize += reserveSize + sizeof(ssize_t);
+          *(ssize_t *) ((int8_t *) resultAddress + reserveSize) = blockSize + reserveSize + sizeof(ssize_t);
+          *(ssize_t *) block = reserveSize;
+          return resultAddress;
+        }
+        block = (int8_t *) block + -1 * blockSize + sizeof(ssize_t);
+      } else {
+        block = (int8_t *) block + blockSize + sizeof(ssize_t);
       }
-      block = (int8_t*) block + blockSize + sizeof(ssize_t);
-    } while (block < (int8_t*) partition->base + partition->totalSize);
+    }
     assert(false);
     return 0;
   }
@@ -390,20 +394,42 @@ reserveMemory(MemoryPartition *partition, size_t reserveSize) {
 
 bool
 freeMemory(MemoryPartition *partition, void* memory) {
-  if (partition->type == TRANSIENT_MEMORY) {
+  if (partition->type == PERMANENT_MEMORY) {
+    return false;
+
+  } else if (partition->type == SHORT_TIME_MEMORY) {
     partition->usedSize = 0;
     return true;
 
-  } else if (partition->type == PERMANENT_MEMORY) {
+  } else if (partition->type == LONG_TIME_MEMORY) {
     assert(memory >= partition->base);
     assert(memory <= (int8_t*) partition->base + partition->totalSize);
     ssize_t* memorySize = (ssize_t*) memory - 1;
-    // memory is already free
-    if (sgn(*memorySize)) {
-      return true;
+
+    if (isNegative(*memorySize)) {
+      return false;
     }
+    partition->usedSize -= *memorySize;
     *memorySize *= -1;
-    // TODO: join contiguous free blockss
+
+    // join contiguous free blocks
+    auto block = partition->base;
+    auto freeBlock = (ssize_t *) 0;
+    while (block < (int8_t*) partition->base + partition->totalSize) {
+      ssize_t blockSize = *(ssize_t*) block;
+      if (isNegative(blockSize)) {
+        if (freeBlock) {
+          *freeBlock += blockSize - sizeof(ssize_t);
+          partition->usedSize += blockSize - sizeof(ssize_t);
+        } else {
+          freeBlock = (ssize_t*) block;
+        }
+        block = (int8_t *) block + -1 * blockSize + sizeof(ssize_t);
+      } else {
+        freeBlock = 0;
+        block = (int8_t *) block + blockSize + sizeof(ssize_t);
+      }
+    }
     return true;
   }
   assert(false);
@@ -434,23 +460,25 @@ main(int argc, char *args[]) {
     return 1;
   }
 
-  auto totalReservedMemorySize = MEGABYTES(32) + MEGABYTES(32);
+  auto totalReservedMemorySize = MEGABYTES(32) + MEGABYTES(32) + MEGABYTES(32);
 
 #if _MSC_VER
-  void* totalReservedMemory = VirtualAlloc(0, totalReservedMemorySize,
-                                           MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+  auto totalReservedMemory = VirtualAlloc(0, totalReservedMemorySize, MEM_RESERVE | MEM_COMMIT,
+                                          PAGE_READWRITE);
 #else
-  void* totalReservedMemory = mmap(0, totalReservedMemorySize,  PROT_READ | PROT_WRITE,
-                                   MAP_ANON | MAP_PRIVATE, -1, 0);
+  auto totalReservedMemory = mmap(0, totalReservedMemorySize,  PROT_READ | PROT_WRITE,
+                                  MAP_ANON | MAP_PRIVATE, -1, 0);
 #endif
 
   auto permanentMemory = MemoryPartition{PERMANENT_MEMORY, MEGABYTES(32), 0, totalReservedMemory};
 
-  // init permanent memory
-  *(ssize_t *) permanentMemory.base = -MEGABYTES(32) + sizeof(ssize_t);
-  permanentMemory.usedSize = sizeof(ssize_t);
+  auto longTimeMemory = MemoryPartition{LONG_TIME_MEMORY, 100, 0, totalReservedMemory};
 
-  auto transientMemory = MemoryPartition{TRANSIENT_MEMORY, MEGABYTES(32), 0,
+  // init longTimeMemory
+  *(ssize_t *) longTimeMemory.base = -100 + sizeof(ssize_t);
+  longTimeMemory.usedSize = sizeof(ssize_t);
+
+  auto shortTimeMemory = MemoryPartition{SHORT_TIME_MEMORY, MEGABYTES(32), 0,
                                          (int8_t *) totalReservedMemory + permanentMemory.totalSize};
 
   auto lastCounter = SDL_GetPerformanceCounter();
@@ -458,9 +486,9 @@ main(int argc, char *args[]) {
   auto targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
   auto userInput = UserInput{};
   G_gameContext = GameContext{SCREEN_WIDTH, SCREEN_HEIGHT, false, &userInput, renderer,
-                              permanentMemory, transientMemory,
+                              permanentMemory, longTimeMemory, shortTimeMemory,
                               PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
-  userInput.shouldQuit = false;
+  userInput.shouldQuit = true;
 
   while (!userInput.shouldQuit) {
     auto event = SDL_Event{};

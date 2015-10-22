@@ -104,8 +104,8 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
   TileSet *tileSetNode = 0;
 
   for (tmx_tileset *tileset = map->ts_head; tileset; tileset = tileset->next) {
-    if (!gameContext->functions.loadTexture(
-        tileset->name, tileset->image->source, gameContext->renderer)) {
+    if (!gameContext->functions.loadTexture(tileset->name, tileset->image->source,
+                                            gameContext->renderer, &gameContext->permanentMemory)) {
       tmx_map_free(map);
       // TODO: free the tileSetList !!!!
       return false;

@@ -9,13 +9,16 @@
 bool
 GameOverState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture("GAME_OVER_TEXT", "gameover.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("GAME_OVER_TEXT", "gameover.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture("MAIN_BUTTON", "main.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("MAIN_BUTTON", "main.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture("RESTART_BUTTON", "restart.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("RESTART_BUTTON", "restart.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
   SDL_Texture *mainButton = gameContext->functions.getTexture("MAIN_BUTTON");

@@ -9,10 +9,12 @@
 bool
 PauseState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture("MAIN_BUTTON", "main.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("MAIN_BUTTON", "main.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture("RESUME_BUTTON", "resume.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("RESUME_BUTTON", "resume.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
 

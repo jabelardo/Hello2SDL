@@ -10,10 +10,12 @@
 bool
 PlayState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture("HELICOPTER", "helicopter.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("HELICOPTER", "helicopter.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
-  if (!gameContext->functions.loadTexture("HELICOPTER2", "helicopter2.png", gameContext->renderer)) {
+  if (!gameContext->functions.loadTexture("HELICOPTER2", "helicopter2.png", gameContext->renderer,
+                                          &gameContext->permanentMemory)) {
     return false;
   }
 
