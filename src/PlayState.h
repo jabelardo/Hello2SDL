@@ -24,7 +24,7 @@ public:
 
 private:
   TileMap* tileMap;
-  Player *player;
+  //Player *player;
   Enemy *enemy;
 };
 

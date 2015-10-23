@@ -16,6 +16,8 @@
 #include "GameContext.h"
 #include "V2D.h"
 #include "tmx.h"
+#include "Entity.h"
+#include "Player.h"
 
 struct TileSet {
   char* name;
@@ -30,6 +32,14 @@ struct TileSet {
   int numColumns;
   TileSet* next;
   SDL_Texture *texture;
+};
+
+struct ObjectLayer {
+  Player* player;
+
+  void draw(SDL_Renderer *renderer);
+
+  void update(GameContext *gameContext);
 };
 
 struct TileLayer {
@@ -63,6 +73,7 @@ struct TileMap {
   int tileWidth;
   int tileHeight;
   TileLayer* tileLayerList;
+  ObjectLayer* objectLayer;
 
   bool init(GameContext *gameContext, const char *mapfile);
 

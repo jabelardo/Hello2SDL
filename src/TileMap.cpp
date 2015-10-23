@@ -78,12 +78,14 @@ TileMap::draw(SDL_Renderer *renderer) {
   for (TileLayer *node = tileLayerList; node; node = node->next) {
     node->draw(renderer);
   }
+  objectLayer->draw(renderer);
 }
 
 void TileMap::update(GameContext *gameContext) {
   for (TileLayer *node = tileLayerList; node; node = node->next) {
     node->update(gameContext);
   }
+  objectLayer->update(gameContext);
 }
 
 bool
@@ -100,18 +102,32 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
   tileHeight = map->tile_height;
   tileLayerList = 0;
 
-  TileSet *tileSetList = 0;
-  TileSet *tileSetNode = 0;
-
-  for (tmx_tileset *tileset = map->ts_head; tileset; tileset = tileset->next) {
-    if (!gameContext->functions.loadTexture(tileset->name, tileset->image->source,
-                                            gameContext->renderer, &gameContext->permanentMemory)) {
-      tmx_map_free(map);
-      // TODO: free the tileSetList !!!!
+  for (auto property = map->properties; property; property = property->next) {
+    if (!gameContext->functions.loadTexture(property->name,
+                                            property->value,
+                                            gameContext->renderer,
+                                            &gameContext->permanentMemory)) {
       return false;
     }
-    TileSet *newTileSetNode = (TileSet *) reserveMemory(&gameContext->permanentMemory,
-                                                        sizeof(TileSet));
+  }
+  
+  auto tileSetList = (TileSet *) 0;
+  auto tileSetNode = (TileSet *) 0;
+
+  for (auto tileset = map->ts_head; tileset; tileset = tileset->next) {
+    if (!gameContext->functions.loadTexture(tileset->name,
+                                            tileset->image->source,
+                                            gameContext->renderer,
+                                            &gameContext->permanentMemory)) {
+      tmx_map_free(map);
+      for (tileSetNode = tileSetList; tileSetNode;) {
+        auto next = tileSetNode->next;
+        freeMemory(&gameContext->longTimeMemory, tileSetNode);
+        tileSetNode = next;
+      }
+      return false;
+    }
+    auto newTileSetNode = (TileSet *) reserveMemory(&gameContext->longTimeMemory, sizeof(TileSet));
     if (!tileSetList) {
       tileSetList = newTileSetNode;
     }
@@ -128,18 +144,18 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
     tileSetNode->spacing = tileset->spacing;
     tileSetNode->margin = tileset->margin;
     tileSetNode->texture = gameContext->functions.getTexture(tileset->name);
-    size_t tileSetNodeNameLen = strlen(tileset->name);
-    tileSetNode->name = (char *) reserveMemory(&gameContext->permanentMemory, tileSetNodeNameLen + 1);
+    auto tileSetNodeNameLen = strlen(tileset->name);
+    tileSetNode->name = (char *) reserveMemory(&gameContext->longTimeMemory, tileSetNodeNameLen + 1);
     strcpy(tileSetNode->name, tileset->name);
     tileSetNode->numColumns = tileSetNode->imageWidth / (tileSetNode->tileWidth + tileSetNode->spacing);
   }
 
-  size_t sizeofids = map->height * map->width * sizeof(int32_t);
-  TileLayer *tileLayerNode = 0;
-  for (tmx_layer *tilelayer = map->ly_head; tilelayer; tilelayer = tilelayer->next) {
+  auto sizeofids = map->height * map->width * sizeof(int32_t);
+  auto tileLayerNode = (TileLayer *) 0;
+  for (auto tilelayer = map->ly_head; tilelayer; tilelayer = tilelayer->next) {
     if (tilelayer->type == L_LAYER && tilelayer->content.gids) {
-      TileLayer *newTileLayerNode = (TileLayer *) reserveMemory(&gameContext->permanentMemory,
-                                                                sizeof(TileLayer));
+      auto newTileLayerNode = (TileLayer *) reserveMemory(&gameContext->longTimeMemory,
+                                                          sizeof(TileLayer));
       if (!tileLayerList) {
         tileLayerList = newTileLayerNode;
       }
@@ -147,7 +163,7 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
         tileLayerNode->next = newTileLayerNode;
       }
       tileLayerNode = newTileLayerNode;
-      tileLayerNode->tileGids = (int32_t *) reserveMemory(&gameContext->permanentMemory, sizeofids);
+      tileLayerNode->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory, sizeofids);
       memcpy(tileLayerNode->tileGids, tilelayer->content.gids, sizeofids);
       tileLayerNode->tileGidsCount = map->height * map->width;
       tileLayerNode->tileWidth = tileWidth;
@@ -159,6 +175,45 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
       tileLayerNode->mapWidth = map->width;
       tileLayerNode->mapHeight = map->height;
       tileLayerNode->tileSetList = tileSetList;
+    
+    } else if (tilelayer->type == L_OBJGR) {
+      auto object = tilelayer->content.objgr->head;
+      objectLayer = (ObjectLayer *) reserveMemory(&gameContext->longTimeMemory, sizeof(ObjectLayer));
+      auto player = (Player *) reserveMemory(&gameContext->longTimeMemory, sizeof(Player));
+      objectLayer->player = player;
+      player->entity.position = V2D{(float) object->x, (float) object->y};
+      auto numFrames = 0;
+      auto textureHeight = 0;
+      auto textureWidth = 0;
+      auto callbackId = 0;
+      auto animSpeed = 0;
+      auto textureId = (char *) 0;
+      for (auto property = object->properties; property; property = property->next) {
+        if (strcmp("numFrames", property->name) == 0) {
+          numFrames = atoi(property->value);
+
+        } else if (strcmp("textureHeight", property->name) == 0) {
+          textureHeight = atoi(property->value);
+
+        } else if (strcmp("textureWidth", property->name) == 0) {
+          textureWidth = atoi(property->value);
+
+        } else if (strcmp("textureId", property->name) == 0) {
+          auto textureIdLen = strlen(property->value);
+          textureId = (char *) reserveMemory(&gameContext->longTimeMemory, textureIdLen + 1);
+          strcpy(textureId, property->value);
+
+        } else if(strcmp("callbackId", property->name) == 0) {
+          callbackId = atoi(property->value);
+
+        } else if(strcmp("animSpeed", property->name) == 0) {
+          animSpeed = atoi(property->value);
+        }
+      }
+      auto texture = gameContext->functions.getTexture(textureId);
+      player->entity.bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames, 1, 1};
+      player->entity.velocity = V2D{0,0};
+      player->entity.acceleration= V2D{0,0};;
     }
   }
 
@@ -167,3 +222,12 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
   return true;
 }
 
+void
+ObjectLayer::update(GameContext *gameContext) {
+  player->update(gameContext->userInput);
+}
+
+void
+ObjectLayer::draw(SDL_Renderer *renderer) {
+  player->draw(renderer);
+}

@@ -10,19 +10,19 @@
 bool
 PlayState::init(GameContext *gameContext) {
 
-  if (!gameContext->functions.loadTexture("HELICOPTER", "helicopter.png", gameContext->renderer,
-                                          &gameContext->permanentMemory)) {
-    return false;
-  }
+//  if (!gameContext->functions.loadTexture("HELICOPTER", "helicopter.png", gameContext->renderer,
+//                                          &gameContext->permanentMemory)) {
+//    return false;
+//  }
   if (!gameContext->functions.loadTexture("HELICOPTER2", "helicopter2.png", gameContext->renderer,
                                           &gameContext->permanentMemory)) {
     return false;
   }
 
-  SDL_Texture *helicopter = gameContext->functions.getTexture("HELICOPTER");
-  if (!helicopter) {
-    return false;
-  }
+//  SDL_Texture *helicopter = gameContext->functions.getTexture("HELICOPTER");
+//  if (!helicopter) {
+//    return false;
+//  }
   SDL_Texture *helicopter2 = gameContext->functions.getTexture("HELICOPTER2");
   if (!helicopter2) {
     return false;
@@ -34,8 +34,8 @@ PlayState::init(GameContext *gameContext) {
     return false;
   }
 
-  player = PLACEMENT_NEW(&gameContext->permanentMemory, Player)
-      Player{{{500, 100}, {helicopter, 128, 55, 5, 1, 1}}};
+//  player = PLACEMENT_NEW(&gameContext->permanentMemory, Player)
+//      Player{{{500, 100}, {helicopter, 128, 55, 5, 1, 1}}};
 
   enemy = PLACEMENT_NEW(&gameContext->permanentMemory, Entity)
       Enemy{{{0, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f}, {0, .33f}}};
@@ -50,18 +50,18 @@ PlayState::update(GameContext *gameContext) {
     return;
   }
   tileMap->update(gameContext);
-  player->update(gameContext->userInput);
+  //player->update(gameContext->userInput);
   enemy->update(gameContext->userInput);
 
-  if (checkCollision(&enemy->entity, &player->entity)) {
-    gameContext->stateChange = GAME_OVER;
+  if (checkCollision(&enemy->entity, &tileMap->objectLayer->player->entity)) {
+    //gameContext->stateChange = GAME_OVER;
   }
 }
 
 void
 PlayState::render(SDL_Renderer *renderer) {
   tileMap->draw(renderer);
-  player->draw(renderer);
+  //player->draw(renderer);
   enemy->draw(renderer);
 }
 
