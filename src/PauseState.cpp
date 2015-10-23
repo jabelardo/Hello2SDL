@@ -26,25 +26,27 @@ PauseState::init(GameContext *gameContext) {
   if (!resumeButton) {
     return false;
   }
-  menuButtons[0] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton{200, 100, {mainButton, 200, 80, 3, 1, 1}, pauseToMain};
+  menuButtons[0] = (MenuButton *) reserveMemory(&gameContext->permanentMemory, sizeof(MenuButton));
+  *menuButtons[0] = {200, 100, {mainButton, 200, 80, 3, 1, 1}, pauseToMain};
 
-  menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton{200, 300, {resumeButton, 200, 80, 3, 1, 1}, resumePlay};
+  menuButtons[1] = (MenuButton *) reserveMemory(&gameContext->permanentMemory, sizeof(MenuButton));
+  *menuButtons[1] = {200, 300, {resumeButton, 200, 80, 3, 1, 1}, resumePlay};
 
   return true;
 }
 
 void
 PauseState::update(GameContext *gameContext) {
-  for (auto &menuButton : menuButtons) {
+  for (int i = 0; i < SDL_arraysize(menuButtons); ++i) {
+    MenuButton *menuButton = menuButtons[i];
     menuButton->update(gameContext);
   }
 }
 
 void
 PauseState::render(SDL_Renderer *renderer) {
-  for (auto &menuButton : menuButtons) {
+  for (int i = 0; i < SDL_arraysize(menuButtons); ++i) {
+    MenuButton *menuButton = menuButtons[i];
     menuButton->draw(renderer);
   }
 }

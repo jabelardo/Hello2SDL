@@ -14,12 +14,6 @@
 #include "Entity.h"
 #include "UserInput.h"
 
-Game::Game(MenuState *menuState, PlayState *playState, PauseState *pauseState,
-           GameOverState *gameOverState)
-    : menuState(menuState), playState(playState), pauseState(pauseState),
-      gameOverState(gameOverState) {
-}
-
 void
 Game::update(GameContext *gameContext) {
   gameContext->stateChange = NONE;

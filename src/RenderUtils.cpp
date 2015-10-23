@@ -6,8 +6,8 @@
 
 void
 drawTile(SDL_Renderer *renderer, int margin, int spacing, int x, int y, Bitmap *bitmap) {
-  auto srcRect = SDL_Rect{};
-  auto destRect = SDL_Rect{};
+  SDL_Rect srcRect;
+  SDL_Rect destRect;
   srcRect.x = margin + (spacing + bitmap->width) * bitmap->currentFrame;
   srcRect.y = margin + (spacing + bitmap->height) * bitmap->currentRow;
   srcRect.w = destRect.w = bitmap->width;
@@ -26,8 +26,8 @@ drawBitmap(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, SDL_RendererFli
 void
 drawTexture(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y, int width, int height,
             SDL_RendererFlip flip) {
-  auto srcRect = SDL_Rect{};
-  auto destRect = SDL_Rect{};
+  SDL_Rect srcRect;
+  SDL_Rect destRect;
   srcRect.x = 0;
   srcRect.y = 0;
   srcRect.w = destRect.w = width;
@@ -40,8 +40,8 @@ drawTexture(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y, int widt
 void
 drawTextureFrame(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y, int width, int height,
                  int currentRow, int currentFrame, SDL_RendererFlip flip) {
-  auto srcRect = SDL_Rect{};
-  auto destRect = SDL_Rect{};
+  SDL_Rect srcRect;
+  SDL_Rect destRect;
   srcRect.x = width * currentFrame;
   srcRect.y = height * (currentRow - 1);
   srcRect.w = destRect.w = width;

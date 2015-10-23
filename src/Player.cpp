@@ -28,7 +28,7 @@ Player::update(UserInput *userInput) {
   entity.bitmap.currentFrame = (int) ((SDL_GetTicks() / 100) % entity.bitmap.totalFrames);
   entity.velocity = V2D{0, 0};
 
-  auto target = V2D{(float) userInput->mousePositionX, (float) userInput->mousePositionY};
+  V2D target = {(float) userInput->mousePositionX, (float) userInput->mousePositionY};
   entity.velocity = (target - entity.position) / 50;
 
   entity.velocity += entity.acceleration;

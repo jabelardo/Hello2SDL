@@ -33,21 +33,22 @@ GameOverState::init(GameContext *gameContext) {
   if (!gameOverText) {
     return false;
   }
-  menuButtons[0] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton{200, 200, {mainButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1}, gameOverToMain};
+  menuButtons[0] = (MenuButton *) reserveMemory(&gameContext->permanentMemory, sizeof(MenuButton));
+  *menuButtons[0] = {200, 200, {mainButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1}, gameOverToMain};
 
-  menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton{200, 300, {restartButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1}, restartPlay};
+  menuButtons[1] = (MenuButton *) reserveMemory(&gameContext->permanentMemory, sizeof(MenuButton));
+  *menuButtons[1] = {200, 300, {restartButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1}, restartPlay};
 
-  gameOverGraphic = PLACEMENT_NEW(&gameContext->permanentMemory, AnimatedGraphic)
-      AnimatedGraphic{200, 100, {gameOverText, 190, 30, 2, 1, 1}, 2};
+  gameOverGraphic = (AnimatedGraphic *) reserveMemory(&gameContext->permanentMemory, sizeof(AnimatedGraphic));
+  *gameOverGraphic = {200, 100, {gameOverText, 190, 30, 2, 1, 1}, 2};
 
   return true;
 }
 
 void
 GameOverState::update(GameContext *gameContext) {
-  for (auto &menuButton : menuButtons) {
+  for (int i = 0; i < SDL_arraysize(menuButtons); ++i) {
+    MenuButton *menuButton = menuButtons[i];
     menuButton->update(gameContext);
   }
   gameOverGraphic->update(gameContext->userInput);
@@ -55,7 +56,8 @@ GameOverState::update(GameContext *gameContext) {
 
 void
 GameOverState::render(SDL_Renderer *renderer) {
-  for (auto &menuButton : menuButtons) {
+  for (int i = 0; i < SDL_arraysize(menuButtons); ++i) {
+    MenuButton *menuButton = menuButtons[i];
     menuButton->draw(renderer);
   }
   gameOverGraphic->draw(renderer);

@@ -37,8 +37,8 @@ PlayState::init(GameContext *gameContext) {
 //  player = PLACEMENT_NEW(&gameContext->permanentMemory, Player)
 //      Player{{{500, 100}, {helicopter, 128, 55, 5, 1, 1}}};
 
-  enemy = PLACEMENT_NEW(&gameContext->permanentMemory, Entity)
-      Enemy{{{0, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f}, {0, .33f}}};
+  enemy = (Enemy *) reserveMemory(&gameContext->permanentMemory, sizeof(Entity));
+  *enemy = {{{400, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f}, {0, .33f}}};
 
   return true;
 }
@@ -54,7 +54,7 @@ PlayState::update(GameContext *gameContext) {
   enemy->update(gameContext->userInput);
 
   if (checkCollision(&enemy->entity, &tileMap->objectLayer->player->entity)) {
-    //gameContext->stateChange = GAME_OVER;
+    gameContext->stateChange = GAME_OVER;
   }
 }
 

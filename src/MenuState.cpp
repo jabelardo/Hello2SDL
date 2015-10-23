@@ -34,31 +34,31 @@ MenuState::init(GameContext *gameContext) {
   callbacks[0] = menuToPlay;
   callbacks[1] = exitFromGame;
 
-  menuButtons[0] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton{100, 100, {textureArray[0], 400, 100, 3, 1, 1}, callbacks[0]};
+  menuButtons[0] = (MenuButton *) reserveMemory(&gameContext->permanentMemory, sizeof(MenuButton));
+  *menuButtons[0] = {100, 100, {textureArray[0], 400, 100, 3, 1, 1}, callbacks[0]};
 
-  menuButtons[1] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-      MenuButton{100, 300, {textureArray[1], 400, 100, 3, 1, 1}, callbacks[1]};
+  menuButtons[1] = (MenuButton *) reserveMemory(&gameContext->permanentMemory, sizeof(MenuButton));
+  *menuButtons[1] = {100, 300, {textureArray[1], 400, 100, 3, 1, 1}, callbacks[1]};
 
   return true;
 }
 
 bool
 MenuState::init(xmlDoc *doc, GameContext *gameContext) {
-  auto root = xmlDocGetRootElement(doc);
-  auto menu = getXmlElement(root, (const xmlChar *) "MENU");
+  xmlNode *root = xmlDocGetRootElement(doc);
+  xmlNode *menu = getXmlElement(root, (const xmlChar *) "MENU");
   if (!menu) {
     return false;
   }
-  auto textures = getXmlElement(menu, (const xmlChar *) "TEXTURES");
+  xmlNode *textures = getXmlElement(menu, (const xmlChar *) "TEXTURES");
   if (!textures) {
     return false;
   }
-  for (auto e = textures->children; e; e = e->next) {
+  for (xmlNode *e = textures->children; e; e = e->next) {
     if (e->type == XML_ELEMENT_NODE && xmlStrcmp(e->name, (const xmlChar *) "texture") == 0) {
-      auto id = (char *) xmlGetProp(e, (const xmlChar *) "id");
-      auto filename = (char *) xmlGetProp(e, (const xmlChar *) "filename");
-      auto textureId = getTextureId(id);
+      char *id = (char *) xmlGetProp(e, (const xmlChar *) "id");
+      char *filename = (char *) xmlGetProp(e, (const xmlChar *) "filename");
+      TextureId textureId = getTextureId(id);
       if (!gameContext->functions.loadTexture("textureId", filename, gameContext->renderer,
                                               &gameContext->permanentMemory)) {
         xmlFree(id);
@@ -85,29 +85,29 @@ MenuState::init(xmlDoc *doc, GameContext *gameContext) {
   callbacks[0] = menuToPlay;
   callbacks[1] = exitFromGame;
 
-  auto objects = getXmlElement(menu, (const xmlChar *) "OBJECTS");
+  xmlNode *objects = getXmlElement(menu, (const xmlChar *) "OBJECTS");
   if (!objects) {
     return false;
   }
-  for (auto e = objects->children; e; e = e->next) {
+  for (xmlNode *e = objects->children; e; e = e->next) {
     if (e->type == XML_ELEMENT_NODE && xmlStrcmp(e->name, (const xmlChar *) "object") == 0) {
-      auto type = xmlGetProp(e, (const xmlChar *) "type");
+      const xmlChar * type = xmlGetProp(e, (const xmlChar *) "type");
       if (xmlStrcmp(type, (const xmlChar *) "MenuButton") == 0) {
-        auto id = (char *) xmlGetProp(e, (const xmlChar *) "id");
-        auto idx = atoi(id);
-        auto x = (char *) xmlGetProp(e, (const xmlChar *) "x");
-        auto y = (char *) xmlGetProp(e, (const xmlChar *) "y");
-        auto textureId = (char *) xmlGetProp(e, (const xmlChar *) "textureId");
-        auto width = (char *) xmlGetProp(e, (const xmlChar *) "width");
-        auto height = (char *) xmlGetProp(e, (const xmlChar *) "height");
-        auto totalFrames = (char *) xmlGetProp(e, (const xmlChar *) "totalFrames");
-        auto currentFrame = (char *) xmlGetProp(e, (const xmlChar *) "currentFrame");
-        auto currentRow = (char *) xmlGetProp(e, (const xmlChar *) "currentRow");
-        menuButtons[idx] = PLACEMENT_NEW(&gameContext->permanentMemory, MenuButton)
-            MenuButton{atoi(x), atoi(y),
-                       {textureArray[idx], atoi(width), atoi(height), atoi(totalFrames),
-                        atoi(currentFrame), atoi(currentRow)},
-                       callbacks[idx]};
+        char * id = (char *) xmlGetProp(e, (const xmlChar *) "id");
+        int idx = atoi(id);
+        char *x = (char *) xmlGetProp(e, (const xmlChar *) "x");
+        char *y = (char *) xmlGetProp(e, (const xmlChar *) "y");
+        char *textureId = (char *) xmlGetProp(e, (const xmlChar *) "textureId");
+        char *width = (char *) xmlGetProp(e, (const xmlChar *) "width");
+        char *height = (char *) xmlGetProp(e, (const xmlChar *) "height");
+        char *totalFrames = (char *) xmlGetProp(e, (const xmlChar *) "totalFrames");
+        char *currentFrame = (char *) xmlGetProp(e, (const xmlChar *) "currentFrame");
+        char *currentRow = (char *) xmlGetProp(e, (const xmlChar *) "currentRow");
+        menuButtons[idx] = (MenuButton *) reserveMemory(&gameContext->permanentMemory, sizeof(MenuButton));
+        *menuButtons[idx] = {atoi(x), atoi(y),
+                             {textureArray[idx], atoi(width), atoi(height), atoi(totalFrames),
+                              atoi(currentFrame), atoi(currentRow)},
+                             callbacks[idx]};
         xmlFree(id);
         xmlFree(x);
         xmlFree(y);
@@ -125,14 +125,16 @@ MenuState::init(xmlDoc *doc, GameContext *gameContext) {
 
 void
 MenuState::update(GameContext *gameContext) {
-  for (auto &menuButton : menuButtons) {
+  for (int i = 0; i < SDL_arraysize(menuButtons); ++i) {
+    MenuButton *menuButton = menuButtons[i];
     menuButton->update(gameContext);
   }
 }
 
 void
 MenuState::render(SDL_Renderer *renderer) {
-  for (auto &menuButton : menuButtons) {
+  for (int i = 0; i < SDL_arraysize(menuButtons); ++i) {
+    MenuButton *menuButton = menuButtons[i];
     menuButton->draw(renderer);
   }
 }

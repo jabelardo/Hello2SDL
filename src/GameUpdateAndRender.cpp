@@ -38,22 +38,18 @@ gameUpdateAndRender(GameContext *gameContext) {
 
   if (!gameContext->isInitialized) {
 
-    auto menuState = PLACEMENT_NEW(&gameContext->permanentMemory, MenuState)
-        MenuState;
+    MenuState *menuState = PLACEMENT_NEW(&gameContext->permanentMemory, MenuState) MenuState;
 
-    auto playState = PLACEMENT_NEW(&gameContext->permanentMemory, PlayState)
-        PlayState;
+    PlayState *playState = PLACEMENT_NEW(&gameContext->permanentMemory, PlayState) PlayState;
 
-    auto pauseState = PLACEMENT_NEW(&gameContext->permanentMemory, PauseState)
-        PauseState;
+    PauseState *pauseState = PLACEMENT_NEW(&gameContext->permanentMemory, PauseState) PauseState;
 
-    auto gameOverState = PLACEMENT_NEW(&gameContext->permanentMemory, GameOverState)
-        GameOverState;
+    GameOverState *gameOverState = PLACEMENT_NEW(&gameContext->permanentMemory, GameOverState) GameOverState;
 
-    game = PLACEMENT_NEW(&gameContext->permanentMemory, Game)
-        Game(menuState, playState, pauseState, gameOverState);
+    game = (Game *) reserveMemory(&gameContext->permanentMemory, sizeof(Game));
+    *game = {menuState, playState, pauseState, gameOverState};
 
-//    auto doc = xmlReadFile("/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/test.xml", 0, 0);
+//    doc = xmlReadFile("/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/test.xml", 0, 0);
 //    menuState->init(doc, gameContext);
 //    xmlFreeDoc(doc);
 

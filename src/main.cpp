@@ -70,13 +70,13 @@ sdbmHash(const char * str) {
 const char *
 sdlGetResourcePath(const char *filename) {
   if (G_baseResourcePath[0] == 0) {
-    auto basePath = SDL_GetBasePath();
+    char *basePath = SDL_GetBasePath();
     if (!basePath) {
       SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
       return 0;
     }
-    auto pos = strstr(basePath, "build");
-    auto basePathLen = (pos) ? pos - basePath : strlen(basePath);
+    char *pos = strstr(basePath, "build");
+    size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
     strncat(G_baseResourcePath, basePath, basePathLen);
     strcat(G_baseResourcePath, ASSETS_FOLDER);
     strcat(G_baseResourcePath, PATH_SEP);
@@ -93,12 +93,12 @@ sdlGetResourcePath(const char *filename) {
 bool
 sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *renderer,
                MemoryPartition *partition) {
-  auto hashVal32 = sdbmHash(textureName);
-  auto hashPos12 = hashVal32 & 0x00000FFF;
+  uint32_t hashVal32 = sdbmHash(textureName);
+  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
   assert(hashPos12 < SDL_arraysize(G_textureHash));
 
-  auto node = G_textureHash[hashPos12];
-  auto parent = node;
+  TextureHashNode *node = G_textureHash[hashPos12];
+  TextureHashNode *parent = node;
   while (node) {
     if (strcmp(node->name, textureName) == 0) {
       return true;
@@ -113,17 +113,17 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
   } else {
     G_textureHash[hashPos12] = node;
   }
-  
-  auto resource = sdlGetResourcePath(fileName);
+
+  const char *resource = sdlGetResourcePath(fileName);
   if (!strlen(resource)) {
     return false;
   }
-  auto tempSurface = IMG_Load(resource);
+  SDL_Surface *tempSurface = IMG_Load(resource);
   if (!tempSurface) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error IMG_Load: %s\n", SDL_GetError());
     return false;
   }
-  auto texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
   SDL_FreeSurface(tempSurface);
   if (!texture) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error SDL_CreateTextureFromSurface: %s\n",
@@ -131,7 +131,7 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
     return false;
   }
   node->texture = texture;
-  auto textureNameLen = strlen(textureName);
+  size_t textureNameLen = strlen(textureName);
   node->name = (char*) reserveMemory(partition, textureNameLen + 1);
   strcpy(node->name, textureName);
   return true;
@@ -139,11 +139,11 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
 
 SDL_Texture *
 sdlGetTexture(const char * textureName) {
-  auto hashVal32 = sdbmHash(textureName);
-  auto hashPos12 = hashVal32 & 0x00000FFF;
+  uint32_t hashVal32 = sdbmHash(textureName);
+  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
   assert(hashPos12 < SDL_arraysize(G_textureHash));
 
-  auto node = G_textureHash[hashPos12];
+  TextureHashNode *node = G_textureHash[hashPos12];
   while (node) {
     if (strcmp(node->name, textureName) == 0) {
       return node->texture;
@@ -155,7 +155,7 @@ sdlGetTexture(const char * textureName) {
 
 bool
 sdlUnloadTexture(const char * textureName) {
-//  for (auto currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
+//  for (currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
 //    if (currentNode->textureId == textureId) {
 //      SDL_DestroyTexture(currentNode->texture);
 //      currentNode->texture = 0;
@@ -167,10 +167,10 @@ sdlUnloadTexture(const char * textureName) {
 
 int
 sdlGetWindowRefreshRate(SDL_Window *window) {
-  auto displayIndex = SDL_GetWindowDisplayIndex(window);
+  int displayIndex = SDL_GetWindowDisplayIndex(window);
 
   // If we can't find the refresh rate, we'll return DEFAULT_REFRESH_RATE
-  auto mode = SDL_DisplayMode{};
+  SDL_DisplayMode mode = {};
   if (SDL_GetDesktopDisplayMode(displayIndex, &mode) != 0) {
     return DEFAULT_REFRESH_RATE;
   }
@@ -202,9 +202,9 @@ sdlHandleEvent(SDL_Event *event, UserInput *userInput) {
     }
     case SDL_MOUSEBUTTONDOWN:
     case SDL_MOUSEBUTTONUP: {
-      auto button = event->button.button;
-      auto isDown = (event->button.state == SDL_PRESSED);
-      auto wasDown = (event->button.state == SDL_RELEASED) ||
+      Uint8 button = event->button.button;
+      bool isDown = (event->button.state == SDL_PRESSED);
+      bool wasDown = (event->button.state == SDL_RELEASED) ||
                      (event->button.clicks != 0);
       switch (button) {
         case SDL_BUTTON_LEFT: {
@@ -229,9 +229,9 @@ sdlHandleEvent(SDL_Event *event, UserInput *userInput) {
     }
     case SDL_KEYDOWN:
     case SDL_KEYUP: {
-      auto keyCode = event->key.keysym.sym;
-      auto isDown = (event->key.state == SDL_PRESSED);
-      auto wasDown = (event->key.state == SDL_RELEASED) ||
+      SDL_Keycode keyCode = event->key.keysym.sym;
+      bool isDown = (event->key.state == SDL_PRESSED);
+      bool wasDown = (event->key.state == SDL_RELEASED) ||
                      (event->key.repeat != 0);
       if (event->key.repeat == 0) {
         switch (keyCode) {
@@ -305,12 +305,12 @@ void *
 reserveMemory(MemoryPartition *partition, size_t reserveSize) {
   if (partition->type == PERMANENT_MEMORY || partition->type == SHORT_TIME_MEMORY) {
     assert(reserveSize <= partition->totalSize - partition->usedSize);
-    auto result = (int8_t *) partition->base + partition->usedSize;
+    int8_t *result = (int8_t *) partition->base + partition->usedSize;
     partition->usedSize += reserveSize;
     return result;
 
   } else if (partition->type == LONG_TIME_MEMORY) {
-    auto block = partition->base;
+    void *block = partition->base;
     while (block < (int8_t*) partition->base + partition->totalSize) {
       // NOTE:
       // each memory block is prefixed with a ssize_t value indicating the block size, the block is
@@ -320,7 +320,7 @@ reserveMemory(MemoryPartition *partition, size_t reserveSize) {
         if (-1 * blockSize >= reserveSize + sizeof(ssize_t)) {
           assert((int8_t *) block + sizeof(ssize_t) + reserveSize + sizeof(ssize_t)
                  <= (int8_t *) partition->base + partition->totalSize);
-          auto resultAddress = (ssize_t *) block + 1;
+          ssize_t *resultAddress = (ssize_t *) block + 1;
           partition->usedSize += reserveSize + sizeof(ssize_t);
           *(ssize_t *) ((int8_t *) resultAddress + reserveSize) = blockSize + reserveSize + sizeof(ssize_t);
           *(ssize_t *) block = reserveSize;
@@ -359,8 +359,8 @@ freeMemory(MemoryPartition *partition, void* memory) {
     *memorySize *= -1;
 
     // join contiguous free blocks
-    auto block = partition->base;
-    auto freeBlock = (ssize_t *) 0;
+    void *block = partition->base;
+    ssize_t *freeBlock = (ssize_t *) 0;
     while (block < (int8_t*) partition->base + partition->totalSize) {
       ssize_t blockSize = *(ssize_t*) block;
       if (isNegative(blockSize)) {
@@ -385,7 +385,7 @@ freeMemory(MemoryPartition *partition, void* memory) {
 int
 main(int argc, char *args[]) {
 
-  auto result = SDL_Init(SDL_INIT_EVERYTHING);
+  int result = SDL_Init(SDL_INIT_EVERYTHING);
   if (result != 0) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error initializating SDL: %s\n", SDL_GetError());
     return result;
@@ -393,52 +393,52 @@ main(int argc, char *args[]) {
 
   atexit(SDL_Quit);
 
-  auto window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                 SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+  SDL_Window *window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                   SCREEN_WIDTH, SCREEN_HEIGHT, 0);
   if (!window) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating window: %s\n", SDL_GetError());
     return 1;
   }
 
-  auto renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+  SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
   if (!renderer) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating renderer: %s\n", SDL_GetError());
     return 1;
   }
 
-  auto totalReservedMemorySize = MEGABYTES(32) + MEGABYTES(32) + MEGABYTES(32);
+  size_t totalReservedMemorySize = MEGABYTES(32) + MEGABYTES(32) + MEGABYTES(32);
 
 #if _MSC_VER
-  auto totalReservedMemory = VirtualAlloc(0, totalReservedMemorySize, MEM_RESERVE | MEM_COMMIT,
-                                          PAGE_READWRITE);
+  void *totalReservedMemory = VirtualAlloc(0, totalReservedMemorySize, MEM_RESERVE | MEM_COMMIT,
+                                           PAGE_READWRITE);
 #else
-  auto totalReservedMemory = mmap(0, totalReservedMemorySize,  PROT_READ | PROT_WRITE,
-                                  MAP_ANON | MAP_PRIVATE, -1, 0);
+  void *totalReservedMemory = mmap(0, totalReservedMemorySize,  PROT_READ | PROT_WRITE,
+                                   MAP_ANON | MAP_PRIVATE, -1, 0);
 #endif
 
-  auto permanentMemory = MemoryPartition{PERMANENT_MEMORY, MEGABYTES(32), 0, totalReservedMemory};
+   MemoryPartition permanentMemory = {PERMANENT_MEMORY, MEGABYTES(32), 0, totalReservedMemory};
 
-  auto longTimeMemory = MemoryPartition{LONG_TIME_MEMORY, MEGABYTES(32), 0,
-                                        (int8_t *) permanentMemory.base + permanentMemory.totalSize};
+  MemoryPartition longTimeMemory = {LONG_TIME_MEMORY, MEGABYTES(32), 0, 
+                                    (int8_t *) permanentMemory.base + permanentMemory.totalSize};
 
   // init longTimeMemory
   *(ssize_t *) longTimeMemory.base = -longTimeMemory.totalSize - sizeof(ssize_t);
   longTimeMemory.usedSize = sizeof(ssize_t);
 
-  auto shortTimeMemory = MemoryPartition{SHORT_TIME_MEMORY, MEGABYTES(32), 0,
-                                         (int8_t *) longTimeMemory.base + longTimeMemory.totalSize};
+  MemoryPartition shortTimeMemory = {SHORT_TIME_MEMORY, MEGABYTES(32), 0,
+                                     (int8_t *) longTimeMemory.base + longTimeMemory.totalSize};
 
-  auto lastCounter = SDL_GetPerformanceCounter();
-  auto monitorRefreshHz = sdlGetWindowRefreshRate(window);
-  auto targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
-  auto userInput = UserInput{};
+  Uint64 lastCounter = SDL_GetPerformanceCounter();
+  int monitorRefreshHz = sdlGetWindowRefreshRate(window);
+  float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
+  UserInput userInput = {};
   G_gameContext = GameContext{SCREEN_WIDTH, SCREEN_HEIGHT, false, &userInput, renderer,
                               permanentMemory, longTimeMemory, shortTimeMemory,
                               PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
   userInput.shouldQuit = false;
 
   while (!userInput.shouldQuit) {
-    auto event = SDL_Event{};
+    SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
       sdlHandleEvent(&event, &userInput);
     }
@@ -446,9 +446,9 @@ main(int argc, char *args[]) {
     SDL_RenderClear(renderer);
     gameUpdateAndRender(&G_gameContext);
 
-    auto secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
+    float secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
     if (secondsElapsedForFrame < targetSecondsPerFrame) {
-      auto timeToSleep = (Uint32) (targetSecondsPerFrame - secondsElapsedForFrame) * 1000;
+      Uint32 timeToSleep = (Uint32) (targetSecondsPerFrame - secondsElapsedForFrame) * 1000;
       if (timeToSleep > 0) {
 //        printf("timeToSleep %d\n", timeToSleep);
         SDL_Delay(timeToSleep);
@@ -459,7 +459,7 @@ main(int argc, char *args[]) {
 
     SDL_RenderPresent(renderer);
 
-    auto endCounter = SDL_GetPerformanceCounter();
+    Uint64 endCounter = SDL_GetPerformanceCounter();
 
     lastCounter = endCounter;
   }

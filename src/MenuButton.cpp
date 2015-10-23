@@ -12,8 +12,8 @@ MenuButton::draw(SDL_Renderer *renderer) {
 
 void
 MenuButton::update(GameContext *gameContext) {
-  auto mousePositionX = gameContext->userInput->mousePositionX;
-  auto mousePositionY = gameContext->userInput->mousePositionY;
+  int mousePositionX = gameContext->userInput->mousePositionX;
+  int mousePositionY = gameContext->userInput->mousePositionY;
   if (mousePositionX < (x + bitmap.width)
       && mousePositionX > x
       && mousePositionY < (y + bitmap.height)

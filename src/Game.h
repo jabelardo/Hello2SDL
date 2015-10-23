@@ -13,11 +13,7 @@
 #include "RenderUtils.h"
 #include "UserInput.h"
 
-class Game {
-public:
-
-  Game(MenuState *menuState, PlayState *playState, PauseState *pauseState,
-       GameOverState *gameOverState);
+struct Game {
 
   void update(GameContext *gameContext);
 
@@ -35,7 +31,6 @@ public:
 
   void processStateChange(GameContext *gameContext);
 
-private:
   MenuState *menuState;
   PlayState *playState;
   PauseState *pauseState;
