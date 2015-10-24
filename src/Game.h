@@ -2,8 +2,8 @@
 // Created by Jose Gutierrez on 10/16/15.
 //
 
-#ifndef HELLO2SDL_GAMEUPDATEANDRENDER_H
-#define HELLO2SDL_GAMEUPDATEANDRENDER_H
+#ifndef HELLO2SDL_GAME_H
+#define HELLO2SDL_GAME_H
 
 #ifdef __APPLE__
 
@@ -27,4 +27,4 @@ int gameUpdateAndRender(GameContext *gameContext);
 }
 #endif
 
-#endif //HELLO2SDL_GAMEUPDATEANDRENDER_H
+#endif //HELLO2SDL_GAME_H

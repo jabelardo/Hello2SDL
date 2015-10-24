@@ -20,7 +20,7 @@
 
 #include "UserInput.h"
 
-#include "GameUpdateAndRender.cpp"
+#include "Game.cpp"
 #include "GameContext.h"
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
@@ -344,7 +344,6 @@ freeMemory(MemoryPartition *partition, void* memory) {
     return false;
 
   } else if (partition->type == SHORT_TIME_MEMORY) {
-    partition->usedSize = 0;
     return true;
 
   } else if (partition->type == LONG_TIME_MEMORY) {

@@ -5,17 +5,13 @@
 #ifndef HELLO2SDL_USERINPUT_H
 #define HELLO2SDL_USERINPUT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct ButtonState {
+struct ButtonState {
   int halfTransitionCount;
   bool endedDown;
   bool wasDown;
-} ButtonState;
+};
 
-typedef struct UserInput {
+struct UserInput {
   bool shouldQuit;
 
   int mousePositionX;
@@ -40,10 +36,6 @@ typedef struct UserInput {
 
   ButtonState back;
   ButtonState start;
-} UserInput;
-
-#ifdef __cplusplus
-}
-#endif
+};
 
 #endif //HELLO2SDL_USERINPUT_H

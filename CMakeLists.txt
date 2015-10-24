@@ -7,20 +7,19 @@ set(SOURCE_FILES
         src/AnimatedGraphic.cpp
         src/AnimatedGraphic.h
         src/Bitmap.h
+        src/Entity.h
         src/GameContext.h
-        src/GameUpdateAndRender.cpp
-        src/GameUpdateAndRender.h
-        src/TileMap.cpp
-        src/TileMap.h
+        src/Game.cpp
+        src/Game.h
         src/main.cpp
         src/MenuButton.cpp
         src/MenuButton.h
         src/RenderUtils.cpp
         src/RenderUtils.h
+        src/TileMap.cpp
+        src/TileMap.h
         src/UserInput.h
-        src/V2D.h
-        src/XmlUtils.cpp
-        src/XmlUtils.h)
+        src/V2D.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

@@ -2,7 +2,7 @@
 // Created by Jose Gutierrez on 10/16/15.
 //
 
-#include "GameUpdateAndRender.h"
+#include "Game.h"
 #include "Entity.h"
 #include "GameContext.h"
 
@@ -10,7 +10,6 @@
 #include "TileMap.cpp"
 #include "MenuButton.cpp"
 #include "RenderUtils.cpp"
-#include "XmlUtils.cpp"
 
 struct MainMenu {
   union {
@@ -66,87 +65,6 @@ startPlay(GameContext *gameContext) {
 void
 exitFromGame(GameContext *gameContext) {
   gameContext->stateChange = EXIT_FROM_GAME;
-}
-
-bool
-initMainMenu(MainMenu *mainMenu, xmlDoc *doc, GameContext *gameContext) {
-  xmlNode *root = xmlDocGetRootElement(doc);
-  xmlNode *menu = getXmlElement(root, (const xmlChar *) "MENU");
-  if (!menu) {
-    return false;
-  }
-  xmlNode *textures = getXmlElement(menu, (const xmlChar *) "TEXTURES");
-  if (!textures) {
-    return false;
-  }
-  for (xmlNode *e = textures->children; e; e = e->next) {
-    if (e->type == XML_ELEMENT_NODE && xmlStrcmp(e->name, (const xmlChar *) "texture") == 0) {
-      char *id = (char *) xmlGetProp(e, (const xmlChar *) "id");
-      char *filename = (char *) xmlGetProp(e, (const xmlChar *) "filename");
-      if (!gameContext->functions.loadTexture("textureId", filename, gameContext->renderer,
-                                              &gameContext->permanentMemory)) {
-        xmlFree(id);
-        xmlFree(filename);
-        return false;
-      }
-      xmlFree(id);
-      xmlFree(filename);
-    }
-  }
-
-  SDL_Texture *textureArray[2] = {};
-
-  textureArray[0] = gameContext->functions.getTexture("PLAY_BUTTON");
-  if (!textureArray[0]) {
-    return false;
-  }
-  textureArray[1] = gameContext->functions.getTexture("EXIT_BUTTON");
-  if (!textureArray[1]) {
-    return false;
-  }
-
-  GameContextCallbackFunc *callbacks[2] = {};
-  callbacks[0] = startPlay;
-  callbacks[1] = exitFromGame;
-
-  xmlNode *objects = getXmlElement(menu, (const xmlChar *) "OBJECTS");
-  if (!objects) {
-    return false;
-  }
-  for (xmlNode *e = objects->children; e; e = e->next) {
-    if (e->type == XML_ELEMENT_NODE && xmlStrcmp(e->name, (const xmlChar *) "object") == 0) {
-      const xmlChar *type = xmlGetProp(e, (const xmlChar *) "type");
-      if (xmlStrcmp(type, (const xmlChar *) "MenuButton") == 0) {
-        char *id = (char *) xmlGetProp(e, (const xmlChar *) "id");
-        int idx = atoi(id);
-        char *x = (char *) xmlGetProp(e, (const xmlChar *) "x");
-        char *y = (char *) xmlGetProp(e, (const xmlChar *) "y");
-        char *textureId = (char *) xmlGetProp(e, (const xmlChar *) "textureId");
-        char *width = (char *) xmlGetProp(e, (const xmlChar *) "width");
-        char *height = (char *) xmlGetProp(e, (const xmlChar *) "height");
-        char *totalFrames = (char *) xmlGetProp(e, (const xmlChar *) "totalFrames");
-        char *currentFrame = (char *) xmlGetProp(e, (const xmlChar *) "currentFrame");
-        char *currentRow = (char *) xmlGetProp(e, (const xmlChar *) "currentRow");
-        mainMenu->menuButtons[idx] = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
-                                                                  sizeof(MenuButton));
-        *mainMenu->menuButtons[idx] = {atoi(x), atoi(y),
-                                       {textureArray[idx], atoi(width), atoi(height),
-                                        atoi(totalFrames),
-                                        atoi(currentFrame), atoi(currentRow)},
-                                       callbacks[idx]};
-        xmlFree(id);
-        xmlFree(x);
-        xmlFree(y);
-        xmlFree(textureId);
-        xmlFree(width);
-        xmlFree(height);
-        xmlFree(totalFrames);
-        xmlFree(currentFrame);
-        xmlFree(currentRow);
-      }
-    }
-  }
-  return false;
 }
 
 bool
