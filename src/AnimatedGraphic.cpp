@@ -13,13 +13,15 @@
 #include "RenderUtils.h"
 
 void
-AnimatedGraphic::draw(SDL_Renderer *renderer) {
-  drawBitmap(renderer, x, y, &bitmap);
+drawAnimatedGraphic(AnimatedGraphic *animatedGraphic, SDL_Renderer *renderer) {
+  drawBitmap(renderer, animatedGraphic->x, animatedGraphic->y, &animatedGraphic->bitmap);
 }
 
 void
-AnimatedGraphic::update(UserInput *inputHandler) {
-  if (animationSpeed) {
-    bitmap.currentFrame = (int) ((SDL_GetTicks() / (1000 / animationSpeed)) % bitmap.totalFrames);
+updateAnimatedGraphic(AnimatedGraphic *animatedGraphic, UserInput *inputHandler) {
+  if (animatedGraphic->animationSpeed) {
+    animatedGraphic->bitmap.currentFrame = (int) (
+        (SDL_GetTicks() / (1000 / animatedGraphic->animationSpeed)) %
+        animatedGraphic->bitmap.totalFrames);
   }
 }

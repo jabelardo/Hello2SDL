@@ -21,11 +21,11 @@ struct AnimatedGraphic {
   int y;
   Bitmap bitmap;
   int animationSpeed;
-
-  void draw(SDL_Renderer *renderer);
-
-  void update(UserInput *inputHandler);
 };
+
+void drawAnimatedGraphic(AnimatedGraphic* animatedGraphic, SDL_Renderer *renderer);
+
+void updateAnimatedGraphic(AnimatedGraphic* animatedGraphic, UserInput *inputHandler);
 
 
 #endif //HELLO2SDL_ANIMATEDGRAPHIC_H

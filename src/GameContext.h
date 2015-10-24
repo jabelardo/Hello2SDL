@@ -23,13 +23,20 @@ struct MemoryPartition {
   void *base;
 };
 
+enum GameState {
+  PLAY_STATE,
+  MAIN_MENU_STATE,
+  PAUSE_MENU_STATE,
+  GAME_OVER_STATE
+};
+
 enum GameStateChange {
   NONE = 0,
-  RESTART_PLAY,
+  START_PLAY,
   EXIT_FROM_GAME,
-  SHOW_MAIN_MENU,
+  MAIN_MENU,
   RESUME_PLAY,
-  PAUSE_PLAY,
+  PAUSE_MENU,
   GAME_OVER
 };
 
@@ -54,6 +61,7 @@ struct GameContext {
   MemoryPartition longTimeMemory;
   MemoryPartition shortTimetMemory;
   PlatformFunctions functions;
+  GameState currentState;
   GameStateChange stateChange;
 };
 

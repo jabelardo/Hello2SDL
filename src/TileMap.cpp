@@ -5,67 +5,13 @@
 #include "TileMap.h"
 #include "tmx.h"
 #include "RenderUtils.h"
+#include "Entity.h"
 
 #include "tmx.h"
 
-void
-TileLayer::draw(SDL_Renderer *renderer) {
-  int x = (int) position.x / tileWidth;
-  int y = (int) position.y / tileHeight;
-  int x2 = (int) position.x % tileWidth;
-  int y2 = (int) position.y % tileHeight;
-  for (int i = (y2 < 0 ? -1 : 0); i < (y2 <= 0 ? screenRows : screenRows + 1); ++i) {
-    for (int j = (x2 < 0 ? -1 : 0); j < (x2 <= 0 ? screenColumns : screenColumns + 1); ++j) {
-      int tileX = j + x;
-      if (tileX >= mapWidth) {
-        tileX -= mapWidth;
-      } else if (tileX < 0) {
-        tileX += mapWidth;
-      }
-      int tileY = i + y;
-      if (tileY >= mapHeight) {
-        tileY -= mapHeight;
-      } else if (tileY < 0) {
-        tileY += mapHeight;
-      }
-      int tileIdx = tileY * mapWidth + tileX;
-      if (tileIdx >= tileGidsCount) {
-        continue;
-      }
-      int32_t tileId = tileGids[tileIdx];
-      if (tileId == 0) {
-        continue;
-      }
-      TileSet *tileSet = getTileSetById(tileId);
-      if (tileSet == 0) {
-        continue;
-      }
-      SDL_Texture *texture = tileSet->texture;
-      int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
-      int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
-      Bitmap bitmap = {texture, tileWidth, tileHeight, 0, currentFrame, currentRow};
-      int x3 = (j * tileWidth) - x2;
-      int y3 = (i * tileHeight) - y2;
-      drawTile(renderer, 2, 2, x3, y3, &bitmap);
-    }
-  }
-}
-
-void
-TileLayer::update(GameContext *gameContext) {
-  velocity.x = 1;
-  position += velocity;
-  if (position.x == mapWidth * tileWidth || position.x == -mapWidth * tileWidth) {
-    position.x = 0;
-  }
-  if (position.y == mapHeight * tileHeight || position.y == -mapHeight * tileHeight) {
-    position.y = 0;
-  }
-}
-
 TileSet *
-TileLayer::getTileSetById(int tileId) {
-  for (TileSet *node = tileSetList; node; node = node->next) {
+getTileSetById(TileLayer* tileLayer, int tileId) {
+  for (TileSet *node = tileLayer->tileSetList; node; node = node->next) {
     if (tileId >= node->firstGid && tileId < node->firstGid + node->tileCount) {
       return node;
     }
@@ -74,33 +20,100 @@ TileLayer::getTileSetById(int tileId) {
 }
 
 void
-TileMap::draw(SDL_Renderer *renderer) {
-  for (TileLayer *node = tileLayerList; node; node = node->next) {
-    node->draw(renderer);
+drawTileLayer(TileLayer* tileLayer, SDL_Renderer *renderer) {
+  int x = (int) tileLayer->position.x / tileLayer->tileWidth;
+  int y = (int) tileLayer->position.y / tileLayer->tileHeight;
+  int x2 = (int) tileLayer->position.x % tileLayer->tileWidth;
+  int y2 = (int) tileLayer->position.y % tileLayer->tileHeight;
+  for (int i = (y2 < 0 ? -1 : 0); i < (y2 <= 0 ? tileLayer->screenRows : tileLayer->screenRows + 1); ++i) {
+    for (int j = (x2 < 0 ? -1 : 0); j < (x2 <= 0 ? tileLayer->screenColumns : tileLayer->screenColumns + 1); ++j) {
+      int tileX = j + x;
+      if (tileX >= tileLayer->mapWidth) {
+        tileX -= tileLayer->mapWidth;
+      } else if (tileX < 0) {
+        tileX += tileLayer->mapWidth;
+      }
+      int tileY = i + y;
+      if (tileY >= tileLayer->mapHeight) {
+        tileY -= tileLayer->mapHeight;
+      } else if (tileY < 0) {
+        tileY += tileLayer->mapHeight;
+      }
+      int tileIdx = tileY * tileLayer->mapWidth + tileX;
+      if (tileIdx >= tileLayer->tileGidsCount) {
+        continue;
+      }
+      int32_t tileId = tileLayer->tileGids[tileIdx];
+      if (tileId == 0) {
+        continue;
+      }
+      TileSet *tileSet = getTileSetById(tileLayer, tileId);
+      if (tileSet == 0) {
+        continue;
+      }
+      SDL_Texture *texture = tileSet->texture;
+      int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
+      int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
+      Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame, currentRow};
+      int x3 = (j * tileLayer->tileWidth) - x2;
+      int y3 = (i * tileLayer->tileHeight) - y2;
+      drawTile(renderer, 2, 2, x3, y3, &bitmap);
+    }
   }
-  objectLayer->draw(renderer);
 }
 
-void TileMap::update(GameContext *gameContext) {
-  for (TileLayer *node = tileLayerList; node; node = node->next) {
-    node->update(gameContext);
+void
+drawObjectLayer(ObjectLayer* objectLayer, SDL_Renderer *renderer) {
+  drawEntity(objectLayer->player, renderer);
+}
+
+void
+drawTileMap(TileMap* tileMap, SDL_Renderer *renderer) {
+  for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
+    drawTileLayer(node, renderer);
   }
-  objectLayer->update(gameContext);
+  drawObjectLayer(tileMap->objectLayer, renderer);
+}
+
+void
+updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
+  tileLayer->velocity.x = 1;
+  tileLayer->position += tileLayer->velocity;
+  if (tileLayer->position.x == tileLayer->mapWidth * tileLayer->tileWidth ||
+      tileLayer->position.x == -tileLayer->mapWidth * tileLayer->tileWidth) {
+    tileLayer->position.x = 0;
+  }
+  if (tileLayer->position.y == tileLayer->mapHeight * tileLayer->tileHeight ||
+      tileLayer->position.y == -tileLayer->mapHeight * tileLayer->tileHeight) {
+    tileLayer->position.y = 0;
+  }
+}
+void
+updateObjectLayer(ObjectLayer* objectLayer, GameContext *gameContext) {
+  updateEntity(objectLayer->player, gameContext->userInput);
+}
+
+void
+updateTileMap(TileMap* tileMap, GameContext *gameContext) {
+  for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
+    updateTileLayer(node, gameContext);
+  }
+  updateObjectLayer(tileMap->objectLayer, gameContext);
 }
 
 bool
-TileMap::init(GameContext *gameContext, const char *mapfile) {
+initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
 
   tmx_map *map = tmx_load(mapfile);
   if (!map) {
     return false;
   }
 
-  width = map->width;
-  height = map->height;
-  tileWidth = map->tile_width;
-  tileHeight = map->tile_height;
-  tileLayerList = 0;
+  tileMap->width = map->width;
+  tileMap->height = map->height;
+  tileMap->tileWidth = map->tile_width;
+  tileMap->tileHeight = map->tile_height;
+  tileMap->tileLayerList = 0;
 
   for (tmx_property *property = map->properties; property; property = property->next) {
     if (!gameContext->functions.loadTexture(property->name,
@@ -156,8 +169,8 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
     if (tilelayer->type == L_LAYER && tilelayer->content.gids) {
       TileLayer *newTileLayerNode = (TileLayer *) reserveMemory(&gameContext->longTimeMemory, 
                                                                 sizeof(TileLayer));
-      if (!tileLayerList) {
-        tileLayerList = newTileLayerNode;
+      if (!tileMap->tileLayerList) {
+        tileMap->tileLayerList = newTileLayerNode;
       }
       if (tileLayerNode) {
         tileLayerNode->next = newTileLayerNode;
@@ -166,22 +179,18 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
       tileLayerNode->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory, sizeofids);
       memcpy(tileLayerNode->tileGids, tilelayer->content.gids, sizeofids);
       tileLayerNode->tileGidsCount = map->height * map->width;
-      tileLayerNode->tileWidth = tileWidth;
-      tileLayerNode->tileHeight = tileHeight;
+      tileLayerNode->tileWidth = tileMap->tileWidth;
+      tileLayerNode->tileHeight = tileMap->tileHeight;
       tileLayerNode->screenWidth = gameContext->screenWidth;
       tileLayerNode->screenHeight = gameContext->screenWidth;
-      tileLayerNode->screenColumns = gameContext->screenWidth / tileWidth;
-      tileLayerNode->screenRows = gameContext->screenHeight / tileHeight;
+      tileLayerNode->screenColumns = gameContext->screenWidth / tileMap->tileWidth;
+      tileLayerNode->screenRows = gameContext->screenHeight / tileMap->tileHeight;
       tileLayerNode->mapWidth = map->width;
       tileLayerNode->mapHeight = map->height;
       tileLayerNode->tileSetList = tileSetList;
     
     } else if (tilelayer->type == L_OBJGR) {
       tmx_object *object = tilelayer->content.objgr->head;
-      objectLayer = (ObjectLayer *) reserveMemory(&gameContext->longTimeMemory, sizeof(ObjectLayer));
-      Player *player = (Player *) reserveMemory(&gameContext->longTimeMemory, sizeof(Player));
-      objectLayer->player = player;
-      player->entity.position = V2D{(float) object->x, (float) object->y};
       int numFrames = 0;
       int textureHeight = 0;
       int textureWidth = 0;
@@ -211,23 +220,21 @@ TileMap::init(GameContext *gameContext, const char *mapfile) {
         }
       }
       SDL_Texture *texture = gameContext->functions.getTexture(textureId);
-      player->entity.bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames, 1, 1};
-      player->entity.velocity = V2D{0,0};
-      player->entity.acceleration= V2D{0,0};;
+
+      Entity *player = (Entity *) reserveMemory(&gameContext->longTimeMemory, sizeof(Entity));
+      player->type = PLAYER_TYPE;
+      player->position = V2D{(float) object->x, (float) object->y};
+      player->bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames, 1, 1};
+      player->velocity = V2D{0,0};
+      player->acceleration= V2D{0,0};
+
+      tileMap->objectLayer = (ObjectLayer *) reserveMemory(&gameContext->longTimeMemory, sizeof(ObjectLayer));
+      tileMap->objectLayer->playerInitialPosition = player->position;
+      tileMap->objectLayer->player = player;
     }
   }
 
   tmx_map_free(map);
 
   return true;
-}
-
-void
-ObjectLayer::update(GameContext *gameContext) {
-  player->update(gameContext->userInput);
-}
-
-void
-ObjectLayer::draw(SDL_Renderer *renderer) {
-  player->draw(renderer);
 }

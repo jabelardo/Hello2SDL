@@ -7,19 +7,7 @@ set(SOURCE_FILES
         src/AnimatedGraphic.cpp
         src/AnimatedGraphic.h
         src/Bitmap.h
-        src/Enemy.cpp
-        src/Enemy.h
-        src/Entity.cpp
-        src/Entity.h
-        src/Game.cpp
-        src/Game.h
         src/GameContext.h
-        src/GameOverState.cpp
-        src/GameOverState.h
-        src/GameState.h
-        src/GameStateId.h
-        src/GameStateMachine.cpp
-        src/GameStateMachine.h
         src/GameUpdateAndRender.cpp
         src/GameUpdateAndRender.h
         src/TileMap.cpp
@@ -27,18 +15,8 @@ set(SOURCE_FILES
         src/main.cpp
         src/MenuButton.cpp
         src/MenuButton.h
-        src/MenuState.cpp
-        src/MenuState.h
-        src/PauseState.cpp
-        src/PauseState.h
-        src/Player.cpp
-        src/Player.h
-        src/PlayState.cpp
-        src/PlayState.h
         src/RenderUtils.cpp
         src/RenderUtils.h
-        src/TextureId.cpp
-        src/TextureId.h
         src/tmx.c
         src/tmx.h
         src/tmx_err.c

@@ -6,28 +6,28 @@
 #include "RenderUtils.h"
 
 void
-MenuButton::draw(SDL_Renderer *renderer) {
-  drawBitmap(renderer, x, y, &bitmap);
+drawMenuButton(MenuButton* menuButton, SDL_Renderer *renderer) {
+  drawBitmap(renderer, menuButton->x, menuButton->y, &menuButton->bitmap);
 }
 
 void
-MenuButton::update(GameContext *gameContext) {
+updateMenuButton(MenuButton* menuButton, GameContext *gameContext) {
   int mousePositionX = gameContext->userInput->mousePositionX;
   int mousePositionY = gameContext->userInput->mousePositionY;
-  if (mousePositionX < (x + bitmap.width)
-      && mousePositionX > x
-      && mousePositionY < (y + bitmap.height)
-      && mousePositionY > y) {
+  if (mousePositionX < (menuButton->x + menuButton->bitmap.width)
+      && mousePositionX > menuButton->x
+      && mousePositionY < (menuButton->y + menuButton->bitmap.height)
+      && mousePositionY > menuButton->y) {
 
-    if (gameContext->userInput->mouseButtonLeft.endedDown && buttonReleased) {
-      bitmap.currentFrame = CLICKED;
-      callback(gameContext);
-      buttonReleased = false;
+    if (gameContext->userInput->mouseButtonLeft.endedDown && menuButton->buttonReleased) {
+      menuButton->bitmap.currentFrame = MenuButton::CLICKED;
+      menuButton->callback(gameContext);
+      menuButton->buttonReleased = false;
     } else if (gameContext->userInput->mouseButtonLeft.endedDown) {
-      buttonReleased = true;
-      bitmap.currentFrame = MOUSE_OVER;
+      menuButton->buttonReleased = true;
+      menuButton->bitmap.currentFrame = MenuButton::MOUSE_OVER;
     }
   } else {
-    bitmap.currentFrame = MOUSE_OUT;
+    menuButton->bitmap.currentFrame = MenuButton::MOUSE_OUT;
   }
 }

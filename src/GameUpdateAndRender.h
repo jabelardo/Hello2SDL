@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-void gameUpdateAndRender(GameContext *gameContext);
+int gameUpdateAndRender(GameContext *gameContext);
 
 
 #ifdef __cplusplus

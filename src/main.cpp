@@ -444,7 +444,9 @@ main(int argc, char *args[]) {
     }
 
     SDL_RenderClear(renderer);
-    gameUpdateAndRender(&G_gameContext);
+    if (int result = gameUpdateAndRender(&G_gameContext) != 0) {
+      return result;
+    }
 
     float secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
     if (secondsElapsedForFrame < targetSecondsPerFrame) {

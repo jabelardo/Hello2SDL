@@ -30,11 +30,11 @@ struct MenuButton {
   Bitmap bitmap;
   GameContextCallbackFunc *callback;
   bool buttonReleased;
-
-  void draw(SDL_Renderer *renderer);
-
-  void update(GameContext *gameContext);
 };
+
+void drawMenuButton(MenuButton* menuButton, SDL_Renderer *renderer);
+
+void updateMenuButton(MenuButton* menuButton, GameContext *gameContext);
 
 
 #endif //HELLO2SDL_MENUBUTTON_H
