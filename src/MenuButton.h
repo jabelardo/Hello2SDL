@@ -14,8 +14,7 @@
 #endif
 
 #include "Bitmap.h"
-#include "UserInput.h"
-#include "GameContext.h"
+#include "Game.h"
 
 struct MenuButton {
 

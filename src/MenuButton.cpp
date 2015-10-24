@@ -12,18 +12,18 @@ drawMenuButton(MenuButton* menuButton, SDL_Renderer *renderer) {
 
 void
 updateMenuButton(MenuButton* menuButton, GameContext *gameContext) {
-  int mousePositionX = gameContext->userInput->mousePositionX;
-  int mousePositionY = gameContext->userInput->mousePositionY;
+  int mousePositionX = gameContext->userInput.mousePositionX;
+  int mousePositionY = gameContext->userInput.mousePositionY;
   if (mousePositionX < (menuButton->x + menuButton->bitmap.width)
       && mousePositionX > menuButton->x
       && mousePositionY < (menuButton->y + menuButton->bitmap.height)
       && mousePositionY > menuButton->y) {
 
-    if (gameContext->userInput->mouseButtonLeft.endedDown && menuButton->buttonReleased) {
+    if (gameContext->userInput.mouseButtonLeft.endedDown && menuButton->buttonReleased) {
       menuButton->bitmap.currentFrame = MenuButton::CLICKED;
       menuButton->callback(gameContext);
       menuButton->buttonReleased = false;
-    } else if (gameContext->userInput->mouseButtonLeft.endedDown) {
+    } else if (gameContext->userInput.mouseButtonLeft.endedDown) {
       menuButton->buttonReleased = true;
       menuButton->bitmap.currentFrame = MenuButton::MOUSE_OVER;
     }

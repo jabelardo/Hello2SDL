@@ -8,7 +8,6 @@ set(SOURCE_FILES
         src/AnimatedGraphic.h
         src/Bitmap.h
         src/Entity.h
-        src/GameContext.h
         src/Game.cpp
         src/Game.h
         src/main.cpp
@@ -18,7 +17,6 @@ set(SOURCE_FILES
         src/RenderUtils.h
         src/TileMap.cpp
         src/TileMap.h
-        src/UserInput.h
         src/V2D.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})

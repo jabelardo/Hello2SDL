@@ -4,7 +4,6 @@
 
 #include "Game.h"
 #include "Entity.h"
-#include "GameContext.h"
 
 #include "AnimatedGraphic.cpp"
 #include "TileMap.cpp"
@@ -222,12 +221,12 @@ updateEntity(Entity *entity, UserInput *userInput) {
 
 void
 updatePlayState(PlayState *playState, GameContext *gameContext) {
-  if (gameContext->userInput->back.endedDown) {
+  if (gameContext->userInput.back.endedDown) {
     gameContext->stateChange = PAUSE_MENU;
     return;
   }
   updateTileMap(playState->tileMap, gameContext);
-  updateEntity(playState->enemy, gameContext->userInput);
+  updateEntity(playState->enemy, &gameContext->userInput);
 
   if (checkEntityCollision(playState->enemy, playState->tileMap->objectLayer->player)) {
     gameContext->stateChange = GAME_OVER;
@@ -415,11 +414,11 @@ processStateChange(GameContext *gameContext) {
       break;
     }
     case EXIT_FROM_GAME: {
-      gameContext->userInput->shouldQuit = true;
+      gameContext->userInput.shouldQuit = true;
       break;
     }
     case MAIN_MENU: {
-      *gameContext->userInput = UserInput{};
+      gameContext->userInput = UserInput{};
       gameContext->currentState = MAIN_MENU_STATE;
       break;
     }

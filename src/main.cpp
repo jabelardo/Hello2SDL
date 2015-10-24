@@ -1,8 +1,6 @@
 #ifdef __APPLE__
-
 #include <SDL2/SDL.h>
 #include <SDL2_image/SDL_image.h>
-
 #else
 #include <SDL.h>
 #include <SDL_image.h>
@@ -18,10 +16,7 @@
 
 #include <assert.h>
 
-#include "UserInput.h"
-
 #include "Game.cpp"
-#include "GameContext.h"
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
 // On the vast majority of those systems, one can use MAP_ANON instead.
@@ -54,6 +49,18 @@ struct TextureHashNode {
 };
 
 GameContext G_gameContext = {};
+
+
+/*
+ * TODO:
+ *  - dynamic library loading
+ *  - sound system
+ *  - loop game recording / playback
+ *  - improve textureHash to its final version
+ */
+
+// TODO: this should live in the long time memory partition and have a provision to recycle instead
+//       of freeing the nodes on unload texture
 TextureHashNode *G_textureHash[4096] = {};
 
 uint32_t
@@ -432,22 +439,21 @@ main(int argc, char *args[]) {
   Uint64 lastCounter = SDL_GetPerformanceCounter();
   int monitorRefreshHz = sdlGetWindowRefreshRate(window);
   float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
-  UserInput userInput = {};
   char *resourcePath = getResourcePath(&permanentMemory);
-  G_gameContext = GameContext{resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, false, &userInput,
+  G_gameContext = GameContext{resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, false,
                               renderer,
                               permanentMemory, longTimeMemory, shortTimeMemory,
                               PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
-  userInput.shouldQuit = false;
+  G_gameContext.userInput.shouldQuit = false;
 
-  while (!userInput.shouldQuit) {
+  while (!G_gameContext.userInput.shouldQuit) {
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
-      sdlHandleEvent(&event, &userInput);
+      sdlHandleEvent(&event, &G_gameContext.userInput);
     }
 
     SDL_RenderClear(renderer);
-    if (int result = gameUpdateAndRender(&G_gameContext) != 0) {
+    if ((result = gameUpdateAndRender(&G_gameContext) != 0)) {
       return result;
     }
 
@@ -468,8 +474,5 @@ main(int argc, char *args[]) {
 
     lastCounter = endCounter;
   }
-
-  // TODO: xmlCleanupParser();
-
   return 0;
 }

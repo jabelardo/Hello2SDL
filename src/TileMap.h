@@ -13,7 +13,7 @@
 #include <SDL_render.h>
 #endif
 
-#include "GameContext.h"
+#include "Game.h"
 #include "V2D.h"
 
 struct TileSet {

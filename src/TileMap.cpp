@@ -94,7 +94,7 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 
 void
 updateObjectLayer(ObjectLayer *objectLayer, GameContext *gameContext) {
-  updateEntity(objectLayer->player, gameContext->userInput);
+  updateEntity(objectLayer->player, &gameContext->userInput);
 }
 
 void
