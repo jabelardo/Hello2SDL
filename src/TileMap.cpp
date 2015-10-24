@@ -200,9 +200,6 @@ alloc_func
 zlibAllocFunction(MemoryPartition* memoryPartition) {
   static MemoryPartition* partition = memoryPartition;
   alloc_func result = [](void *opaque, unsigned int items, unsigned int size) {
-#ifdef BUILD_SLOW
-    printf("zlibAllocFunction\n");
-#endif
     return reserveMemory(partition, items * size);
   };
   return result;
@@ -212,9 +209,6 @@ free_func
 zlibFreeFunction(MemoryPartition* memoryPartition) {
   static MemoryPartition* partition = memoryPartition;
   free_func result = [](void *opaque, void *address) {
-#ifdef BUILD_SLOW
-    printf("zlibFreeFunction\n");
-#endif
     freeMemory(partition, address);
   };
   return result;
