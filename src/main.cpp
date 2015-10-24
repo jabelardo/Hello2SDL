@@ -53,8 +53,7 @@ struct TextureHashNode {
   TextureHashNode *next;
 };
 
-char G_baseResourcePath[FILENAME_MAX] = {0};
-char G_resourcePath[FILENAME_MAX] = {0};
+char* G_baseResourcePath = 0;
 GameContext G_gameContext = {};
 TextureHashNode* G_textureHash[4096] = {};
 
@@ -68,8 +67,8 @@ sdbmHash(const char * str) {
 }
 
 const char *
-sdlGetResourcePath(const char *filename) {
-  if (G_baseResourcePath[0] == 0) {
+sdlGetResourcePath(const char *filename, MemoryPartition *partition) {
+  if (G_baseResourcePath == 0) {
     char *basePath = SDL_GetBasePath();
     if (!basePath) {
       SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
@@ -77,6 +76,9 @@ sdlGetResourcePath(const char *filename) {
     }
     char *pos = strstr(basePath, "build");
     size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
+    G_baseResourcePath = (char *) reserveMemory(&G_gameContext.permanentMemory, 
+                                                basePathLen + strlen(ASSETS_FOLDER) + 2);
+    G_baseResourcePath[0] = 0;
     strncat(G_baseResourcePath, basePath, basePathLen);
     strcat(G_baseResourcePath, ASSETS_FOLDER);
     strcat(G_baseResourcePath, PATH_SEP);
@@ -85,9 +87,11 @@ sdlGetResourcePath(const char *filename) {
   if (!filename || !strlen(filename)) {
     return G_baseResourcePath;
   }
-  strcpy(G_resourcePath, G_baseResourcePath);
-  strcat(G_resourcePath, filename);
-  return G_resourcePath;
+  char *result = (char *) reserveMemory(partition,
+                                        strlen(G_baseResourcePath) + strlen(filename) + 1);
+  strcpy(result, G_baseResourcePath);
+  strcat(result, filename);
+  return result;
 }
 
 bool
@@ -114,7 +118,7 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
     G_textureHash[hashPos12] = node;
   }
 
-  const char *resource = sdlGetResourcePath(fileName);
+  const char *resource = sdlGetResourcePath(fileName, &G_gameContext.shortTimetMemory);
   if (!strlen(resource)) {
     return false;
   }
