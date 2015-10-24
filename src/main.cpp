@@ -48,17 +48,16 @@
 #define SCREEN_HEIGHT 480
 
 struct TextureHashNode {
-  char* name;
+  char *name;
   SDL_Texture *texture;
   TextureHashNode *next;
 };
 
-char* G_baseResourcePath = 0;
 GameContext G_gameContext = {};
-TextureHashNode* G_textureHash[4096] = {};
+TextureHashNode *G_textureHash[4096] = {};
 
 uint32_t
-sdbmHash(const char * str) {
+sdbmHash(const char *str) {
   uint32_t hash = 0;
   while (int c = *str++) {
     hash = c + (hash << 6) + (hash << 16) - hash;
@@ -66,39 +65,29 @@ sdbmHash(const char * str) {
   return hash;
 }
 
-const char *
-sdlGetResourcePath(const char *filename, MemoryPartition *partition) {
-  if (G_baseResourcePath == 0) {
-    char *basePath = SDL_GetBasePath();
-    if (!basePath) {
-      SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
-      return 0;
-    }
-    char *pos = strstr(basePath, "build");
-    size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
-    G_baseResourcePath = (char *) reserveMemory(&G_gameContext.permanentMemory, 
-                                                basePathLen + strlen(ASSETS_FOLDER) + 2);
-    G_baseResourcePath[0] = 0;
-    strncat(G_baseResourcePath, basePath, basePathLen);
-    strcat(G_baseResourcePath, ASSETS_FOLDER);
-    strcat(G_baseResourcePath, PATH_SEP);
-    SDL_free(basePath);
+char *
+getResourcePath(MemoryPartition *partition) {
+  char *basePath = SDL_GetBasePath();
+  if (!basePath) {
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
+    return 0;
   }
-  if (!filename || !strlen(filename)) {
-    return G_baseResourcePath;
-  }
-  char *result = (char *) reserveMemory(partition,
-                                        strlen(G_baseResourcePath) + strlen(filename) + 1);
-  strcpy(result, G_baseResourcePath);
-  strcat(result, filename);
-  return result;
+  char *pos = strstr(basePath, "build");
+  size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
+  char *resourcePath = (char *) reserveMemory(partition, basePathLen + strlen(ASSETS_FOLDER) + 2);
+  resourcePath[0] = 0;
+  strncat(resourcePath, basePath, basePathLen);
+  strcat(resourcePath, ASSETS_FOLDER);
+  strcat(resourcePath, PATH_SEP);
+  SDL_free(basePath);
+  return resourcePath;
 }
 
 bool
-sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *renderer,
+sdlLoadTexture(const char *textureName, const char *filename, SDL_Renderer *renderer,
                MemoryPartition *partition) {
   uint32_t hashVal32 = sdbmHash(textureName);
-  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
+  uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(G_textureHash) - 1;
   assert(hashPos12 < SDL_arraysize(G_textureHash));
 
   TextureHashNode *node = G_textureHash[hashPos12];
@@ -117,12 +106,9 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
   } else {
     G_textureHash[hashPos12] = node;
   }
-
-  const char *resource = sdlGetResourcePath(fileName, &G_gameContext.shortTimetMemory);
-  if (!strlen(resource)) {
-    return false;
-  }
-  SDL_Surface *tempSurface = IMG_Load(resource);
+  char *filePath = stringConcat(G_gameContext.resourcePath, filename,
+                                &G_gameContext.shortTimeMemory);
+  SDL_Surface *tempSurface = IMG_Load(filePath);
   if (!tempSurface) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error IMG_Load: %s\n", SDL_GetError());
     return false;
@@ -136,15 +122,15 @@ sdlLoadTexture(const char * textureName, const char *fileName, SDL_Renderer *ren
   }
   node->texture = texture;
   size_t textureNameLen = strlen(textureName);
-  node->name = (char*) reserveMemory(partition, textureNameLen + 1);
+  node->name = (char *) reserveMemory(partition, textureNameLen + 1);
   strcpy(node->name, textureName);
   return true;
 }
 
 SDL_Texture *
-sdlGetTexture(const char * textureName) {
+sdlGetTexture(const char *textureName) {
   uint32_t hashVal32 = sdbmHash(textureName);
-  uint32_t hashPos12 = hashVal32 & 0x00000FFF;
+  uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(G_textureHash) - 1;
   assert(hashPos12 < SDL_arraysize(G_textureHash));
 
   TextureHashNode *node = G_textureHash[hashPos12];
@@ -158,14 +144,24 @@ sdlGetTexture(const char * textureName) {
 }
 
 bool
-sdlUnloadTexture(const char * textureName) {
-//  for (currentNode = G_textureList; currentNode; currentNode = currentNode->next) {
-//    if (currentNode->textureId == textureId) {
-//      SDL_DestroyTexture(currentNode->texture);
-//      currentNode->texture = 0;
-//      return true;
-//    }
-//  }
+sdlUnloadTexture(const char *textureName, MemoryPartition *partition) {
+  uint32_t hashVal32 = sdbmHash(textureName);
+  uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(G_textureHash) - 1;
+  assert(hashPos12 < SDL_arraysize(G_textureHash));
+
+  TextureHashNode *node = G_textureHash[hashPos12];
+  TextureHashNode *parent = 0;
+  while (node) {
+    if (strcmp(node->name, textureName) == 0) {
+      parent->next = node->next;
+      SDL_DestroyTexture(node->texture);
+      freeMemory(partition, node->name);
+      freeMemory(partition, node);
+      return true;
+    }
+    parent = node;
+    node = node->next;
+  }
   return false;
 }
 
@@ -299,7 +295,7 @@ sdlGetSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
           (float) (SDL_GetPerformanceFrequency()));
 }
 
-template <typename T>
+template<typename T>
 bool isNegative(T val) {
   int result = (val > T(0)) - (val < T(0));
   return result == -1;
@@ -315,18 +311,19 @@ reserveMemory(MemoryPartition *partition, size_t reserveSize) {
 
   } else if (partition->type == LONG_TIME_MEMORY) {
     void *block = partition->base;
-    while (block < (int8_t*) partition->base + partition->totalSize) {
+    while (block < (int8_t *) partition->base + partition->totalSize) {
       // NOTE:
       // each memory block is prefixed with a ssize_t value indicating the block size, the block is
       // free to use if the sign of the size header is negative
-      ssize_t blockSize = *(ssize_t*) block;
+      ssize_t blockSize = *(ssize_t *) block;
       if (isNegative(blockSize)) {
         if (-1 * blockSize >= reserveSize + sizeof(ssize_t)) {
           assert((int8_t *) block + sizeof(ssize_t) + reserveSize + sizeof(ssize_t)
                  <= (int8_t *) partition->base + partition->totalSize);
           ssize_t *resultAddress = (ssize_t *) block + 1;
           partition->usedSize += reserveSize + sizeof(ssize_t);
-          *(ssize_t *) ((int8_t *) resultAddress + reserveSize) = blockSize + reserveSize + sizeof(ssize_t);
+          *(ssize_t *) ((int8_t *) resultAddress + reserveSize) =
+              blockSize + reserveSize + sizeof(ssize_t);
           *(ssize_t *) block = reserveSize;
           return resultAddress;
         }
@@ -343,7 +340,7 @@ reserveMemory(MemoryPartition *partition, size_t reserveSize) {
 }
 
 bool
-freeMemory(MemoryPartition *partition, void* memory) {
+freeMemory(MemoryPartition *partition, void *memory) {
   if (partition->type == PERMANENT_MEMORY) {
     return false;
 
@@ -352,8 +349,8 @@ freeMemory(MemoryPartition *partition, void* memory) {
 
   } else if (partition->type == LONG_TIME_MEMORY) {
     assert(memory >= partition->base);
-    assert(memory <= (int8_t*) partition->base + partition->totalSize);
-    ssize_t* memorySize = (ssize_t*) memory - 1;
+    assert(memory <= (int8_t *) partition->base + partition->totalSize);
+    ssize_t *memorySize = (ssize_t *) memory - 1;
 
     if (isNegative(*memorySize)) {
       return false;
@@ -364,14 +361,14 @@ freeMemory(MemoryPartition *partition, void* memory) {
     // join contiguous free blocks
     void *block = partition->base;
     ssize_t *freeBlock = (ssize_t *) 0;
-    while (block < (int8_t*) partition->base + partition->totalSize) {
-      ssize_t blockSize = *(ssize_t*) block;
+    while (block < (int8_t *) partition->base + partition->totalSize) {
+      ssize_t blockSize = *(ssize_t *) block;
       if (isNegative(blockSize)) {
         if (freeBlock) {
           *freeBlock += blockSize - sizeof(ssize_t);
           partition->usedSize += blockSize - sizeof(ssize_t);
         } else {
-          freeBlock = (ssize_t*) block;
+          freeBlock = (ssize_t *) block;
         }
         block = (int8_t *) block + -1 * blockSize + sizeof(ssize_t);
       } else {
@@ -396,8 +393,9 @@ main(int argc, char *args[]) {
 
   atexit(SDL_Quit);
 
-  SDL_Window *window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                   SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+  SDL_Window *window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED,
+                                        SDL_WINDOWPOS_UNDEFINED,
+                                        SCREEN_WIDTH, SCREEN_HEIGHT, 0);
   if (!window) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error creating window: %s\n", SDL_GetError());
     return 1;
@@ -415,13 +413,13 @@ main(int argc, char *args[]) {
   void *totalReservedMemory = VirtualAlloc(0, totalReservedMemorySize, MEM_RESERVE | MEM_COMMIT,
                                            PAGE_READWRITE);
 #else
-  void *totalReservedMemory = mmap(0, totalReservedMemorySize,  PROT_READ | PROT_WRITE,
+  void *totalReservedMemory = mmap(0, totalReservedMemorySize, PROT_READ | PROT_WRITE,
                                    MAP_ANON | MAP_PRIVATE, -1, 0);
 #endif
 
-   MemoryPartition permanentMemory = {PERMANENT_MEMORY, MEGABYTES(32), 0, totalReservedMemory};
+  MemoryPartition permanentMemory = {PERMANENT_MEMORY, MEGABYTES(32), 0, totalReservedMemory};
 
-  MemoryPartition longTimeMemory = {LONG_TIME_MEMORY, MEGABYTES(32), 0, 
+  MemoryPartition longTimeMemory = {LONG_TIME_MEMORY, MEGABYTES(32), 0,
                                     (int8_t *) permanentMemory.base + permanentMemory.totalSize};
 
   // init longTimeMemory
@@ -435,7 +433,9 @@ main(int argc, char *args[]) {
   int monitorRefreshHz = sdlGetWindowRefreshRate(window);
   float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
   UserInput userInput = {};
-  G_gameContext = GameContext{SCREEN_WIDTH, SCREEN_HEIGHT, false, &userInput, renderer,
+  char *resourcePath = getResourcePath(&permanentMemory);
+  G_gameContext = GameContext{resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, false, &userInput,
+                              renderer,
                               permanentMemory, longTimeMemory, shortTimeMemory,
                               PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
   userInput.shouldQuit = false;

@@ -40,10 +40,10 @@ enum GameStateChange {
   GAME_OVER
 };
 
-using LoadTextureFunc = bool(const char * textureName, const char *fileName, SDL_Renderer *renderer,
+using LoadTextureFunc = bool(const char * textureName, const char *filePath, SDL_Renderer *renderer,
                              MemoryPartition *partition);
 using GetTextureFunc = SDL_Texture *(const char * textureName);
-using UnloadTextureFunc = bool(const char * textureName);
+using UnloadTextureFunc = bool(const char * textureName, MemoryPartition *partition);
 
 struct PlatformFunctions {
   LoadTextureFunc *loadTexture;
@@ -52,6 +52,7 @@ struct PlatformFunctions {
 };
 
 struct GameContext {
+  char* resourcePath;
   int screenWidth;
   int screenHeight;
   bool isInitialized;
@@ -59,7 +60,7 @@ struct GameContext {
   SDL_Renderer *renderer;
   MemoryPartition permanentMemory;
   MemoryPartition longTimeMemory;
-  MemoryPartition shortTimetMemory;
+  MemoryPartition shortTimeMemory;
   PlatformFunctions functions;
   GameState currentState;
   GameStateChange stateChange;
@@ -72,5 +73,17 @@ void * reserveMemory(MemoryPartition *partition, size_t reserveSize);
 #define PLACEMENT_NEW(MEMORY, TYPE) new(reserveMemory(MEMORY, sizeof(TYPE)))
 
 bool freeMemory(MemoryPartition *partition, void* memory);
+
+inline char *
+stringConcat(const char * str1, const char * str2, MemoryPartition* memoryPartition) {
+  char *result = (char *) reserveMemory(memoryPartition, strlen(str1) + strlen(str2) + 1);
+  if (!result) {
+    return 0;
+  }
+  result[0] = 0;
+  strcpy(result, str1);
+  strcat(result, str2);
+  return result;
+}
 
 #endif //HELLO2SDL_GAMECONTEXT_H

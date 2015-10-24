@@ -124,9 +124,7 @@ initPlayState(PlayState *playState, GameContext *gameContext) {
 
   playState->tileMap = (TileMap *) reserveMemory(&gameContext->permanentMemory, sizeof(TileMap));
 
-  if (!initTileMap(playState->tileMap,
-                   gameContext,
-                   "/Users/jabelardo/Library/Caches/clion11/cmake/generated/cd64e9d/cd64e9d/Debug/assets/untitled2.tmx")) {
+  if (!initTileMap(playState->tileMap, "untitled2.tmx", gameContext)) {
     return false;
   }
 

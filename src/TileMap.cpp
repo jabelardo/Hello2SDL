@@ -197,8 +197,8 @@ b64Decode(char *source, size_t *resultLen, MemoryPartition *memoryPartition) {
 }
 
 alloc_func
-zlibAllocFunction(MemoryPartition* memoryPartition) {
-  static MemoryPartition* partition = memoryPartition;
+zlibAllocFunction(MemoryPartition *memoryPartition) {
+  static MemoryPartition *partition = memoryPartition;
   alloc_func result = [](void *opaque, unsigned int items, unsigned int size) {
     return reserveMemory(partition, items * size);
   };
@@ -206,8 +206,8 @@ zlibAllocFunction(MemoryPartition* memoryPartition) {
 }
 
 free_func
-zlibFreeFunction(MemoryPartition* memoryPartition) {
-  static MemoryPartition* partition = memoryPartition;
+zlibFreeFunction(MemoryPartition *memoryPartition) {
+  static MemoryPartition *partition = memoryPartition;
   free_func result = [](void *opaque, void *address) {
     freeMemory(partition, address);
   };
@@ -218,10 +218,10 @@ int
 zlibDecompress(Bytef *dest, size_t *destLen, const Bytef *source, size_t sourceLen,
                MemoryPartition *memoryPartition) {
 
-  if (!dest || ! destLen || !source || !sourceLen) {
+  if (!dest || !destLen || !source || !sourceLen) {
     return Z_DATA_ERROR;
   }
-  
+
   z_stream stream;
   stream.next_in = (Bytef *) source;
   stream.avail_in = (uInt) sourceLen;
@@ -302,16 +302,16 @@ dataDecode(char *source, size_t gidsCount, int32_t **gids, MemoryPartition *memo
 }
 
 xmlFreeFunc
-xmlFreeFunction(MemoryPartition* memoryPartition) {
-  static MemoryPartition* partition = memoryPartition;
+xmlFreeFunction(MemoryPartition *memoryPartition) {
+  static MemoryPartition *partition = memoryPartition;
   xmlFreeFunc result = [](void *mem) {
   };
   return result;
 }
 
 xmlMallocFunc
-xmlMallocFunction(MemoryPartition* memoryPartition) {
-  static MemoryPartition* partition = memoryPartition;
+xmlMallocFunction(MemoryPartition *memoryPartition) {
+  static MemoryPartition *partition = memoryPartition;
   xmlMallocFunc result = [](size_t size) {
     return reserveMemory(partition, size);
   };
@@ -319,8 +319,8 @@ xmlMallocFunction(MemoryPartition* memoryPartition) {
 }
 
 xmlReallocFunc
-xmlReallocFunction(MemoryPartition* memoryPartition) {
-  static MemoryPartition* partition = memoryPartition;
+xmlReallocFunction(MemoryPartition *memoryPartition) {
+  static MemoryPartition *partition = memoryPartition;
   xmlReallocFunc result = [](void *mem, size_t size) {
     freeMemory(partition, mem);
     return reserveMemory(partition, size);
@@ -329,19 +329,19 @@ xmlReallocFunction(MemoryPartition* memoryPartition) {
 }
 
 xmlStrdupFunc
-xmlStrdupFunction(MemoryPartition* memoryPartition) {
-  static MemoryPartition* partition = memoryPartition;
-  xmlStrdupFunc result = [](const char *str) -> char* {
+xmlStrdupFunction(MemoryPartition *memoryPartition) {
+  static MemoryPartition *partition = memoryPartition;
+  xmlStrdupFunc result = [](const char *str) -> char * {
     if (!str) {
       return 0;
     }
     size_t size = strlen(str) + 1;
-    void* mem = reserveMemory(partition, size);
+    void *mem = reserveMemory(partition, size);
     if (!mem) {
       return 0;
     }
     memcpy(mem, str, size);
-    return (char*) mem;
+    return (char *) mem;
   };
   return result;
 }
@@ -368,19 +368,27 @@ xmlGetProp(xmlNode *node, const xmlChar *name, int *value) {
 }
 
 bool
-initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
+initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext) {
 
-  if (xmlMemSetup(xmlFreeFunction(&gameContext->shortTimetMemory),
-                  xmlMallocFunction(&gameContext->shortTimetMemory),
-                  xmlReallocFunction(&gameContext->shortTimetMemory),
-                  xmlStrdupFunction(&gameContext->shortTimetMemory))) {
+  if (xmlMemSetup(xmlFreeFunction(&gameContext->shortTimeMemory),
+                  xmlMallocFunction(&gameContext->shortTimeMemory),
+                  xmlReallocFunction(&gameContext->shortTimeMemory),
+                  xmlStrdupFunction(&gameContext->shortTimeMemory))) {
     return false;
   }
   xmlInitParser();
 
+  char *mapfilePath = stringConcat(gameContext->resourcePath, mapfileName,
+                                   &gameContext->shortTimeMemory);
+
+  if (!mapfilePath) {
+    return false;
+  }
+
+  xmlDoc *doc = xmlReadFile(mapfilePath, 0, 0);
+
   TileSet *tileSetList = 0;
   TileLayer *tileLayerList = 0;
-  xmlDoc *doc = xmlReadFile(mapfile, 0, 0);
   if (!doc) {
     goto fail;
   }
@@ -505,7 +513,7 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
       }
     }
 
-    TileLayer* tileLayerNodePrev = 0;
+    TileLayer *tileLayerNodePrev = 0;
     for (xmlNode *layer = map->children; layer; layer = layer->next) {
       if (layer->type == XML_ELEMENT_NODE &&
           xmlStrcmp(layer->name, (const xmlChar *) "layer") == 0) {
@@ -538,7 +546,7 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
         char *trimBase64Gids = stringTrim((char *) base64Gids);
         int32_t *gids = 0;
         if (!dataDecode(trimBase64Gids, newTileLayer->tileGidsCount, &gids,
-                        &gameContext->shortTimetMemory)) {
+                        &gameContext->shortTimeMemory)) {
           xmlFree(base64Gids);
           goto fail;
         }
@@ -546,7 +554,7 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
 
         size_t sizeofids = newTileLayer->tileGidsCount * sizeof(int32_t);
         newTileLayer->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory,
-                                                            sizeofids);
+                                                           sizeofids);
 
         memcpy(newTileLayer->tileGids, gids, sizeofids);
       }
@@ -607,7 +615,7 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
 
         } else if (strcmp(propertyName, "textureId") == 0) {
           size_t propertyValueLen = strlen(propertyValue);
-          textureId = (char *) reserveMemory(&gameContext->shortTimetMemory, propertyValueLen + 1);
+          textureId = (char *) reserveMemory(&gameContext->shortTimeMemory, propertyValueLen + 1);
           memcpy(textureId, propertyValue, propertyValueLen + 1);
         }
         xmlFree(propertyName);
@@ -631,7 +639,7 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
 
     xmlCleanupParser();
 
-    gameContext->shortTimetMemory.usedSize = 0;
+    gameContext->shortTimeMemory.usedSize = 0;
 
     return true;
   }
@@ -657,6 +665,6 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
   if (tileMap->objectLayer) {
     freeMemory(&gameContext->longTimeMemory, tileMap->objectLayer);
   }
-  gameContext->shortTimetMemory.usedSize = 0;
+  gameContext->shortTimeMemory.usedSize = 0;
   return false;
 }
