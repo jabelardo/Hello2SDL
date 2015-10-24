@@ -17,13 +17,6 @@ set(SOURCE_FILES
         src/MenuButton.h
         src/RenderUtils.cpp
         src/RenderUtils.h
-        src/tmx.c
-        src/tmx.h
-        src/tmx_err.c
-        src/tmx_sdl_test.c
-        src/tmx_utils.c
-        src/tmx_utils.h
-        src/tmx_xml.c
         src/UserInput.h
         src/V2D.h
         src/XmlUtils.cpp

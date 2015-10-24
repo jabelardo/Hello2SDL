@@ -5,11 +5,22 @@
 #include "XmlUtils.h"
 
 xmlNode *
-getXmlElement(xmlNode *a_node, const xmlChar *name) {
-  for (xmlNode *cur_node = a_node; cur_node; cur_node = cur_node->next) {
-    if (cur_node->type == XML_ELEMENT_NODE && xmlStrcmp(cur_node->name, name) == 0) {
-      return cur_node;
+getXmlElement(xmlNode *node, const xmlChar *name) {
+  for (xmlNode *curNode = node; curNode; curNode = curNode->next) {
+    if (curNode->type == XML_ELEMENT_NODE && xmlStrcmp(curNode->name, name) == 0) {
+      return curNode;
     }
   }
-  return a_node->children ? getXmlElement(a_node->children, name) : 0;
+  return node->children ? getXmlElement(node->children, name) : 0;
+}
+
+bool
+xmlGetProp(xmlNode *node, const xmlChar *name, int *value) {
+  xmlChar *prop = xmlGetProp(node, name);
+  if (!prop) {
+    return false;
+  }
+  *value = atoi((const char *) prop);
+  xmlFree(prop);
+  return true;
 }

@@ -15,7 +15,6 @@
 
 #include "GameContext.h"
 #include "V2D.h"
-#include "tmx.h"
 
 struct TileSet {
   char* name;

@@ -4,23 +4,13 @@
 
 #include "GameUpdateAndRender.h"
 #include "Entity.h"
+#include "GameContext.h"
 
 #include "AnimatedGraphic.cpp"
 #include "TileMap.cpp"
 #include "MenuButton.cpp"
 #include "RenderUtils.cpp"
-
 #include "XmlUtils.cpp"
-
-extern "C" {
-#include "tmx.c"
-#include "tmx_err.c"
-#include "tmx_utils.c"
-#include "tmx_xml.c"
-#include "tmx_sdl_test.c"
-}
-
-#include "GameContext.h"
 
 struct MainMenu {
   union {

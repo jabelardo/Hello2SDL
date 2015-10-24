@@ -2,15 +2,14 @@
 // Created by Jose Gutierrez on 10/18/15.
 //
 
+#include <libxml/tree.h>
 #include "TileMap.h"
-#include "tmx.h"
 #include "RenderUtils.h"
 #include "Entity.h"
-
-#include "tmx.h"
+#include "XmlUtils.h"
 
 TileSet *
-getTileSetById(TileLayer* tileLayer, int tileId) {
+getTileSetById(TileLayer *tileLayer, int tileId) {
   for (TileSet *node = tileLayer->tileSetList; node; node = node->next) {
     if (tileId >= node->firstGid && tileId < node->firstGid + node->tileCount) {
       return node;
@@ -20,13 +19,15 @@ getTileSetById(TileLayer* tileLayer, int tileId) {
 }
 
 void
-drawTileLayer(TileLayer* tileLayer, SDL_Renderer *renderer) {
+drawTileLayer(TileLayer *tileLayer, SDL_Renderer *renderer) {
   int x = (int) tileLayer->position.x / tileLayer->tileWidth;
   int y = (int) tileLayer->position.y / tileLayer->tileHeight;
   int x2 = (int) tileLayer->position.x % tileLayer->tileWidth;
   int y2 = (int) tileLayer->position.y % tileLayer->tileHeight;
-  for (int i = (y2 < 0 ? -1 : 0); i < (y2 <= 0 ? tileLayer->screenRows : tileLayer->screenRows + 1); ++i) {
-    for (int j = (x2 < 0 ? -1 : 0); j < (x2 <= 0 ? tileLayer->screenColumns : tileLayer->screenColumns + 1); ++j) {
+  for (int i = (y2 < 0 ? -1 : 0);
+       i < (y2 <= 0 ? tileLayer->screenRows : tileLayer->screenRows + 1); ++i) {
+    for (int j = (x2 < 0 ? -1 : 0);
+         j < (x2 <= 0 ? tileLayer->screenColumns : tileLayer->screenColumns + 1); ++j) {
       int tileX = j + x;
       if (tileX >= tileLayer->mapWidth) {
         tileX -= tileLayer->mapWidth;
@@ -54,7 +55,8 @@ drawTileLayer(TileLayer* tileLayer, SDL_Renderer *renderer) {
       SDL_Texture *texture = tileSet->texture;
       int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
       int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
-      Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame, currentRow};
+      Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame,
+                       currentRow};
       int x3 = (j * tileLayer->tileWidth) - x2;
       int y3 = (i * tileLayer->tileHeight) - y2;
       drawTile(renderer, 2, 2, x3, y3, &bitmap);
@@ -63,12 +65,12 @@ drawTileLayer(TileLayer* tileLayer, SDL_Renderer *renderer) {
 }
 
 void
-drawObjectLayer(ObjectLayer* objectLayer, SDL_Renderer *renderer) {
+drawObjectLayer(ObjectLayer *objectLayer, SDL_Renderer *renderer) {
   drawEntity(objectLayer->player, renderer);
 }
 
 void
-drawTileMap(TileMap* tileMap, SDL_Renderer *renderer) {
+drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     drawTileLayer(node, renderer);
   }
@@ -88,13 +90,14 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
     tileLayer->position.y = 0;
   }
 }
+
 void
-updateObjectLayer(ObjectLayer* objectLayer, GameContext *gameContext) {
+updateObjectLayer(ObjectLayer *objectLayer, GameContext *gameContext) {
   updateEntity(objectLayer->player, gameContext->userInput);
 }
 
 void
-updateTileMap(TileMap* tileMap, GameContext *gameContext) {
+updateTileMap(TileMap *tileMap, GameContext *gameContext) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
   }
@@ -104,137 +107,196 @@ updateTileMap(TileMap* tileMap, GameContext *gameContext) {
 bool
 initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
 
-  tmx_map *map = tmx_load(mapfile);
+  xmlDoc *doc = xmlReadFile(mapfile, 0, 0);
+  if (!doc) {
+    return false;
+  }
+
+  xmlNode *root = xmlDocGetRootElement(doc);
+  if (!root) {
+    return false;
+  }
+
+  xmlNode *map = getXmlElement(root, (const xmlChar *) "map");
   if (!map) {
     return false;
   }
 
-  tileMap->width = map->width;
-  tileMap->height = map->height;
-  tileMap->tileWidth = map->tile_width;
-  tileMap->tileHeight = map->tile_height;
+  if (!xmlGetProp(map, (const xmlChar *) "width", &tileMap->width)) {
+    return false;
+  }
+  if (!xmlGetProp(map, (const xmlChar *) "height", &tileMap->height)) {
+    return false;
+  }
+  if (!xmlGetProp(map, (const xmlChar *) "tilewidth", &tileMap->tileWidth)) {
+    return false;
+  }
+  if (!xmlGetProp(map, (const xmlChar *) "tileheight", &tileMap->tileHeight)) {
+    return false;
+  }
   tileMap->tileLayerList = 0;
 
-  for (tmx_property *property = map->properties; property; property = property->next) {
-    if (!gameContext->functions.loadTexture(property->name,
-                                            property->value,
-                                            gameContext->renderer,
-                                            &gameContext->permanentMemory)) {
-      return false;
+  xmlNode *mapProperties = getXmlElement(map, (const xmlChar *) "properties");
+  if (!mapProperties) {
+    return false;
+  }
+  for (xmlNode *property = mapProperties->children; property; property = property->next) {
+    if (property->type == XML_ELEMENT_NODE &&
+        xmlStrcmp(property->name, (const xmlChar *) "property") == 0) {
+      char *name = (char *) xmlGetProp(property, (const xmlChar *) "name");
+      char *value = (char *) xmlGetProp(property, (const xmlChar *) "value");
+      if (!gameContext->functions.loadTexture(name, value, gameContext->renderer,
+                                              &gameContext->permanentMemory)) {
+        return false;
+      }
     }
   }
 
   TileSet *tileSetList = 0;
   TileSet *tileSetNode = 0;
-
-  for (tmx_tileset *tileset = map->ts_head; tileset; tileset = tileset->next) {
-    if (!gameContext->functions.loadTexture(tileset->name,
-                                            tileset->image->source,
-                                            gameContext->renderer,
-                                            &gameContext->permanentMemory)) {
-      tmx_map_free(map);
-      for (tileSetNode = tileSetList; tileSetNode;) {
-        TileSet *next = tileSetNode->next;
-        freeMemory(&gameContext->longTimeMemory, tileSetNode);
-        tileSetNode = next;
+  for (xmlNode *tileset = map->children; tileset; tileset = tileset->next) {
+    if (tileset->type == XML_ELEMENT_NODE &&
+        xmlStrcmp(tileset->name, (const xmlChar *) "tileset") == 0) {
+      TileSet *newTileSet = (TileSet *) reserveMemory(&gameContext->longTimeMemory, sizeof(TileSet));
+      if (!tileSetList) {
+        tileSetList = newTileSet;
       }
-      return false;
-    }
-    TileSet *newTileSetNode = (TileSet *) reserveMemory(&gameContext->longTimeMemory, sizeof(TileSet));
-    if (!tileSetList) {
-      tileSetList = newTileSetNode;
-    }
-    if (tileSetNode) {
-      tileSetNode->next = newTileSetNode;
-    }
-    tileSetNode = newTileSetNode;
-    tileSetNode->imageWidth = tileset->image->width;
-    tileSetNode->imageHeight = tileset->image->height;
-    tileSetNode->firstGid = tileset->firstgid;
-    tileSetNode->tileCount = tileset->tile_count;
-    tileSetNode->tileWidth = tileset->tile_width;
-    tileSetNode->tileHeight = tileset->tile_height;
-    tileSetNode->spacing = tileset->spacing;
-    tileSetNode->margin = tileset->margin;
-    tileSetNode->texture = gameContext->functions.getTexture(tileset->name);
-    size_t tileSetNodeNameLen = strlen(tileset->name);
-    tileSetNode->name = (char *) reserveMemory(&gameContext->longTimeMemory, tileSetNodeNameLen + 1);
-    strcpy(tileSetNode->name, tileset->name);
-    tileSetNode->numColumns = tileSetNode->imageWidth / (tileSetNode->tileWidth + tileSetNode->spacing);
-  }
-
-  size_t sizeofids = map->height * map->width * sizeof(int32_t);
-  TileLayer *tileLayerNode = 0;
-  for (tmx_layer *tilelayer = map->ly_head; tilelayer; tilelayer = tilelayer->next) {
-    if (tilelayer->type == L_LAYER && tilelayer->content.gids) {
-      TileLayer *newTileLayerNode = (TileLayer *) reserveMemory(&gameContext->longTimeMemory, 
-                                                                sizeof(TileLayer));
-      if (!tileMap->tileLayerList) {
-        tileMap->tileLayerList = newTileLayerNode;
+      if (tileSetNode) {
+        tileSetNode->next = newTileSet;
       }
-      if (tileLayerNode) {
-        tileLayerNode->next = newTileLayerNode;
+      tileSetNode = newTileSet;
+      if (!xmlGetProp(tileset, (const xmlChar *) "firstgid", &newTileSet->firstGid)) {
+        return false;
       }
-      tileLayerNode = newTileLayerNode;
-      tileLayerNode->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory, sizeofids);
-      memcpy(tileLayerNode->tileGids, tilelayer->content.gids, sizeofids);
-      tileLayerNode->tileGidsCount = map->height * map->width;
-      tileLayerNode->tileWidth = tileMap->tileWidth;
-      tileLayerNode->tileHeight = tileMap->tileHeight;
-      tileLayerNode->screenWidth = gameContext->screenWidth;
-      tileLayerNode->screenHeight = gameContext->screenWidth;
-      tileLayerNode->screenColumns = gameContext->screenWidth / tileMap->tileWidth;
-      tileLayerNode->screenRows = gameContext->screenHeight / tileMap->tileHeight;
-      tileLayerNode->mapWidth = map->width;
-      tileLayerNode->mapHeight = map->height;
-      tileLayerNode->tileSetList = tileSetList;
-    
-    } else if (tilelayer->type == L_OBJGR) {
-      tmx_object *object = tilelayer->content.objgr->head;
-      int numFrames = 0;
-      int textureHeight = 0;
-      int textureWidth = 0;
-      int callbackId = 0;
-      int animSpeed = 0;
-      char *textureId = 0;
-      for (tmx_property *property = object->properties; property; property = property->next) {
-        if (strcmp("numFrames", property->name) == 0) {
-          numFrames = atoi(property->value);
+      if (!xmlGetProp(tileset, (const xmlChar *) "tilewidth", &newTileSet->tileWidth)) {
+        return false;
+      }
+      if (!xmlGetProp(tileset, (const xmlChar *) "tileheight", &newTileSet->tileHeight)) {
+        return false;
+      }
+      if (!xmlGetProp(tileset, (const xmlChar *) "spacing", &newTileSet->spacing)) {
+        return false;
+      }
+      if (!xmlGetProp(tileset, (const xmlChar *) "margin", &newTileSet->margin)) {
+        return false;
+      }
+      if (!xmlGetProp(tileset, (const xmlChar *) "tilecount", &newTileSet->tileCount)) {
+        return false;
+      }
+      char *name = (char *) xmlGetProp(tileset, (const xmlChar *) "name");
+      size_t tileSetNodeNameLen = strlen(name);
+      newTileSet->name = (char *) reserveMemory(&gameContext->longTimeMemory, tileSetNodeNameLen + 1);
+      strcpy(newTileSet->name, name);
 
-        } else if (strcmp("textureHeight", property->name) == 0) {
-          textureHeight = atoi(property->value);
-
-        } else if (strcmp("textureWidth", property->name) == 0) {
-          textureWidth = atoi(property->value);
-
-        } else if (strcmp("textureId", property->name) == 0) {
-          size_t textureIdLen = strlen(property->value);
-          textureId = (char *) reserveMemory(&gameContext->longTimeMemory, textureIdLen + 1);
-          strcpy(textureId, property->value);
-
-        } else if(strcmp("callbackId", property->name) == 0) {
-          callbackId = atoi(property->value);
-
-        } else if(strcmp("animSpeed", property->name) == 0) {
-          animSpeed = atoi(property->value);
+      for (xmlNode *image = tileset->children; image; image = image->next) {
+        if (image->type == XML_ELEMENT_NODE &&
+            xmlStrcmp(image->name, (const xmlChar *) "image") == 0) {
+          if (!xmlGetProp(image, (const xmlChar *) "width", &newTileSet->imageWidth)) {
+            return false;
+          }
+          if (!xmlGetProp(image, (const xmlChar *) "height", &newTileSet->imageHeight)) {
+            return false;
+          }
+          char *source = (char *) xmlGetProp(image, (const xmlChar *) "source");
+          if (!gameContext->functions.loadTexture(newTileSet->name, source, gameContext->renderer,
+                                                  &gameContext->permanentMemory)) {
+            return false;
+          }
+          newTileSet->texture = gameContext->functions.getTexture(newTileSet->name);
         }
       }
-      SDL_Texture *texture = gameContext->functions.getTexture(textureId);
-
-      Entity *player = (Entity *) reserveMemory(&gameContext->longTimeMemory, sizeof(Entity));
-      player->type = PLAYER_TYPE;
-      player->position = V2D{(float) object->x, (float) object->y};
-      player->bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames, 1, 1};
-      player->velocity = V2D{0,0};
-      player->acceleration= V2D{0,0};
-
-      tileMap->objectLayer = (ObjectLayer *) reserveMemory(&gameContext->longTimeMemory, sizeof(ObjectLayer));
-      tileMap->objectLayer->playerInitialPosition = player->position;
-      tileMap->objectLayer->player = player;
+      newTileSet->numColumns = newTileSet->imageWidth / (newTileSet->tileWidth + newTileSet->spacing);
     }
   }
 
-  tmx_map_free(map);
+//  for (tmx_tileset *tileset = map->ts_head; tileset; tileset = tileset->next) {
+//    if (!gameContext->functions.loadTexture(tileset->name,
+//                                            tileset->image->source,
+//                                            gameContext->renderer,
+//                                            &gameContext->permanentMemory)) {
+//      tmx_map_free(map);
+//      for (tileSetNode = tileSetList; tileSetNode;) {
+//        TileSet *next = tileSetNode->next;
+//        freeMemory(&gameContext->longTimeMemory, tileSetNode);
+//        tileSetNode = next;
+//      }
+//      return false;
+//    }
+
+//  }
+//
+//  size_t sizeofids = map->height * map->width * sizeof(int32_t);
+//  TileLayer *tileLayerNode = 0;
+//  for (tmx_layer *tilelayer = map->ly_head; tilelayer; tilelayer = tilelayer->next) {
+//    if (tilelayer->type == L_LAYER && tilelayer->content.gids) {
+//      TileLayer *newTileLayerNode = (TileLayer *) reserveMemory(&gameContext->longTimeMemory,
+//                                                                sizeof(TileLayer));
+//      if (!tileMap->tileLayerList) {
+//        tileMap->tileLayerList = newTileLayerNode;
+//      }
+//      if (tileLayerNode) {
+//        tileLayerNode->next = newTileLayerNode;
+//      }
+//      tileLayerNode = newTileLayerNode;
+//      tileLayerNode->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory, sizeofids);
+//      memcpy(tileLayerNode->tileGids, tilelayer->content.gids, sizeofids);
+//      tileLayerNode->tileGidsCount = map->height * map->width;
+//      tileLayerNode->tileWidth = tileMap->tileWidth;
+//      tileLayerNode->tileHeight = tileMap->tileHeight;
+//      tileLayerNode->screenWidth = gameContext->screenWidth;
+//      tileLayerNode->screenHeight = gameContext->screenWidth;
+//      tileLayerNode->screenColumns = gameContext->screenWidth / tileMap->tileWidth;
+//      tileLayerNode->screenRows = gameContext->screenHeight / tileMap->tileHeight;
+//      tileLayerNode->mapWidth = map->width;
+//      tileLayerNode->mapHeight = map->height;
+//      tileLayerNode->tileSetList = tileSetList;
+//
+//    } else if (tilelayer->type == L_OBJGR) {
+//      tmx_object *object = tilelayer->content.objgr->head;
+//      int numFrames = 0;
+//      int textureHeight = 0;
+//      int textureWidth = 0;
+//      int callbackId = 0;
+//      int animSpeed = 0;
+//      char *textureId = 0;
+//      for (tmx_property *property = object->properties; property; property = property->next) {
+//        if (strcmp("numFrames", property->name) == 0) {
+//          numFrames = atoi(property->value);
+//
+//        } else if (strcmp("textureHeight", property->name) == 0) {
+//          textureHeight = atoi(property->value);
+//
+//        } else if (strcmp("textureWidth", property->name) == 0) {
+//          textureWidth = atoi(property->value);
+//
+//        } else if (strcmp("textureId", property->name) == 0) {
+//          size_t textureIdLen = strlen(property->value);
+//          textureId = (char *) reserveMemory(&gameContext->longTimeMemory, textureIdLen + 1);
+//          strcpy(textureId, property->value);
+//
+//        } else if(strcmp("callbackId", property->name) == 0) {
+//          callbackId = atoi(property->value);
+//
+//        } else if(strcmp("animSpeed", property->name) == 0) {
+//          animSpeed = atoi(property->value);
+//        }
+//      }
+//      SDL_Texture *texture = gameContext->functions.getTexture(textureId);
+//
+//      Entity *player = (Entity *) reserveMemory(&gameContext->longTimeMemory, sizeof(Entity));
+//      player->type = PLAYER_TYPE;
+//      player->position = V2D{(float) object->x, (float) object->y};
+//      player->bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames, 1, 1};
+//      player->velocity = V2D{0,0};
+//      player->acceleration= V2D{0,0};
+//
+//      tileMap->objectLayer = (ObjectLayer *) reserveMemory(&gameContext->longTimeMemory, sizeof(ObjectLayer));
+//      tileMap->objectLayer->playerInitialPosition = player->position;
+//      tileMap->objectLayer->player = player;
+//    }
+//  }
+//
+//  tmx_map_free(map);
 
   return true;
 }
