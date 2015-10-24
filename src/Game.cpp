@@ -47,7 +47,6 @@ struct GameOverMenu {
 };
 
 
-
 MainMenu *G_mainMenu;
 
 PlayState *G_playState;
@@ -138,14 +137,16 @@ startGame(PlayState *playState, GameContext *gameContext) {
   if (!helicopter2) {
     return false;
   }
-  for (TileLayer* tileLayer = playState->tileMap->tileLayerList; tileLayer; tileLayer = tileLayer->next) {
+  for (TileLayer *tileLayer = playState->tileMap->tileLayerList; tileLayer;
+       tileLayer = tileLayer->next) {
     tileLayer->position = {0, 0};
   }
 
   playState->tileMap->objectLayer->player->position =
       playState->tileMap->objectLayer->playerInitialPosition;
 
-  *playState->enemy = {ENEMY_TYPE, {400, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f}, {0, .33f}};
+  *playState->enemy = {ENEMY_TYPE, {400, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f},
+                       {0, .33f}};
   return true;
 }
 
