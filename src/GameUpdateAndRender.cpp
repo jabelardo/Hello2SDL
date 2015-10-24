@@ -441,7 +441,7 @@ updateGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext) {
     MenuButton *menuButton = gameOverMenu->menuButtons[i];
     updateMenuButton(menuButton, gameContext);
   }
-  updateAnimatedGraphic(gameOverMenu->gameOverGraphic, gameContext->userInput);
+  updateAnimatedGraphic(gameOverMenu->gameOverGraphic);
 }
 
 void

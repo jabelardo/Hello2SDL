@@ -14,7 +14,6 @@
 #endif
 
 #include "Bitmap.h"
-#include "UserInput.h"
 
 struct AnimatedGraphic {
   int x;
@@ -25,7 +24,7 @@ struct AnimatedGraphic {
 
 void drawAnimatedGraphic(AnimatedGraphic* animatedGraphic, SDL_Renderer *renderer);
 
-void updateAnimatedGraphic(AnimatedGraphic* animatedGraphic, UserInput *inputHandler);
+void updateAnimatedGraphic(AnimatedGraphic* animatedGraphic);
 
 
 #endif //HELLO2SDL_ANIMATEDGRAPHIC_H

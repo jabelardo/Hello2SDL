@@ -69,7 +69,7 @@ int gid_clear_flags(unsigned int gid) {
 
 void draw_layer(SDL_Renderer *ren, tmx_map *map, tmx_layer *layer) {
 	unsigned long i, j;
-	unsigned int x, y;
+//	unsigned int x, y;
 	float op;
 	tmx_tileset *ts;
 	SDL_Texture *tex_ts;

@@ -18,7 +18,7 @@ drawAnimatedGraphic(AnimatedGraphic *animatedGraphic, SDL_Renderer *renderer) {
 }
 
 void
-updateAnimatedGraphic(AnimatedGraphic *animatedGraphic, UserInput *inputHandler) {
+updateAnimatedGraphic(AnimatedGraphic *animatedGraphic) {
   if (animatedGraphic->animationSpeed) {
     animatedGraphic->bitmap.currentFrame = (int) (
         (SDL_GetTicks() / (1000 / animatedGraphic->animationSpeed)) %
