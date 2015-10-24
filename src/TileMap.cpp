@@ -442,7 +442,7 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
       }
     }
 
-    TileSet *tileSetNode = 0;
+    TileSet *tileSetNodePrev = 0;
     for (xmlNode *tileset = map->children; tileset; tileset = tileset->next) {
       if (tileset->type == XML_ELEMENT_NODE &&
           xmlStrcmp(tileset->name, (const xmlChar *) "tileset") == 0) {
@@ -451,11 +451,11 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
         if (!tileSetList) {
           tileSetList = newTileSet;
         }
-        if (tileSetNode) {
-          tileSetNode->next = newTileSet;
+        if (tileSetNodePrev) {
+          tileSetNodePrev->next = newTileSet;
         }
-        tileSetNode = newTileSet;
-        tileSetNode->next = 0;
+        tileSetNodePrev = newTileSet;
+        newTileSet->next = 0;
         if (!xmlGetProp(tileset, (const xmlChar *) "firstgid", &newTileSet->firstGid)) {
           goto fail;
         }
@@ -511,7 +511,7 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
       }
     }
 
-    TileLayer* tileLayerNode = 0;
+    TileLayer* tileLayerNodePrev = 0;
     for (xmlNode *layer = map->children; layer; layer = layer->next) {
       if (layer->type == XML_ELEMENT_NODE &&
           xmlStrcmp(layer->name, (const xmlChar *) "layer") == 0) {
@@ -524,37 +524,37 @@ initTileMap(TileMap *tileMap, GameContext *gameContext, const char *mapfile) {
         if (!tileLayerList) {
           tileLayerList = newTileLayer;
         }
-        if (tileLayerNode) {
-          tileLayerNode->next = newTileLayer;
+        if (tileLayerNodePrev) {
+          tileLayerNodePrev->next = newTileLayer;
         }
-        tileLayerNode = newTileLayer;
-        tileLayerNode->next = 0;
-        tileLayerNode->tileWidth = tileMap->tileWidth;
-        tileLayerNode->tileHeight = tileMap->tileHeight;
-        tileLayerNode->screenWidth = gameContext->screenWidth;
-        tileLayerNode->screenHeight = gameContext->screenWidth;
-        tileLayerNode->screenColumns = gameContext->screenWidth / tileMap->tileWidth;
-        tileLayerNode->screenRows = gameContext->screenHeight / tileMap->tileHeight;
-        tileLayerNode->mapWidth = tileMap->width;
-        tileLayerNode->mapHeight = tileMap->height;
-        tileLayerNode->tileSetList = tileSetList;
-        tileLayerNode->tileGidsCount = (size_t) (tileMap->height * tileMap->width);
+        tileLayerNodePrev = newTileLayer;
+        newTileLayer->next = 0;
+        newTileLayer->tileWidth = tileMap->tileWidth;
+        newTileLayer->tileHeight = tileMap->tileHeight;
+        newTileLayer->screenWidth = gameContext->screenWidth;
+        newTileLayer->screenHeight = gameContext->screenWidth;
+        newTileLayer->screenColumns = gameContext->screenWidth / tileMap->tileWidth;
+        newTileLayer->screenRows = gameContext->screenHeight / tileMap->tileHeight;
+        newTileLayer->mapWidth = tileMap->width;
+        newTileLayer->mapHeight = tileMap->height;
+        newTileLayer->tileSetList = tileSetList;
+        newTileLayer->tileGidsCount = (size_t) (tileMap->height * tileMap->width);
 
         xmlChar *base64Gids = xmlNodeGetContent(data);
         char *trimBase64Gids = stringTrim((char *) base64Gids);
         int32_t *gids = 0;
-        if (!dataDecode(trimBase64Gids, tileLayerNode->tileGidsCount, &gids,
+        if (!dataDecode(trimBase64Gids, newTileLayer->tileGidsCount, &gids,
                         &gameContext->shortTimetMemory)) {
           xmlFree(base64Gids);
           goto fail;
         }
         xmlFree(base64Gids);
 
-        size_t sizeofids = tileLayerNode->tileGidsCount * sizeof(int32_t);
-        tileLayerNode->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory,
+        size_t sizeofids = newTileLayer->tileGidsCount * sizeof(int32_t);
+        newTileLayer->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory,
                                                             sizeofids);
 
-        memcpy(tileLayerNode->tileGids, gids, sizeofids);
+        memcpy(newTileLayer->tileGids, gids, sizeofids);
       }
     }
     tileMap->tileLayerList = tileLayerList;
