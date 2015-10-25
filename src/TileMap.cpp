@@ -9,6 +9,7 @@
 #include "RenderUtils.h"
 #include "Entity.h"
 #include "TextureStorage.h"
+#include "SharedDefinitions.h"
 
 TileSet *
 getTileSetById(TileLayer *tileLayer, int tileId) {
@@ -94,16 +95,16 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 }
 
 void
-updateObjectLayer(ObjectLayer *objectLayer, GameContext *gameContext) {
-  updateEntity(objectLayer->player, &gameContext->userInput);
+updateObjectLayer(ObjectLayer *objectLayer, UserInput *userInput) {
+  updateEntity(objectLayer->player, userInput);
 }
 
 void
-updateTileMap(TileMap *tileMap, GameContext *gameContext) {
+updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
   }
-  updateObjectLayer(tileMap->objectLayer, gameContext);
+  updateObjectLayer(tileMap->objectLayer, userInput);
 }
 
 char *
@@ -369,18 +370,19 @@ xmlGetProp(xmlNode *node, const xmlChar *name, int *value) {
 }
 
 bool
-initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext) {
+initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext, 
+            SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig) {
 
-  if (xmlMemSetup(xmlFreeFunction(&gameContext->shortTimeMemory),
-                  xmlMallocFunction(&gameContext->shortTimeMemory),
-                  xmlReallocFunction(&gameContext->shortTimeMemory),
-                  xmlStrdupFunction(&gameContext->shortTimeMemory))) {
+  if (xmlMemSetup(xmlFreeFunction(&gameMemory->shortTimeMemory),
+                  xmlMallocFunction(&gameMemory->shortTimeMemory),
+                  xmlReallocFunction(&gameMemory->shortTimeMemory),
+                  xmlStrdupFunction(&gameMemory->shortTimeMemory))) {
     return false;
   }
   xmlInitParser();
 
-  char *mapfilePath = stringConcat(gameContext->resourcePath, mapfileName,
-                                   &gameContext->shortTimeMemory);
+  char *mapfilePath = stringConcat(platformConfig->resourcePath, mapfileName,
+                                   &gameMemory->shortTimeMemory);
 
   if (!mapfilePath) {
     return false;
@@ -434,7 +436,8 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
           xmlFree(name);
           goto fail;
         }
-        if (!loadTexture(name, value, gameContext->renderer, gameContext)) {
+        if (!loadTexture(name, value, platformConfig->resourcePath, renderer, gameContext,
+                         gameMemory)) {
           xmlFree(name);
           xmlFree(value);
           goto fail;
@@ -448,8 +451,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
     for (xmlNode *tileset = map->children; tileset; tileset = tileset->next) {
       if (tileset->type == XML_ELEMENT_NODE &&
           xmlStrcmp(tileset->name, (const xmlChar *) "tileset") == 0) {
-        TileSet *newTileSet = (TileSet *) reserveMemory(&gameContext->longTimeMemory,
-                                                        sizeof(TileSet));
+        TileSet *newTileSet = RESERVE_MEMORY(&gameMemory->longTimeMemory, TileSet);
         if (!tileSetList) {
           tileSetList = newTileSet;
         }
@@ -481,7 +483,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
           goto fail;
         }
         size_t tileSetNodeNameLen = strlen(name);
-        newTileSet->name = (char *) reserveMemory(&gameContext->longTimeMemory,
+        newTileSet->name = (char *) reserveMemory(&gameMemory->longTimeMemory,
                                                   tileSetNodeNameLen + 1);
         strcpy(newTileSet->name, name);
         xmlFree(name);
@@ -499,7 +501,8 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
             if (!source) {
               goto fail;
             }
-            if (!loadTexture(newTileSet->name, source, gameContext->renderer, gameContext)) {
+            if (!loadTexture(newTileSet->name, source, platformConfig->resourcePath, renderer,
+                             gameContext, gameMemory)) {
               xmlFree(source);
               goto fail;
             }
@@ -520,8 +523,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
         if (!data) {
           goto fail;
         }
-        TileLayer *newTileLayer = (TileLayer *) reserveMemory(&gameContext->longTimeMemory,
-                                                              sizeof(TileLayer));
+        TileLayer *newTileLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, TileLayer);
         if (!tileLayerList) {
           tileLayerList = newTileLayer;
         }
@@ -532,10 +534,10 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
         newTileLayer->next = 0;
         newTileLayer->tileWidth = tileMap->tileWidth;
         newTileLayer->tileHeight = tileMap->tileHeight;
-        newTileLayer->screenWidth = gameContext->screenWidth;
-        newTileLayer->screenHeight = gameContext->screenWidth;
-        newTileLayer->screenColumns = gameContext->screenWidth / tileMap->tileWidth;
-        newTileLayer->screenRows = gameContext->screenHeight / tileMap->tileHeight;
+        newTileLayer->screenWidth = platformConfig->screenWidth;
+        newTileLayer->screenHeight = platformConfig->screenWidth;
+        newTileLayer->screenColumns = platformConfig->screenWidth / tileMap->tileWidth;
+        newTileLayer->screenRows = platformConfig->screenHeight / tileMap->tileHeight;
         newTileLayer->mapWidth = tileMap->width;
         newTileLayer->mapHeight = tileMap->height;
         newTileLayer->tileSetList = tileSetList;
@@ -545,14 +547,14 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
         char *trimBase64Gids = stringTrim((char *) base64Gids);
         int32_t *gids = 0;
         if (!dataDecode(trimBase64Gids, newTileLayer->tileGidsCount, &gids,
-                        &gameContext->shortTimeMemory)) {
+                        &gameMemory->shortTimeMemory)) {
           xmlFree(base64Gids);
           goto fail;
         }
         xmlFree(base64Gids);
 
         size_t sizeofids = newTileLayer->tileGidsCount * sizeof(int32_t);
-        newTileLayer->tileGids = (int32_t *) reserveMemory(&gameContext->longTimeMemory,
+        newTileLayer->tileGids = (int32_t *) reserveMemory(&gameMemory->longTimeMemory,
                                                            sizeofids);
 
         memcpy(newTileLayer->tileGids, gids, sizeofids);
@@ -614,7 +616,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
 
         } else if (strcmp(propertyName, "textureId") == 0) {
           size_t propertyValueLen = strlen(propertyValue);
-          textureId = (char *) reserveMemory(&gameContext->shortTimeMemory, propertyValueLen + 1);
+          textureId = (char *) reserveMemory(&gameMemory->shortTimeMemory, propertyValueLen + 1);
           memcpy(textureId, propertyValue, propertyValueLen + 1);
         }
         xmlFree(propertyName);
@@ -622,15 +624,14 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
       }
     }
     SDL_Texture *texture = getTexture(textureId, gameContext);
-    Entity *player = (Entity *) reserveMemory(&gameContext->longTimeMemory, sizeof(Entity));
+    Entity *player = RESERVE_MEMORY(&gameMemory->longTimeMemory, Entity);
     player->type = PLAYER_TYPE;
     player->position = V2D{(float) objectX, (float) objectY};
     player->bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames, 1, 1};
     player->velocity = V2D{0, 0};
     player->acceleration = V2D{0, 0};
 
-    tileMap->objectLayer = (ObjectLayer *) reserveMemory(&gameContext->longTimeMemory,
-                                                         sizeof(ObjectLayer));
+    tileMap->objectLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, ObjectLayer);
     tileMap->objectLayer->playerInitialPosition = player->position;
     tileMap->objectLayer->player = player;
 
@@ -638,7 +639,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
 
     xmlCleanupParser();
 
-    gameContext->shortTimeMemory.usedSize = 0;
+    gameMemory->shortTimeMemory.usedSize = 0;
 
     return true;
   }
@@ -648,22 +649,22 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
   }
   for (TileSet *tileSetNode = tileSetList; tileSetNode; tileSetNode = tileSetNode->next) {
     if (tileSetNode->name) {
-      freeMemory(&gameContext->longTimeMemory, tileSetNode->name);
+      freeMemory(&gameMemory->longTimeMemory, tileSetNode->name);
     }
-    freeMemory(&gameContext->longTimeMemory, tileSetNode);
+    freeMemory(&gameMemory->longTimeMemory, tileSetNode);
   }
   for (TileLayer *tileLayerNode = tileLayerList; tileLayerNode; tileLayerNode = tileLayerNode->next) {
     if (tileLayerNode->tileGids) {
-      freeMemory(&gameContext->longTimeMemory, tileLayerNode->tileGids);
+      freeMemory(&gameMemory->longTimeMemory, tileLayerNode->tileGids);
     }
-    freeMemory(&gameContext->longTimeMemory, tileLayerNode);
+    freeMemory(&gameMemory->longTimeMemory, tileLayerNode);
   }
   if (tileMap->objectLayer && tileMap->objectLayer->player) {
-    freeMemory(&gameContext->longTimeMemory, tileMap->objectLayer->player);
+    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer->player);
   }
   if (tileMap->objectLayer) {
-    freeMemory(&gameContext->longTimeMemory, tileMap->objectLayer);
+    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer);
   }
-  gameContext->shortTimeMemory.usedSize = 0;
+  gameMemory->shortTimeMemory.usedSize = 0;
   return false;
 }

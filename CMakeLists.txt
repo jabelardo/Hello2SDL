@@ -17,6 +17,7 @@ set(SOURCE_FILES
         src/MainMenu.cpp
         src/MainMenu.h
         src/MemoryPartition.cpp
+        src/MemoryPartition.h
         src/MenuButton.cpp
         src/MenuButton.h
         src/PauseMenu.cpp
@@ -25,6 +26,7 @@ set(SOURCE_FILES
         src/PlayState.h
         src/RenderUtils.cpp
         src/RenderUtils.h
+        src/SharedDefinitions.h
         src/TextureStorage.cpp
         src/TextureStorage.h
         src/TileMap.cpp
@@ -33,7 +35,7 @@ set(SOURCE_FILES
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 
-target_compile_definitions(CLION_PLACEHOLDER PUBLIC "TMXEXPORT=")
+target_compile_definitions(CLION_PLACEHOLDER PUBLIC "BUILD_INTERNAL=1")
 
 add_custom_target(Hello2SDL
         COMMAND ${Hello2SDL_SOURCE_DIR}/src/build.sh ${Hello2SDL_SOURCE_DIR}/src)

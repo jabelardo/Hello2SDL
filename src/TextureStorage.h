@@ -5,16 +5,12 @@
 #ifndef HELLO2SDL_TEXTURESTORAGE_H
 #define HELLO2SDL_TEXTURESTORAGE_H
 
-#ifdef __APPLE__
-#include <SDL2/SDL_render.h>
-#include "Game.h"
+struct GameContext;
+struct GameMemory;
+struct SDL_Renderer;
 
-#else
-#include <SDL_render.h>
-#endif
-
-bool loadTexture(const char *textureName, const char *filename, SDL_Renderer *renderer,
-                 GameContext *gameContext);
+bool loadTexture(const char *textureName, const char *filename, const char* resourcePath,
+                 SDL_Renderer *renderer, GameContext *gameContext, GameMemory* gameMemory);
 
 SDL_Texture * getTexture(const char *textureName, GameContext *gameContext);
 

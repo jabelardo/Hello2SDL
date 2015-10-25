@@ -13,6 +13,15 @@
 #include <assert.h>
 
 #include "TextureStorage.h"
+#include "MemoryPartition.h"
+#include "SharedDefinitions.h"
+#include "Game.h"
+
+struct TextureHashNode {
+  char *name;
+  SDL_Texture *texture;
+  TextureHashNode *next;
+};
 
 char *
 stringConcat(const char * str1, const char * str2, MemoryPartition* memoryPartition) {
@@ -36,8 +45,8 @@ sdbmHash(const char *str) {
 }
 
 bool
-loadTexture(const char *textureName, const char *filename, SDL_Renderer *renderer,
-            GameContext *gameContext) {
+loadTexture(const char *textureName, const char *filename, const char* resourcePath,
+            SDL_Renderer *renderer, GameContext *gameContext, GameMemory* gameMemory) {
   uint32_t hashVal32 = sdbmHash(textureName);
   uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(gameContext->textureHash) - 1;
   assert(hashPos12 < SDL_arraysize(gameContext->textureHash));
@@ -56,7 +65,7 @@ loadTexture(const char *textureName, const char *filename, SDL_Renderer *rendere
     gameContext->freeTextureHashNodes = gameContext->freeTextureHashNodes->next;
     node->next = 0;
   } else {
-    node = (TextureHashNode *) reserveMemory(&gameContext->longTimeMemory, sizeof(TextureHashNode));
+    node = (TextureHashNode *) reserveMemory(&gameMemory->longTimeMemory, sizeof(TextureHashNode));
     *node = {};
   }
   if (parent) {
@@ -64,7 +73,7 @@ loadTexture(const char *textureName, const char *filename, SDL_Renderer *rendere
   } else {
     gameContext->textureHash[hashPos12] = node;
   }
-  char *filePath = stringConcat(gameContext->resourcePath, filename, &gameContext->shortTimeMemory);
+  char *filePath = stringConcat(resourcePath, filename, &gameMemory->shortTimeMemory);
   SDL_Surface *tempSurface = IMG_Load(filePath);
   if (!tempSurface) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error IMG_Load: %s\n", SDL_GetError());
@@ -89,12 +98,12 @@ loadTexture(const char *textureName, const char *filename, SDL_Renderer *rendere
   if (node->name) {
     size_t oldNodeNameLen = strlen(node->name);
     if (oldNodeNameLen != textureNameLen) {
-      freeMemory(&gameContext->longTimeMemory, node->name);
+      freeMemory(&gameMemory->longTimeMemory, node->name);
       node->name = 0;
     }
   }
   if (!node->name) {
-    node->name = (char *) reserveMemory(&gameContext->longTimeMemory, textureNameLen + 1);
+    node->name = (char *) reserveMemory(&gameMemory->longTimeMemory, textureNameLen + 1);
   }
   strcpy(node->name, textureName);
   return true;

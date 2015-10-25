@@ -11,6 +11,7 @@
 
 #include "MenuButton.h"
 #include "RenderUtils.h"
+#include "SharedDefinitions.h"
 
 void
 drawMenuButton(MenuButton* menuButton, SDL_Renderer *renderer) {
@@ -18,9 +19,9 @@ drawMenuButton(MenuButton* menuButton, SDL_Renderer *renderer) {
 }
 
 void
-updateMenuButton(MenuButton* menuButton, GameContext *gameContext) {
-  int mousePositionX = gameContext->userInput.mousePositionX;
-  int mousePositionY = gameContext->userInput.mousePositionY;
+updateMenuButton(MenuButton* menuButton, GameContext *gameContext, UserInput* userInput) {
+  int mousePositionX = userInput->mousePositionX;
+  int mousePositionY = userInput->mousePositionY;
   if (mousePositionX < (menuButton->x + menuButton->bitmap.width)
       && mousePositionX > menuButton->x
       && mousePositionY < (menuButton->y + menuButton->bitmap.height)
@@ -31,7 +32,7 @@ updateMenuButton(MenuButton* menuButton, GameContext *gameContext) {
       menuButton->clickedTime = 0;
       gameContext->stateChange = menuButton->stateChange;
 
-    } else if (gameContext->userInput.mouseButtonLeft.endedDown) {
+    } else if (userInput->mouseButtonLeft.endedDown) {
       menuButton->bitmap.currentFrame = MenuButton::MOUSE_OUT;
       menuButton->clickedTime = SDL_GetTicks();
 

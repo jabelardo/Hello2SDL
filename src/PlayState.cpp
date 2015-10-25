@@ -5,20 +5,26 @@
 #include "PlayState.h"
 #include "Entity.h"
 #include "TextureStorage.h"
+#include "MemoryPartition.h"
+#include "TileMap.h"
+#include "SharedDefinitions.h"
 
 bool
-initPlayState(PlayState *playState, GameContext *gameContext) {
-  if (!loadTexture("HELICOPTER2", "helicopter2.png", gameContext->renderer, gameContext)) {
+initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer,
+              GameMemory* gameMemory, PlatformConfig *platformConfig) {
+  if (!loadTexture("HELICOPTER2", "helicopter2.png", platformConfig->resourcePath, renderer,
+                   gameContext, gameMemory)) {
     return false;
   }
 
-  playState->tileMap = (TileMap *) reserveMemory(&gameContext->permanentMemory, sizeof(TileMap));
+  playState->tileMap = RESERVE_MEMORY(&gameMemory->permanentMemory, TileMap);
 
-  if (!initTileMap(playState->tileMap, "game1.tmx", gameContext)) {
+  if (!initTileMap(playState->tileMap, "game1.tmx", gameContext, renderer, gameMemory,
+                   platformConfig)) {
     return false;
   }
 
-  playState->enemy = (Entity *) reserveMemory(&gameContext->permanentMemory, sizeof(Entity));
+  playState->enemy = RESERVE_MEMORY(&gameMemory->permanentMemory, Entity);
 
   return true;
 }
@@ -43,13 +49,13 @@ startGame(PlayState *playState, GameContext *gameContext) {
 }
 
 void
-updatePlayState(PlayState *playState, GameContext *gameContext) {
-  if (gameContext->userInput.back.endedDown) {
+updatePlayState(PlayState *playState, GameContext *gameContext, UserInput* userInput) {
+  if (userInput->back.endedDown) {
     gameContext->stateChange = PAUSE_MENU;
     return;
   }
-  updateTileMap(playState->tileMap, gameContext);
-  updateEntity(playState->enemy, &gameContext->userInput);
+  updateTileMap(playState->tileMap, gameContext, userInput);
+  updateEntity(playState->enemy, userInput);
 
   if (checkEntityCollision(playState->enemy, playState->tileMap->objectLayer->player)) {
     gameContext->stateChange = GAME_OVER;

@@ -5,8 +5,13 @@
 #ifndef HELLO2SDL_GAMEOVERMENU_H
 #define HELLO2SDL_GAMEOVERMENU_H
 
-#include "MenuButton.h"
-#include "AnimatedGraphic.h"
+struct AnimatedGraphic;
+struct GameContext;
+struct GameMemory;
+struct MenuButton;
+struct PlatformConfig;
+struct SDL_Renderer;
+struct UserInput;
 
 struct GameOverMenu {
   union {
@@ -19,9 +24,10 @@ struct GameOverMenu {
   AnimatedGraphic *gameOverGraphic;
 };
 
-bool initGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext);
+bool initGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext, SDL_Renderer *renderer,
+                      GameMemory* gameMemory, PlatformConfig *platformConfig);
 
-void updateGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext);
+void updateGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext, UserInput* userInput);
 
 void renderGameOverMenu(GameOverMenu *gameOverMenu, SDL_Renderer *renderer);
 

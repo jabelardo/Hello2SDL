@@ -13,10 +13,11 @@
 #include <sys/mman.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
+#include "SharedDefinitions.h"
 
 #endif
 
-#include "Game.h"
+//#include "Game.h"
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
 // On the vast majority of those systems, one can use MAP_ANON instead.
@@ -32,15 +33,12 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-GameContext G_gameContext = {};
-
 /*
  * TODO:
- *  - dynamic library loading
  *  - loop game recording / playback
  */
 
-using gameUpdateAndRenderFunc = int(GameContext *gameContext);
+using gameUpdateAndRenderFunc = int(PlatformConfig *, GameMemory *, UserInput *, SDL_Renderer *);
 
 struct GameLibrary {
   void *dl;
@@ -312,12 +310,12 @@ main(int argc, char *args[]) {
   int monitorRefreshHz = getWindowRefreshRate(window);
   float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
 
-  G_gameContext = {G_resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, renderer, permanentMemory,
-                   longTimeMemory, shortTimeMemory};
-  G_gameContext.userInput.shouldQuit = false;
+  PlatformConfig platformConfig = {G_resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT};
+  GameMemory gameMemory = {permanentMemory, longTimeMemory, shortTimeMemory};
+  UserInput userInput = {};
   GameLibrary gameLibrary = {};
 
-  while (!G_gameContext.userInput.shouldQuit) {
+  while (!userInput.shouldQuit) {
 
 #ifdef BUILD_INTERNAL
     time_t gameLibraryLastWriteTime =  getLastWriteTime("libGame.dylib");
@@ -333,17 +331,18 @@ main(int argc, char *args[]) {
 
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
-      handleEvent(&event, &G_gameContext.userInput);
+      handleEvent(&event, &userInput);
     }
 
     SDL_RenderClear(renderer);
 
 #ifdef BUILD_INTERNAL
-    if ((result = gameLibrary.gameUpdateAndRender(&G_gameContext) != 0)) {
+    if ((result = gameLibrary.gameUpdateAndRender(
+        &platformConfig, &gameMemory, &userInput, renderer) != 0)) {
       return result;
     }
 #else
-    if ((result = gameUpdateAndRender(&G_gameContext) != 0)) {
+    if ((result = gameUpdateAndRender(&platformConfig, &gameMemory, &userInput, renderer) != 0)) {
       return result;
     }
 #endif

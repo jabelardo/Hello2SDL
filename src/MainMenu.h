@@ -5,7 +5,12 @@
 #ifndef HELLO2SDL_MAINMENU_H
 #define HELLO2SDL_MAINMENU_H
 
-#include "MenuButton.h"
+struct GameContext;
+struct GameMemory;
+struct MenuButton;
+struct PlatformConfig;
+struct SDL_Renderer;
+struct UserInput;
 
 struct MainMenu {
   union {
@@ -17,10 +22,11 @@ struct MainMenu {
   };
 };
 
-bool initMainMenu(MainMenu *mainMenu, GameContext *gameContext);
+bool initMainMenu(MainMenu *mainMenu, GameContext *gameContext, SDL_Renderer *renderer,
+                  GameMemory* gameMemory, PlatformConfig *platformConfig);
 
-void updateMainMenu(MainMenu *mainMenu, GameContext *gameContext);
+void updateMainMenu(MainMenu *mainMenu, GameContext *gameContext, UserInput* userInput);
 
-void renderMainMenu(MainMenu *mainMenu, SDL_Renderer *renderer);
+void renderMainMenu(MainMenu *mainMenu, GameContext *gameContext);
 
 #endif //HELLO2SDL_MAINMENU_H

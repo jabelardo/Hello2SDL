@@ -9,6 +9,7 @@
 
 #include "Entity.h"
 #include "RenderUtils.h"
+#include "SharedDefinitions.h"
 
 bool
 checkEntityCollision(Entity *entity1, Entity *entity2) {

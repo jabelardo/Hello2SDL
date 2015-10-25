@@ -5,16 +5,10 @@
 #ifndef HELLO2SDL_MENUBUTTON_H
 #define HELLO2SDL_MENUBUTTON_H
 
-#ifdef __APPLE__
-
-#include <SDL2/SDL_render.h>
-
-#else
-#include <SDL_render.h>
-#endif
-
 #include "Bitmap.h"
 #include "Game.h"
+
+struct UserInput;
 
 struct MenuButton {
 
@@ -33,7 +27,7 @@ struct MenuButton {
 
 void drawMenuButton(MenuButton* menuButton, SDL_Renderer *renderer);
 
-void updateMenuButton(MenuButton* menuButton, GameContext *gameContext);
+void updateMenuButton(MenuButton* menuButton, GameContext *gameContext, UserInput* userInput);
 
 
 #endif //HELLO2SDL_MENUBUTTON_H

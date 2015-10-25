@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include "Game.h"
+#include "SharedDefinitions.h"
 
 #include "AnimatedGraphic.cpp"
 #include "Entity.cpp"
@@ -18,90 +19,82 @@
 #include "TileMap.cpp"
 
 void
-updateGame(GameContext *gameContext) {
+updateGame(GameContext *gameContext, UserInput* userInput) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
-      updatePlayState(gameContext->playState, gameContext);
+      updatePlayState(gameContext->playState, gameContext, userInput);
       break;
     }
     case MAIN_MENU_STATE: {
-      updateMainMenu(gameContext->mainMenu, gameContext);
+      updateMainMenu(gameContext->mainMenu, gameContext, userInput);
       break;
     }
     case PAUSE_MENU_STATE: {
-      updatePauseMenu(gameContext->pauseMenu, gameContext);
+      updatePauseMenu(gameContext->pauseMenu, gameContext, userInput);
       break;
     }
     case GAME_OVER_STATE: {
-      updateGameOverMenu(gameContext->gameOverMenu, gameContext);
-      break;
-    }
-    case NOT_INITIALIZED_STATE:{
-      assert(!("NOT_INITIALIZED_STATE"));
+      updateGameOverMenu(gameContext->gameOverMenu, gameContext, userInput);
       break;
     }
   }
 }
 
 void
-renderGame(GameContext *gameContext) {
+renderGame(GameContext *gameContext, SDL_Renderer *renderer) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
-      renderPlayState(gameContext->playState, gameContext->renderer);
+      renderPlayState(gameContext->playState, renderer);
       break;
     }
     case MAIN_MENU_STATE: {
-      renderMainMenu(gameContext->mainMenu, gameContext->renderer);
+      renderMainMenu(gameContext->mainMenu, renderer);
       break;
     }
     case PAUSE_MENU_STATE: {
-      renderPauseMenu(gameContext->pauseMenu, gameContext->renderer);
+      renderPauseMenu(gameContext->pauseMenu, renderer);
       break;
     }
     case GAME_OVER_STATE: {
-      renderGameOverMenu(gameContext->gameOverMenu, gameContext->renderer);
-      break;
-    }
-    case NOT_INITIALIZED_STATE: {
-      assert(!("NOT_INITIALIZED_STATE"));
+      renderGameOverMenu(gameContext->gameOverMenu, renderer);
       break;
     }
   }
 }
 
 void
-processStateChange(GameContext *gameContext) {
+processStateChange(GameContext *gameContext, UserInput* userInput) {
   switch (gameContext->stateChange) {
-    case NONE: {
+    case NO_CHANGE: {
       break;
     }
     case START_PLAY: {
-      gameContext->userInput = {};
+      *userInput = {};
       startGame(gameContext->playState, gameContext);
       gameContext->currentState = PLAY_STATE;
       break;
     }
     case EXIT_FROM_GAME: {
-      gameContext->userInput.shouldQuit = true;
+      userInput->shouldQuit = true;
       break;
     }
     case MAIN_MENU: {
-      gameContext->userInput = {};
+      *userInput = {};
       gameContext->currentState = MAIN_MENU_STATE;
       break;
     }
     case RESUME_PLAY: {
-      gameContext->userInput = {};
+      *userInput = {};
       gameContext->currentState = PLAY_STATE;
       break;
     }
     case PAUSE_MENU: {
-      gameContext->userInput = {};
+      *userInput = {};
       gameContext->currentState = PAUSE_MENU_STATE;
       break;
     }
     case GAME_OVER: {
-      gameContext->userInput = {};
+      *userInput = {};
       gameContext->currentState = GAME_OVER_STATE;
       break;
     }
@@ -109,32 +102,37 @@ processStateChange(GameContext *gameContext) {
 }
 
 extern "C" int
-gameUpdateAndRender(GameContext *gameContext) {
+gameUpdateAndRender(PlatformConfig *platformConfig, GameMemory* gameMemory, UserInput* userInput,
+                    SDL_Renderer *renderer) {
 
-  if (gameContext->currentState == NOT_INITIALIZED_STATE) {
-    gameContext->mainMenu = (MainMenu *) reserveMemory(&gameContext->permanentMemory, sizeof(MainMenu));
-    if (!initMainMenu(gameContext->mainMenu, gameContext)) {
+  GameContext *gameContext = (GameContext *) gameMemory->permanentMemory.base;
+
+  if (!gameMemory->isInitialized) {
+    gameContext = RESERVE_MEMORY(&gameMemory->permanentMemory, GameContext);
+
+    gameContext->mainMenu = RESERVE_MEMORY(&gameMemory->permanentMemory, MainMenu);
+    if (!initMainMenu(gameContext->mainMenu, gameContext, renderer, gameMemory, platformConfig)) {
       return -1;
     }
-    gameContext->playState = (PlayState *) reserveMemory(&gameContext->permanentMemory, sizeof(PlayState));
-    if (!initPlayState(gameContext->playState, gameContext)) {
+    gameContext->playState = RESERVE_MEMORY(&gameMemory->permanentMemory, PlayState);
+    if (!initPlayState(gameContext->playState, gameContext, renderer, gameMemory, platformConfig)) {
       return -1;
     }
-    gameContext->pauseMenu = (PauseMenu *) reserveMemory(&gameContext->permanentMemory, sizeof(PauseMenu));
-    if (!initPauseMenu(gameContext->pauseMenu, gameContext)) {
+    gameContext->pauseMenu = RESERVE_MEMORY(&gameMemory->permanentMemory, PauseMenu);
+    if (!initPauseMenu(gameContext->pauseMenu, gameContext, renderer, gameMemory, platformConfig)) {
       return -1;
     }
-    gameContext->gameOverMenu = (GameOverMenu *) reserveMemory(&gameContext->permanentMemory,
-                                                    sizeof(GameOverMenu));
-    if (!initGameOverMenu(gameContext->gameOverMenu, gameContext)) {
+    gameContext->gameOverMenu = RESERVE_MEMORY(&gameMemory->permanentMemory, GameOverMenu);
+    if (!initGameOverMenu(gameContext->gameOverMenu, gameContext, renderer, gameMemory, platformConfig)) {
       return -1;
     }
     gameContext->currentState = MAIN_MENU_STATE;
+    gameMemory->isInitialized = true;
   }
-  gameContext->stateChange = NONE;
-  updateGame(gameContext);
-  processStateChange(gameContext);
-  renderGame(gameContext);
+  gameContext->stateChange = NO_CHANGE;
+  updateGame(gameContext, userInput);
+  processStateChange(gameContext, userInput);
+  renderGame(gameContext, renderer);
 
   return 0;
 }

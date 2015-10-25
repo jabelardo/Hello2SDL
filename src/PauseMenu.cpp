@@ -4,13 +4,19 @@
 
 #include "PauseMenu.h"
 #include "TextureStorage.h"
+#include "MemoryPartition.h"
+#include "MenuButton.h"
+#include "SharedDefinitions.h"
 
 bool
-initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext) {
-  if (!loadTexture("MAIN_BUTTON", "main.png", gameContext->renderer, gameContext)) {
+initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, SDL_Renderer *renderer,
+              GameMemory* gameMemory, PlatformConfig *platformConfig) {
+  if (!loadTexture("MAIN_BUTTON", "main.png", platformConfig->resourcePath, renderer,
+                   gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("RESUME_BUTTON", "resume.png", gameContext->renderer, gameContext)) {
+  if (!loadTexture("RESUME_BUTTON", "resume.png", platformConfig->resourcePath, renderer,
+                   gameContext, gameMemory)) {
     return false;
   }
 
@@ -22,22 +28,20 @@ initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext) {
   if (!resumeButton) {
     return false;
   }
-  pauseMenu->mainMenuButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
-                                                           sizeof(MenuButton));
+  pauseMenu->mainMenuButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
   *pauseMenu->mainMenuButton = {200, 100, {mainButton, 200, 80, 3, 1, 1}, MAIN_MENU};
 
-  pauseMenu->resumePlayButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
-                                                             sizeof(MenuButton));
+  pauseMenu->resumePlayButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
   *pauseMenu->resumePlayButton = {200, 300, {resumeButton, 200, 80, 3, 1, 1}, RESUME_PLAY};
 
   return true;
 }
 
 void
-updatePauseMenu(PauseMenu *pauseMenu, GameContext *gameContext) {
+updatePauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, UserInput* userInput) {
   for (int i = 0; i < SDL_arraysize(pauseMenu->menuButtons); ++i) {
     MenuButton *menuButton = pauseMenu->menuButtons[i];
-    updateMenuButton(menuButton, gameContext);
+    updateMenuButton(menuButton, gameContext, userInput);
   }
 }
 

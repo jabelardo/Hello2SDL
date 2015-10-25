@@ -5,7 +5,12 @@
 #ifndef HELLO2SDL_PAUSEMENU_H
 #define HELLO2SDL_PAUSEMENU_H
 
-#include "MenuButton.h"
+struct GameContext;
+struct GameMemory;
+struct MenuButton;
+struct PlatformConfig;
+struct SDL_Renderer;
+struct UserInput;
 
 struct PauseMenu {
   union {
@@ -17,9 +22,10 @@ struct PauseMenu {
   };
 };
 
-bool initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext);
+bool initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, SDL_Renderer *renderer,
+                   GameMemory* gameMemory, PlatformConfig *platformConfign);
 
-void updatePauseMenu(PauseMenu *pauseMenu, GameContext *gameContext);
+void updatePauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, UserInput* userInput);
 
 void renderPauseMenu(PauseMenu *pauseMenu, SDL_Renderer *renderer);
 

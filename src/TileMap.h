@@ -5,16 +5,16 @@
 #ifndef HELLO2SDL_TILEMMAP_H
 #define HELLO2SDL_TILEMMAP_H
 
-#ifdef __APPLE__
-
-#include <SDL2/SDL_render.h>
-
-#else
-#include <SDL_render.h>
-#endif
-
-#include "Game.h"
 #include "V2D.h"
+
+struct Entity;
+struct GameContext;
+struct GameMemory;
+struct GameMemory;
+struct PlatformConfig;
+struct SDL_Renderer;
+struct SDL_Texture;
+struct UserInput;
 
 struct TileSet {
   char* name;
@@ -30,8 +30,6 @@ struct TileSet {
   TileSet* next;
   SDL_Texture *texture;
 };
-
-struct Entity;
 
 struct ObjectLayer {
   Entity* player;
@@ -66,9 +64,10 @@ struct TileMap {
   ObjectLayer* objectLayer;
 };
 
-bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext);
+bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
+                 SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig);
 
-void updateTileMap(TileMap *tileMap, GameContext *gameContext);
+void updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput);
 
 void drawTileMap(TileMap *tileMap, SDL_Renderer *renderer);
 
