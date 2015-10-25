@@ -17,26 +17,6 @@
 #include "TileMap.cpp"
 
 void
-startPlay(GameContext *gameContext) {
-  gameContext->stateChange = START_PLAY;
-}
-
-void
-exitFromGame(GameContext *gameContext) {
-  gameContext->stateChange = EXIT_FROM_GAME;
-}
-
-void
-resumePlay(GameContext *gameContext) {
-  gameContext->stateChange = RESUME_PLAY;
-}
-
-void
-mainMenu(GameContext *gameContext) {
-  gameContext->stateChange = MAIN_MENU;
-}
-
-void
 updateGame(GameContext *gameContext) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
