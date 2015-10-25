@@ -24,11 +24,11 @@ initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext) {
   }
   pauseMenu->mainMenuButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
                                                            sizeof(MenuButton));
-  *pauseMenu->mainMenuButton = {200, 100, {mainButton, 200, 80, 3, 1, 1}, mainMenu};
+  *pauseMenu->mainMenuButton = {200, 100, {mainButton, 200, 80, 3, 1, 1}, MAIN_MENU};
 
   pauseMenu->resumePlayButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
                                                              sizeof(MenuButton));
-  *pauseMenu->resumePlayButton = {200, 300, {resumeButton, 200, 80, 3, 1, 1}, resumePlay};
+  *pauseMenu->resumePlayButton = {200, 300, {resumeButton, 200, 80, 3, 1, 1}, RESUME_PLAY};
 
   return true;
 }

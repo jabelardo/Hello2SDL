@@ -1,5 +1,7 @@
 #ifdef __APPLE__
+
 #include <SDL2/SDL.h>
+
 #else
 #include <SDL.h>
 #endif
@@ -7,10 +9,14 @@
 #if _MSC_VER
 #include <windows.h>
 #else
+
 #include <sys/mman.h>
+#include <dlfcn.h>
+#include <sys/stat.h>
+
 #endif
 
-#include "Game.cpp"
+#include "Game.h"
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
 // On the vast majority of those systems, one can use MAP_ANON instead.
@@ -34,32 +40,93 @@ GameContext G_gameContext = {};
  *  - loop game recording / playback
  */
 
+using gameUpdateAndRenderFunc = int(GameContext *gameContext);
+
+struct GameLibrary {
+  void *dl;
+  time_t lastWriteTime;
+  gameUpdateAndRenderFunc *gameUpdateAndRender;
+  bool initialized;
+};
+
+#if _MSC_VER
+#else
+
+time_t
+getLastWriteTime(const char *filename) {
+  time_t lastWriteTime = 0;
+  struct stat fileStat;
+  if (stat(filename, &fileStat) == 0) {
+    lastWriteTime = fileStat.st_mtimespec.tv_sec;
+  }
+  return lastWriteTime;
+}
+
+#endif
+
+#ifdef __APPLE__
+
+static void
+loadGameLibrary(GameLibrary *gameLibrary, const char *sourceName) {
+  gameLibrary->lastWriteTime = getLastWriteTime(sourceName);
+
+  gameLibrary->dl = dlopen(sourceName, RTLD_LAZY | RTLD_GLOBAL);
+  if (gameLibrary->dl) {
+    gameLibrary->gameUpdateAndRender = (gameUpdateAndRenderFunc *)
+        dlsym(gameLibrary->dl, "gameUpdateAndRender");
+
+    gameLibrary->initialized = (gameLibrary->gameUpdateAndRender != 0);
+  }
+  if (!gameLibrary->initialized) {
+    gameLibrary->gameUpdateAndRender = 0;
+  }
+}
+
+static void
+unloadGameLibrary(GameLibrary *gameLibrary) {
+  if (gameLibrary->dl) {
+    dlclose(gameLibrary->dl);
+    gameLibrary->dl = 0;
+  }
+  gameLibrary->initialized = false;
+  gameLibrary->gameUpdateAndRender = 0;
+}
+
+#endif
+
 #ifndef ASSETS_FOLDER
 #define ASSETS_FOLDER "assets"
 #endif
 
-static char *
-getResourcePath(MemoryPartition *partition) {
+static char G_resourcePath[1024];
+
+static int
+initResourcePath() {
 #ifdef _WIN32
   const char* PATH_SEP = "\\";
 #else
-  const char* PATH_SEP = "/";
+  const char *PATH_SEP = "/";
 #endif
 
   char *basePath = SDL_GetBasePath();
   if (!basePath) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
-    return 0;
+    return -1;
   }
   char *pos = strstr(basePath, "build");
   size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
-  char *resourcePath = (char *) reserveMemory(partition, basePathLen + strlen(ASSETS_FOLDER) + 2);
-  resourcePath[0] = 0;
-  strncat(resourcePath, basePath, basePathLen);
-  strcat(resourcePath, ASSETS_FOLDER);
-  strcat(resourcePath, PATH_SEP);
+  size_t resourcePathLen = basePathLen + strlen(ASSETS_FOLDER) + 2;
+  if (resourcePathLen > SDL_arraysize(G_resourcePath)) {
+    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Resource path lenght %d > %d\n", resourcePathLen,
+                 SDL_arraysize(G_resourcePath));
+    return -1;
+  }
+  G_resourcePath[0] = 0;
+  strncat(G_resourcePath, basePath, basePathLen);
+  strcat(G_resourcePath, ASSETS_FOLDER);
+  strcat(G_resourcePath, PATH_SEP);
   SDL_free(basePath);
-  return resourcePath;
+  return 0;
 }
 
 static int
@@ -203,6 +270,8 @@ main(int argc, char *args[]) {
 
   atexit(SDL_Quit);
 
+  initResourcePath();
+
   SDL_Window *window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED,
                                         SDL_WINDOWPOS_UNDEFINED,
                                         SCREEN_WIDTH, SCREEN_HEIGHT, 0);
@@ -242,19 +311,32 @@ main(int argc, char *args[]) {
   Uint64 lastCounter = SDL_GetPerformanceCounter();
   int monitorRefreshHz = getWindowRefreshRate(window);
   float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
-  char *resourcePath = getResourcePath(&permanentMemory);
-  G_gameContext = {resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, renderer, permanentMemory,
+
+  G_gameContext = {G_resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, renderer, permanentMemory,
                    longTimeMemory, shortTimeMemory};
   G_gameContext.userInput.shouldQuit = false;
+  GameLibrary gameLibrary = {};
 
   while (!G_gameContext.userInput.shouldQuit) {
+
+    time_t gameLibraryLastWriteTime =  getLastWriteTime("libGame.dylib");
+    if (gameLibraryLastWriteTime > gameLibrary.lastWriteTime) {
+      unloadGameLibrary(&gameLibrary);
+      loadGameLibrary(&gameLibrary, "libGame.dylib");
+    }
+
+    if (!gameLibrary.initialized) {
+      // TODO SDL_LogError
+      return 1;
+    }
+
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
       handleEvent(&event, &G_gameContext.userInput);
     }
 
     SDL_RenderClear(renderer);
-    if ((result = gameUpdateAndRender(&G_gameContext) != 0)) {
+    if ((result = gameLibrary.gameUpdateAndRender(&G_gameContext) != 0)) {
       return result;
     }
 

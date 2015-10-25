@@ -21,11 +21,12 @@ updateMenuButton(MenuButton* menuButton, GameContext *gameContext) {
 
     if (gameContext->userInput.mouseButtonLeft.endedDown && menuButton->buttonReleased) {
       menuButton->bitmap.currentFrame = MenuButton::CLICKED;
-      menuButton->callback(gameContext);
       menuButton->buttonReleased = false;
+      gameContext->stateChange = menuButton->stateChange;
+
     } else if (gameContext->userInput.mouseButtonLeft.endedDown) {
-      menuButton->buttonReleased = true;
       menuButton->bitmap.currentFrame = MenuButton::MOUSE_OVER;
+      menuButton->buttonReleased = true;
     }
   } else {
     menuButton->bitmap.currentFrame = MenuButton::MOUSE_OUT;

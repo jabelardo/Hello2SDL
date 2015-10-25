@@ -81,14 +81,14 @@ drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
 
 void
 updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
-  tileLayer->velocity.x = 1;
+  tileLayer->velocity.x = -2;
   tileLayer->position += tileLayer->velocity;
-  if (tileLayer->position.x == tileLayer->mapWidth * tileLayer->tileWidth ||
-      tileLayer->position.x == -tileLayer->mapWidth * tileLayer->tileWidth) {
+  if (tileLayer->position.x >= tileLayer->mapWidth * tileLayer->tileWidth ||
+      tileLayer->position.x <= -tileLayer->mapWidth * tileLayer->tileWidth) {
     tileLayer->position.x = 0;
   }
-  if (tileLayer->position.y == tileLayer->mapHeight * tileLayer->tileHeight ||
-      tileLayer->position.y == -tileLayer->mapHeight * tileLayer->tileHeight) {
+  if (tileLayer->position.y >= tileLayer->mapHeight * tileLayer->tileHeight ||
+      tileLayer->position.y <= -tileLayer->mapHeight * tileLayer->tileHeight) {
     tileLayer->position.y = 0;
   }
 }

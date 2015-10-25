@@ -26,11 +26,11 @@ initMainMenu(MainMenu *mainMenu, GameContext *gameContext) {
 
   mainMenu->startPlayButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
                                                            sizeof(MenuButton));
-  *mainMenu->startPlayButton = {100, 100, {playButtonTexture, 400, 100, 3, 1, 1}, startPlay};
+  *mainMenu->startPlayButton = {100, 100, {playButtonTexture, 400, 100, 3, 1, 1}, START_PLAY};
 
   mainMenu->exitButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
                                                       sizeof(MenuButton));
-  *mainMenu->exitButton = {100, 300, {exitButtonTexture, 400, 100, 3, 1, 1}, exitFromGame};
+  *mainMenu->exitButton = {100, 300, {exitButtonTexture, 400, 100, 3, 1, 1}, EXIT_FROM_GAME};
 
   return true;
 }

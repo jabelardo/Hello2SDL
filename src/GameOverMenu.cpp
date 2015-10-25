@@ -32,13 +32,13 @@ initGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext) {
   gameOverMenu->mainMenuButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
                                                               sizeof(MenuButton));
   *gameOverMenu->mainMenuButton = {200, 200, {mainButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1},
-                                   mainMenu};
+                                   MAIN_MENU};
 
   gameOverMenu->startPlayButton = (MenuButton *) reserveMemory(&gameContext->permanentMemory,
                                                                sizeof(MenuButton));
 
   *gameOverMenu->startPlayButton = {200, 300, {restartButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1},
-                                    startPlay};
+                                    START_PLAY};
 
   gameOverMenu->gameOverGraphic = (AnimatedGraphic *) reserveMemory(&gameContext->permanentMemory,
                                                                     sizeof(AnimatedGraphic));

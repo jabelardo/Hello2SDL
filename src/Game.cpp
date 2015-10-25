@@ -16,14 +16,6 @@
 #include "TextureStorage.cpp"
 #include "TileMap.cpp"
 
-MainMenu *G_mainMenu;
-
-PlayState *G_playState;
-
-PauseMenu *G_pauseMenu;
-
-GameOverMenu *G_gameOverMenu;
-
 void
 startPlay(GameContext *gameContext) {
   gameContext->stateChange = START_PLAY;
@@ -48,19 +40,19 @@ void
 updateGame(GameContext *gameContext) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
-      updatePlayState(G_playState, gameContext);
+      updatePlayState(gameContext->playState, gameContext);
       break;
     }
     case MAIN_MENU_STATE: {
-      updateMainMenu(G_mainMenu, gameContext);
+      updateMainMenu(gameContext->mainMenu, gameContext);
       break;
     }
     case PAUSE_MENU_STATE: {
-      updatePauseMenu(G_pauseMenu, gameContext);
+      updatePauseMenu(gameContext->pauseMenu, gameContext);
       break;
     }
     case GAME_OVER_STATE: {
-      updateGameOverMenu(G_gameOverMenu, gameContext);
+      updateGameOverMenu(gameContext->gameOverMenu, gameContext);
       break;
     }
     case NOT_INITIALIZED_STATE:{
@@ -74,19 +66,19 @@ void
 renderGame(GameContext *gameContext) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
-      renderPlayState(G_playState, gameContext->renderer);
+      renderPlayState(gameContext->playState, gameContext->renderer);
       break;
     }
     case MAIN_MENU_STATE: {
-      renderMainMenu(G_mainMenu, gameContext->renderer);
+      renderMainMenu(gameContext->mainMenu, gameContext->renderer);
       break;
     }
     case PAUSE_MENU_STATE: {
-      renderPauseMenu(G_pauseMenu, gameContext->renderer);
+      renderPauseMenu(gameContext->pauseMenu, gameContext->renderer);
       break;
     }
     case GAME_OVER_STATE: {
-      renderGameOverMenu(G_gameOverMenu, gameContext->renderer);
+      renderGameOverMenu(gameContext->gameOverMenu, gameContext->renderer);
       break;
     }
     case NOT_INITIALIZED_STATE: {
@@ -103,7 +95,7 @@ processStateChange(GameContext *gameContext) {
       break;
     }
     case START_PLAY: {
-      startGame(G_playState, gameContext);
+      startGame(gameContext->playState, gameContext);
       gameContext->currentState = PLAY_STATE;
       break;
     }
@@ -135,21 +127,21 @@ extern "C" int
 gameUpdateAndRender(GameContext *gameContext) {
 
   if (gameContext->currentState == NOT_INITIALIZED_STATE) {
-    G_mainMenu = (MainMenu *) reserveMemory(&gameContext->permanentMemory, sizeof(MainMenu));
-    if (!initMainMenu(G_mainMenu, gameContext)) {
+    gameContext->mainMenu = (MainMenu *) reserveMemory(&gameContext->permanentMemory, sizeof(MainMenu));
+    if (!initMainMenu(gameContext->mainMenu, gameContext)) {
       return -1;
     }
-    G_playState = (PlayState *) reserveMemory(&gameContext->permanentMemory, sizeof(PlayState));
-    if (!initPlayState(G_playState, gameContext)) {
+    gameContext->playState = (PlayState *) reserveMemory(&gameContext->permanentMemory, sizeof(PlayState));
+    if (!initPlayState(gameContext->playState, gameContext)) {
       return -1;
     }
-    G_pauseMenu = (PauseMenu *) reserveMemory(&gameContext->permanentMemory, sizeof(PauseMenu));
-    if (!initPauseMenu(G_pauseMenu, gameContext)) {
+    gameContext->pauseMenu = (PauseMenu *) reserveMemory(&gameContext->permanentMemory, sizeof(PauseMenu));
+    if (!initPauseMenu(gameContext->pauseMenu, gameContext)) {
       return -1;
     }
-    G_gameOverMenu = (GameOverMenu *) reserveMemory(&gameContext->permanentMemory,
+    gameContext->gameOverMenu = (GameOverMenu *) reserveMemory(&gameContext->permanentMemory,
                                                     sizeof(GameOverMenu));
-    if (!initGameOverMenu(G_gameOverMenu, gameContext)) {
+    if (!initGameOverMenu(gameContext->gameOverMenu, gameContext)) {
       return -1;
     }
     gameContext->currentState = MAIN_MENU_STATE;

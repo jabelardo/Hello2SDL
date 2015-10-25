@@ -86,6 +86,11 @@ struct TextureHashNode {
   TextureHashNode *next;
 };
 
+struct MainMenu;
+struct PlayState;
+struct PauseMenu;
+struct GameOverMenu;
+
 struct GameContext {
   char* resourcePath;
   int screenWidth;
@@ -100,17 +105,11 @@ struct GameContext {
   UserInput userInput;
   TextureHashNode *textureHash[4096];
   TextureHashNode *freeTextureHashNodes;
+  MainMenu *mainMenu;
+  PlayState *playState;
+  PauseMenu *pauseMenu;
+  GameOverMenu *gameOverMenu;
 };
-
-void exitFromGame(GameContext *gameContext);
-
-void startPlay(GameContext *gameContext);
-
-void mainMenu(GameContext *gameContext);
-
-void resumePlay(GameContext *gameContext);
-
-using GameContextCallbackFunc = void(GameContext *);
 
 void * reserveMemory(MemoryPartition *partition, size_t reserveSize);
 

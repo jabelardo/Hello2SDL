@@ -27,7 +27,7 @@ struct MenuButton {
   int x;
   int y;
   Bitmap bitmap;
-  GameContextCallbackFunc *callback;
+  GameStateChange stateChange;
   bool buttonReleased;
 };
 
