@@ -319,16 +319,17 @@ main(int argc, char *args[]) {
 
   while (!G_gameContext.userInput.shouldQuit) {
 
+#ifdef BUILD_INTERNAL
     time_t gameLibraryLastWriteTime =  getLastWriteTime("libGame.dylib");
     if (gameLibraryLastWriteTime > gameLibrary.lastWriteTime) {
       unloadGameLibrary(&gameLibrary);
       loadGameLibrary(&gameLibrary, "libGame.dylib");
     }
-
     if (!gameLibrary.initialized) {
       // TODO SDL_LogError
       return 1;
     }
+#endif
 
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
@@ -336,9 +337,16 @@ main(int argc, char *args[]) {
     }
 
     SDL_RenderClear(renderer);
+
+#ifdef BUILD_INTERNAL
     if ((result = gameLibrary.gameUpdateAndRender(&G_gameContext) != 0)) {
       return result;
     }
+#else
+    if ((result = gameUpdateAndRender(&G_gameContext) != 0)) {
+      return result;
+    }
+#endif
 
     float secondsElapsedForFrame = getSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
     if (secondsElapsedForFrame < targetSecondsPerFrame) {

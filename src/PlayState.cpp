@@ -14,7 +14,7 @@ initPlayState(PlayState *playState, GameContext *gameContext) {
 
   playState->tileMap = (TileMap *) reserveMemory(&gameContext->permanentMemory, sizeof(TileMap));
 
-  if (!initTileMap(playState->tileMap, "untitled2.tmx", gameContext)) {
+  if (!initTileMap(playState->tileMap, "game1.tmx", gameContext)) {
     return false;
   }
 
