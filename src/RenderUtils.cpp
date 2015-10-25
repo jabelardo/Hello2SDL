@@ -3,6 +3,7 @@
 //
 
 #include "RenderUtils.h"
+#include "Bitmap.h"
 
 void
 drawTile(SDL_Renderer *renderer, int margin, int spacing, int x, int y, Bitmap *bitmap) {

@@ -5,12 +5,6 @@
 #ifndef HELLO2SDL_SHAREDDEFINITIONS_H
 #define HELLO2SDL_SHAREDDEFINITIONS_H
 
-#ifdef __APPLE__
-#include <SDL2/SDL_render.h>
-#else
-#include <SDL_render.h>
-#endif
-
 #include "MemoryPartition.h"
 
 struct ButtonState {
@@ -62,6 +56,8 @@ struct PlatformConfig {
   int screenWidth;
   int screenHeight;
 };
+
+struct SDL_Renderer;
 
 #ifdef __cplusplus
 extern "C" {

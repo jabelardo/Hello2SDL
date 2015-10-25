@@ -9,6 +9,7 @@
 #include "Game.h"
 
 struct UserInput;
+struct SDL_Renderer;
 
 struct MenuButton {
 

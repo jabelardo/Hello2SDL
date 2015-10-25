@@ -2,6 +2,12 @@
 // Created by Jose Gutierrez on 10/24/15.
 //
 
+#ifdef __APPLE__
+#include <SDL2/SDL_stdinc.h>
+#else
+#include <SDL_stdinc.h>
+#endif
+
 #include "PauseMenu.h"
 #include "TextureStorage.h"
 #include "MemoryPartition.h"

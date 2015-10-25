@@ -9,6 +9,9 @@
 #include "Bitmap.h"
 #include "Game.h"
 
+struct UserInput;
+struct SDL_Renderer;
+
 enum EntityType {
   PLAYER_TYPE = 0,
   ENEMY_TYPE

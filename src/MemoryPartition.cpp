@@ -3,7 +3,9 @@
 //
 
 #include <assert.h>
+#include <sys/types.h>
 #include "Game.h"
+#include "MemoryPartition.h"
 
 template<typename T>
 bool

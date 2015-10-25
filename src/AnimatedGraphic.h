@@ -5,14 +5,6 @@
 #ifndef HELLO2SDL_ANIMATEDGRAPHIC_H
 #define HELLO2SDL_ANIMATEDGRAPHIC_H
 
-#ifdef __APPLE__
-
-#include <SDL2/SDL_render.h>
-
-#else
-#include <SDL_render.h>
-#endif
-
 #include "Bitmap.h"
 
 struct AnimatedGraphic {

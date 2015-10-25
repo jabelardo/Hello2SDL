@@ -13,7 +13,7 @@
 #include <SDL_render.h>
 #endif
 
-#include "Bitmap.h"
+struct Bitmap;
 
 void drawTile(SDL_Renderer *renderer,
               int margin, int spacing, int x, int y, Bitmap *bitmap);
