@@ -13,11 +13,14 @@
 #include <sys/mman.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
-#include "SharedDefinitions.h"
+#include <sys/fcntl.h>
+#include <assert.h>
+#include <unistd.h>
+#include <sys/errno.h>
 
 #endif
 
-//#include "Game.h"
+#include "SharedDefinitions.h"
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
 // On the vast majority of those systems, one can use MAP_ANON instead.
@@ -50,7 +53,7 @@ struct GameLibrary {
 #if _MSC_VER
 #else
 
-time_t
+static time_t
 getLastWriteTime(const char *filename) {
   time_t lastWriteTime = 0;
   struct stat fileStat;
@@ -96,23 +99,26 @@ unloadGameLibrary(GameLibrary *gameLibrary) {
 #define ASSETS_FOLDER "assets"
 #endif
 
-static char G_resourcePath[1024];
+#ifdef _WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+
+static char *G_basePath = 0;
+static char G_resourcePath[PLATFORM_MAX_PATH];
 
 static int
 initResourcePath() {
-#ifdef _WIN32
-  const char* PATH_SEP = "\\";
-#else
-  const char *PATH_SEP = "/";
-#endif
-
-  char *basePath = SDL_GetBasePath();
-  if (!basePath) {
+  if (!G_basePath) {
+    G_basePath = SDL_GetBasePath();
+  }
+  if (!G_basePath) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
     return -1;
   }
-  char *pos = strstr(basePath, "build");
-  size_t basePathLen = (pos) ? pos - basePath : strlen(basePath);
+  char *pos = strstr(G_basePath, "build");
+  size_t basePathLen = (pos) ? pos - G_basePath : strlen(G_basePath);
   size_t resourcePathLen = basePathLen + strlen(ASSETS_FOLDER) + 2;
   if (resourcePathLen > SDL_arraysize(G_resourcePath)) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Resource path lenght %d > %d\n", resourcePathLen,
@@ -120,10 +126,9 @@ initResourcePath() {
     return -1;
   }
   G_resourcePath[0] = 0;
-  strncat(G_resourcePath, basePath, basePathLen);
+  strncat(G_resourcePath, G_basePath, basePathLen);
   strcat(G_resourcePath, ASSETS_FOLDER);
   strcat(G_resourcePath, PATH_SEP);
-  SDL_free(basePath);
   return 0;
 }
 
@@ -142,6 +147,194 @@ getWindowRefreshRate(SDL_Window *window) {
   return mode.refresh_rate;
 }
 
+static float
+getSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
+  return ((float) (currentCounter - oldCounter) /
+          (float) (SDL_GetPerformanceFrequency()));
+}
+
+struct PlatformReplayBuffer {
+  int fileHandle;
+//  int memoryMap;
+  char filename[PLATFORM_MAX_PATH];
+  void *memoryBlock;
+};
+
+struct PlatformReplayState {
+
+  int recordingHandle;
+  int recordingIndex;
+
+  int playbackHandle;
+  int playingIndex;
+
+  GameMemory *gameMemory;
+
+  PlatformReplayBuffer replayBuffers[4];
+};
+
+static int
+getInputFileLocation(char *destName, size_t destSize, int slotIndex, bool isInputStream = true) {
+  return snprintf(destName, destSize, "%sloop_edit_%d_%s.mem", G_basePath, slotIndex,
+                  isInputStream ? "input" : "state");
+}
+
+static void
+setupPlatformReplayBuffers(PlatformReplayState *state) {
+
+  size_t totalSize = state->gameMemory->permanentMemory.totalSize +
+                     state->gameMemory->longTimeMemory.totalSize;
+
+  for (int replayBufferIdx = 0; replayBufferIdx < SDL_arraysize(state->replayBuffers);
+       ++replayBufferIdx) {
+    PlatformReplayBuffer *replayBuffer = &state->replayBuffers[replayBufferIdx];
+
+    getInputFileLocation(replayBuffer->filename, SDL_arraysize(replayBuffer->filename),
+                         replayBufferIdx, false);
+
+    replayBuffer->fileHandle = open(replayBuffer->filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
+
+    if (replayBuffer->fileHandle != -1) {
+      replayBuffer->memoryBlock = mmap(0, totalSize,
+                                       PROT_READ | PROT_WRITE,
+                                       MAP_PRIVATE,
+                                       replayBuffer->fileHandle,
+                                       0);
+      if (replayBuffer->memoryBlock != MAP_FAILED) {
+        fstore_t fstore = {};
+        fstore.fst_flags = F_ALLOCATECONTIG;
+        fstore.fst_posmode = F_PEOFPOSMODE;
+        fstore.fst_offset = 0;
+        fstore.fst_length = totalSize;
+
+        int Result = fcntl(replayBuffer->fileHandle, F_PREALLOCATE, &fstore);
+        if (Result != -1) {
+          Result = ftruncate(replayBuffer->fileHandle, totalSize);
+
+          if (Result != 0) {
+            printf("ftruncate error on replayBuffer[%d]: %d: %s\n",
+                   replayBufferIdx, errno, strerror(errno));
+          }
+        } else {
+          printf("fcntl error on replayBuffer[%d]: %d: %s\n",
+                 replayBufferIdx, errno, strerror(errno));
+        }
+      } else {
+        printf("mmap error on replayBuffer[%d]: %d  %s",
+               replayBufferIdx, errno, strerror(errno));
+      }
+    } else {
+      printf("Error creating replayBuffer[%d] file %s: %d : %s\n",
+             replayBufferIdx, replayBuffer->filename, errno, strerror(errno));
+    }
+  }
+}
+
+static PlatformReplayBuffer *
+getReplayBuffer(PlatformReplayState *state, int index) {
+  assert(index < SDL_arraysize(state->replayBuffers));
+  PlatformReplayBuffer *result = &state->replayBuffers[index];
+  return result;
+}
+
+static void
+beginInputPlayback(int inputPlayingIndex, PlatformReplayState *state) {
+  printf("beginning input playback\n");
+
+  PlatformReplayBuffer *replayBuffer = getReplayBuffer(state, inputPlayingIndex);
+
+  if (replayBuffer->memoryBlock) {
+    state->playingIndex = inputPlayingIndex;
+    state->playbackHandle = open(replayBuffer->filename, O_RDONLY);
+
+    memcpy(state->gameMemory->permanentMemory.base,
+           replayBuffer->memoryBlock,
+           state->gameMemory->permanentMemory.totalSize);
+
+    memcpy(state->gameMemory->longTimeMemory.base,
+           (int8_t *) replayBuffer->memoryBlock + state->gameMemory->permanentMemory.totalSize,
+           state->gameMemory->longTimeMemory.totalSize);
+  }
+}
+
+static void
+endInputPlayback(PlatformReplayState *state) {
+  close(state->playbackHandle);
+  state->playingIndex = -1;
+  printf("ended input playback\n");
+}
+
+static void
+beginInputRecording(int inputRecordingIndex, PlatformReplayState *state) {
+  printf("beginning recording input\n");
+
+  PlatformReplayBuffer *replayBuffer = getReplayBuffer(state, inputRecordingIndex);
+
+  if (state->playingIndex > -1) {
+    printf("...first stopping input playback\n");
+    endInputPlayback(state);
+  }
+
+  if (replayBuffer->memoryBlock) {
+    state->recordingIndex = inputRecordingIndex;
+
+    getInputFileLocation(replayBuffer->filename, SDL_arraysize(replayBuffer->filename),
+                         inputRecordingIndex);
+    state->recordingHandle = open(replayBuffer->filename, O_WRONLY | O_CREAT, 0644);
+
+    memcpy(replayBuffer->memoryBlock,
+           state->gameMemory->permanentMemory.base,
+           state->gameMemory->permanentMemory.totalSize);
+
+    memcpy((int8_t *) replayBuffer->memoryBlock + state->gameMemory->permanentMemory.totalSize,
+           state->gameMemory->longTimeMemory.base,
+           state->gameMemory->longTimeMemory.totalSize);
+  }
+}
+
+static void
+endInputRecording(PlatformReplayState *state) {
+  close(state->recordingHandle);
+  state->recordingIndex = -1;
+  printf("ended recording input\n");
+}
+
+static void
+recordInput(PlatformReplayState *state, UserInput *userInput) {
+
+  ssize_t bytesWritten = write(state->recordingHandle, userInput, sizeof(UserInput));
+
+  if (bytesWritten != sizeof(UserInput)) {
+    printf("write error recording input: %d: %s\n", errno, strerror(errno));
+  }
+}
+
+static void
+playbackInput(PlatformReplayState *state, UserInput *userInput) {
+
+  ssize_t bytesRead = read(state->playbackHandle, userInput, sizeof(UserInput));
+
+  printf("bytesRead: %zd\n", bytesRead);
+
+  if (bytesRead == 0) {
+    // NOTE(casey): We've hit the end of the stream, go back to the beginning
+    int playingIndex = state->playingIndex;
+    endInputPlayback(state);
+    beginInputPlayback(playingIndex, state);
+
+    bytesRead = read(state->playbackHandle, userInput, sizeof(UserInput));
+
+    if (bytesRead != sizeof(UserInput)) {
+      printf("read error rewinding playback input: %d: %s\n", errno, strerror(errno));
+
+    } else {
+      printf("rewinding playback...\n");
+    }
+  } else if (bytesRead < 0) {
+    int t = 0;
+  }
+}
+
 static void
 processKeyPress(ButtonState *newState, bool isDown, bool wasDown) {
   if (newState->endedDown != isDown) {
@@ -152,7 +345,7 @@ processKeyPress(ButtonState *newState, bool isDown, bool wasDown) {
 }
 
 static void
-handleEvent(SDL_Event *event, UserInput *userInput) {
+handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state) {
   switch (event->type) {
     case SDL_QUIT: {
       userInput->shouldQuit = true;
@@ -245,16 +438,32 @@ handleEvent(SDL_Event *event, UserInput *userInput) {
             processKeyPress(&userInput->start, isDown, wasDown);
             break;
           }
+#ifdef BUILD_INTERNAL
+          case SDLK_p: {
+            if (isDown) {
+              userInput->globalPause = !userInput->globalPause;
+              break;
+            }
+          }
+          case SDLK_l: {
+            if (isDown) {
+              if (state->playingIndex == -1) {
+                if (state->recordingIndex == -1) {
+                  beginInputRecording(0, state);
+                } else {
+                  endInputRecording(state);
+                  beginInputPlayback(0, state);
+                }
+              } else {
+                endInputPlayback(state);
+              }
+            }
+          }
+#endif
         }
       }
     }
   }
-}
-
-static float
-getSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
-  return ((float) (currentCounter - oldCounter) /
-          (float) (SDL_GetPerformanceFrequency()));
 }
 
 int
@@ -312,13 +521,16 @@ main(int argc, char *args[]) {
 
   PlatformConfig platformConfig = {G_resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT};
   GameMemory gameMemory = {permanentMemory, longTimeMemory, shortTimeMemory};
+  PlatformReplayState state = {-1, -1, -1, -1, &gameMemory};
   UserInput userInput = {};
   GameLibrary gameLibrary = {};
+
+  setupPlatformReplayBuffers(&state);
 
   while (!userInput.shouldQuit) {
 
 #ifdef BUILD_INTERNAL
-    time_t gameLibraryLastWriteTime =  getLastWriteTime("libGame.dylib");
+    time_t gameLibraryLastWriteTime = getLastWriteTime("libGame.dylib");
     if (gameLibraryLastWriteTime > gameLibrary.lastWriteTime) {
       unloadGameLibrary(&gameLibrary);
       loadGameLibrary(&gameLibrary, "libGame.dylib");
@@ -331,7 +543,18 @@ main(int argc, char *args[]) {
 
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
-      handleEvent(&event, &userInput);
+      handleEvent(&event, &userInput, &state);
+    }
+#ifdef BUILD_INTERNAL
+    if (userInput.globalPause) {
+      continue;
+    }
+#endif
+    if (state.recordingIndex > -1) {
+      recordInput(&state, &userInput);
+    }
+    if (state.playingIndex > -1) {
+      playbackInput(&state, &userInput);
     }
 
     SDL_RenderClear(renderer);

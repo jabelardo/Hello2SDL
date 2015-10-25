@@ -7,6 +7,8 @@
 
 #include "MemoryPartition.h"
 
+#define PLATFORM_MAX_PATH 1024
+
 struct ButtonState {
   int halfTransitionCount;
   bool endedDown;
@@ -38,6 +40,10 @@ struct UserInput {
 
   ButtonState back;
   ButtonState start;
+
+#ifdef BUILD_INTERNAL
+  bool globalPause;
+#endif
 };
 
 struct PlatformFunctions {
