@@ -7,12 +7,8 @@
 #if _MSC_VER
 #include <windows.h>
 #else
-
 #include <sys/mman.h>
-
 #endif
-
-#include <assert.h>
 
 #include "Game.cpp"
 
