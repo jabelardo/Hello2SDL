@@ -22,16 +22,6 @@
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-#ifdef _WIN32
-#define PATH_SEP "\\"
-#else
-#define PATH_SEP "/"
-#endif
-
-#ifndef ASSETS_FOLDER
-#define ASSETS_FOLDER "assets"
-#endif
-
 #define KILOBYTES(value) ((value) * 1024ul)
 #define MEGABYTES(value) (KILOBYTES(value) * 1024ul)
 #define GIGABYTES(value) (MEGABYTES(value) * 1024ul)
@@ -46,11 +36,20 @@ GameContext G_gameContext = {};
  * TODO:
  *  - dynamic library loading
  *  - loop game recording / playback
- *  - sound system
  */
 
-char *
+#ifndef ASSETS_FOLDER
+#define ASSETS_FOLDER "assets"
+#endif
+
+static char *
 getResourcePath(MemoryPartition *partition) {
+#ifdef _WIN32
+  const char* PATH_SEP = "\\";
+#else
+  const char* PATH_SEP = "/";
+#endif
+
   char *basePath = SDL_GetBasePath();
   if (!basePath) {
     SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error getting resource path: %s\n", SDL_GetError());
@@ -67,8 +66,8 @@ getResourcePath(MemoryPartition *partition) {
   return resourcePath;
 }
 
-int
-sdlGetWindowRefreshRate(SDL_Window *window) {
+static int
+getWindowRefreshRate(SDL_Window *window) {
   int displayIndex = SDL_GetWindowDisplayIndex(window);
 
   // If we can't find the refresh rate, we'll return DEFAULT_REFRESH_RATE
@@ -82,8 +81,8 @@ sdlGetWindowRefreshRate(SDL_Window *window) {
   return mode.refresh_rate;
 }
 
-void
-sdlProcessKeyPress(ButtonState *newState, bool isDown, bool wasDown) {
+static void
+processKeyPress(ButtonState *newState, bool isDown, bool wasDown) {
   if (newState->endedDown != isDown) {
     newState->endedDown = isDown;
     ++newState->halfTransitionCount;
@@ -91,8 +90,8 @@ sdlProcessKeyPress(ButtonState *newState, bool isDown, bool wasDown) {
   newState->wasDown = wasDown;
 }
 
-void
-sdlHandleEvent(SDL_Event *event, UserInput *userInput) {
+static void
+handleEvent(SDL_Event *event, UserInput *userInput) {
   switch (event->type) {
     case SDL_QUIT: {
       userInput->shouldQuit = true;
@@ -110,15 +109,15 @@ sdlHandleEvent(SDL_Event *event, UserInput *userInput) {
                      (event->button.clicks != 0);
       switch (button) {
         case SDL_BUTTON_LEFT: {
-          sdlProcessKeyPress(&userInput->mouseButtonLeft, isDown, wasDown);
+          processKeyPress(&userInput->mouseButtonLeft, isDown, wasDown);
           break;
         }
         case SDL_BUTTON_MIDDLE: {
-          sdlProcessKeyPress(&userInput->mouseButtonMiddle, isDown, wasDown);
+          processKeyPress(&userInput->mouseButtonMiddle, isDown, wasDown);
           break;
         }
         case SDL_BUTTON_RIGHT: {
-          sdlProcessKeyPress(&userInput->mouseButtonRight, isDown, wasDown);
+          processKeyPress(&userInput->mouseButtonRight, isDown, wasDown);
           break;
         }
       }
@@ -138,51 +137,51 @@ sdlHandleEvent(SDL_Event *event, UserInput *userInput) {
       if (event->key.repeat == 0) {
         switch (keyCode) {
           case SDLK_w: {
-            sdlProcessKeyPress(&userInput->moveUp, isDown, wasDown);
+            processKeyPress(&userInput->moveUp, isDown, wasDown);
             break;
           }
           case SDLK_a: {
-            sdlProcessKeyPress(&userInput->moveLeft, isDown, wasDown);
+            processKeyPress(&userInput->moveLeft, isDown, wasDown);
             break;
           }
           case SDLK_s: {
-            sdlProcessKeyPress(&userInput->moveDown, isDown, wasDown);
+            processKeyPress(&userInput->moveDown, isDown, wasDown);
             break;
           }
           case SDLK_d: {
-            sdlProcessKeyPress(&userInput->moveRight, isDown, wasDown);
+            processKeyPress(&userInput->moveRight, isDown, wasDown);
             break;
           }
           case SDLK_q: {
-            sdlProcessKeyPress(&userInput->leftShoulder, isDown, wasDown);
+            processKeyPress(&userInput->leftShoulder, isDown, wasDown);
             break;
           }
           case SDLK_e: {
-            sdlProcessKeyPress(&userInput->rightShoulder, isDown, wasDown);
+            processKeyPress(&userInput->rightShoulder, isDown, wasDown);
             break;
           }
           case SDLK_UP: {
-            sdlProcessKeyPress(&userInput->actionUp, isDown, wasDown);
+            processKeyPress(&userInput->actionUp, isDown, wasDown);
             break;
           }
           case SDLK_LEFT: {
-            sdlProcessKeyPress(&userInput->actionLeft, isDown, wasDown);
+            processKeyPress(&userInput->actionLeft, isDown, wasDown);
             break;
           }
           case SDLK_DOWN: {
-            sdlProcessKeyPress(&userInput->actionDown, isDown, wasDown);
+            processKeyPress(&userInput->actionDown, isDown, wasDown);
             break;
           }
           case SDLK_RIGHT: {
-            sdlProcessKeyPress(&userInput->actionRight, isDown, wasDown);
+            processKeyPress(&userInput->actionRight, isDown, wasDown);
             break;
           }
           case SDLK_ESCAPE: {
-            sdlProcessKeyPress(&userInput->back, isDown, wasDown);
+            processKeyPress(&userInput->back, isDown, wasDown);
             break;
           }
           case SDLK_SPACE: {
-            sdlProcessKeyPress(&userInput->start, isDown, wasDown);
+            processKeyPress(&userInput->start, isDown, wasDown);
             break;
           }
         }
@@ -191,97 +190,10 @@ sdlHandleEvent(SDL_Event *event, UserInput *userInput) {
   }
 }
 
-float
-sdlGetSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
+static float
+getSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
   return ((float) (currentCounter - oldCounter) /
           (float) (SDL_GetPerformanceFrequency()));
-}
-
-template<typename T>
-bool isNegative(T val) {
-  int result = (val > T(0)) - (val < T(0));
-  return result == -1;
-}
-
-void *
-reserveMemory(MemoryPartition *partition, size_t reserveSize) {
-  if (partition->type == PERMANENT_MEMORY || partition->type == SHORT_TIME_MEMORY) {
-    assert(reserveSize <= partition->totalSize - partition->usedSize);
-    int8_t *result = (int8_t *) partition->base + partition->usedSize;
-    partition->usedSize += reserveSize;
-    return result;
-
-  } else if (partition->type == LONG_TIME_MEMORY) {
-    void *block = partition->base;
-    while (block < (int8_t *) partition->base + partition->totalSize) {
-      // NOTE:
-      // each memory block is prefixed with a ssize_t value indicating the block size, the block is
-      // free to use if the sign of the size header is negative
-      ssize_t blockSize = *(ssize_t *) block;
-      if (isNegative(blockSize)) {
-        if (-1 * blockSize >= reserveSize + sizeof(ssize_t)) {
-          assert((int8_t *) block + sizeof(ssize_t) + reserveSize + sizeof(ssize_t)
-                 <= (int8_t *) partition->base + partition->totalSize);
-          ssize_t *resultAddress = (ssize_t *) block + 1;
-          partition->usedSize += reserveSize + sizeof(ssize_t);
-          *(ssize_t *) ((int8_t *) resultAddress + reserveSize) =
-              blockSize + reserveSize + sizeof(ssize_t);
-          *(ssize_t *) block = reserveSize;
-          return resultAddress;
-        }
-        block = (int8_t *) block + -1 * blockSize + sizeof(ssize_t);
-      } else {
-        block = (int8_t *) block + blockSize + sizeof(ssize_t);
-      }
-    }
-    assert(false);
-    return 0;
-  }
-  assert(false);
-  return 0;
-}
-
-bool
-freeMemory(MemoryPartition *partition, void *memory) {
-  if (partition->type == PERMANENT_MEMORY) {
-    return false;
-
-  } else if (partition->type == SHORT_TIME_MEMORY) {
-    return true;
-
-  } else if (partition->type == LONG_TIME_MEMORY) {
-    assert(memory >= partition->base);
-    assert(memory <= (int8_t *) partition->base + partition->totalSize);
-    ssize_t *memorySize = (ssize_t *) memory - 1;
-
-    if (isNegative(*memorySize)) {
-      return false;
-    }
-    partition->usedSize -= *memorySize;
-    *memorySize *= -1;
-
-    // join contiguous free blocks
-    void *block = partition->base;
-    ssize_t *freeBlock = (ssize_t *) 0;
-    while (block < (int8_t *) partition->base + partition->totalSize) {
-      ssize_t blockSize = *(ssize_t *) block;
-      if (isNegative(blockSize)) {
-        if (freeBlock) {
-          *freeBlock += blockSize - sizeof(ssize_t);
-          partition->usedSize += blockSize - sizeof(ssize_t);
-        } else {
-          freeBlock = (ssize_t *) block;
-        }
-        block = (int8_t *) block + -1 * blockSize + sizeof(ssize_t);
-      } else {
-        freeBlock = 0;
-        block = (int8_t *) block + blockSize + sizeof(ssize_t);
-      }
-    }
-    return true;
-  }
-  assert(false);
-  return false;
 }
 
 int
@@ -332,7 +244,7 @@ main(int argc, char *args[]) {
                                      (int8_t *) longTimeMemory.base + longTimeMemory.totalSize};
 
   Uint64 lastCounter = SDL_GetPerformanceCounter();
-  int monitorRefreshHz = sdlGetWindowRefreshRate(window);
+  int monitorRefreshHz = getWindowRefreshRate(window);
   float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
   char *resourcePath = getResourcePath(&permanentMemory);
   G_gameContext = {resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, renderer, permanentMemory,
@@ -342,7 +254,7 @@ main(int argc, char *args[]) {
   while (!G_gameContext.userInput.shouldQuit) {
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
-      sdlHandleEvent(&event, &G_gameContext.userInput);
+      handleEvent(&event, &G_gameContext.userInput);
     }
 
     SDL_RenderClear(renderer);
@@ -350,7 +262,7 @@ main(int argc, char *args[]) {
       return result;
     }
 
-    float secondsElapsedForFrame = sdlGetSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
+    float secondsElapsedForFrame = getSecondsElapsed(lastCounter, SDL_GetPerformanceCounter());
     if (secondsElapsedForFrame < targetSecondsPerFrame) {
       Uint32 timeToSleep = (Uint32) (targetSecondsPerFrame - secondsElapsedForFrame) * 1000;
       if (timeToSleep > 0) {
