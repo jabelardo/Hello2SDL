@@ -8,6 +8,7 @@
 #include "TileMap.h"
 #include "RenderUtils.h"
 #include "Entity.h"
+#include "TextureStorage.h"
 
 TileSet *
 getTileSetById(TileLayer *tileLayer, int tileId) {
@@ -433,8 +434,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
           xmlFree(name);
           goto fail;
         }
-        if (!gameContext->functions.loadTexture(name, value, gameContext->renderer,
-                                                &gameContext->permanentMemory)) {
+        if (!loadTexture(name, value, gameContext->renderer, gameContext)) {
           xmlFree(name);
           xmlFree(value);
           goto fail;
@@ -499,13 +499,12 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
             if (!source) {
               goto fail;
             }
-            if (!gameContext->functions.loadTexture(newTileSet->name, source, gameContext->renderer,
-                                                    &gameContext->permanentMemory)) {
+            if (!loadTexture(newTileSet->name, source, gameContext->renderer, gameContext)) {
               xmlFree(source);
               goto fail;
             }
             xmlFree(source);
-            newTileSet->texture = gameContext->functions.getTexture(newTileSet->name);
+            newTileSet->texture = getTexture(newTileSet->name, gameContext);
           }
         }
         newTileSet->numColumns =
@@ -622,7 +621,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext)
         xmlFree(propertyValue);
       }
     }
-    SDL_Texture *texture = gameContext->functions.getTexture(textureId);
+    SDL_Texture *texture = getTexture(textureId, gameContext);
     Entity *player = (Entity *) reserveMemory(&gameContext->longTimeMemory, sizeof(Entity));
     player->type = PLAYER_TYPE;
     player->position = V2D{(float) objectX, (float) objectY};

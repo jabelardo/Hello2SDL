@@ -7,6 +7,7 @@
 
 #include "V2D.h"
 #include "Bitmap.h"
+#include "Game.h"
 
 enum EntityType {
   PLAYER_TYPE = 0,
@@ -24,5 +25,7 @@ struct Entity {
 void updateEntity(Entity *entity, UserInput *userInput);
 
 void drawEntity(Entity *entity, SDL_Renderer *renderer);
+
+bool checkEntityCollision(Entity *entity1, Entity *entity2);
 
 #endif //HELLO2SDL_ENTITY_H

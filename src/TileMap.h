@@ -66,4 +66,10 @@ struct TileMap {
   ObjectLayer* objectLayer;
 };
 
+bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext);
+
+void updateTileMap(TileMap *tileMap, GameContext *gameContext);
+
+void drawTileMap(TileMap *tileMap, SDL_Renderer *renderer);
+
 #endif //HELLO2SDL_TILEMMAP_H

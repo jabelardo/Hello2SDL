@@ -27,6 +27,7 @@ struct MemoryPartition {
 };
 
 enum GameState {
+  NOT_INITIALIZED_STATE = 0,
   PLAY_STATE,
   MAIN_MENU_STATE,
   PAUSE_MENU_STATE,
@@ -41,17 +42,6 @@ enum GameStateChange {
   RESUME_PLAY,
   PAUSE_MENU,
   GAME_OVER
-};
-
-using LoadTextureFunc = bool(const char * textureName, const char *filePath, SDL_Renderer *renderer,
-                             MemoryPartition *partition);
-using GetTextureFunc = SDL_Texture *(const char * textureName);
-using UnloadTextureFunc = bool(const char * textureName, MemoryPartition *partition);
-
-struct PlatformFunctions {
-  LoadTextureFunc *loadTexture;
-  GetTextureFunc *getTexture;
-  UnloadTextureFunc *unloadTexture;
 };
 
 struct ButtonState {
@@ -87,11 +77,19 @@ struct UserInput {
   ButtonState start;
 };
 
+struct PlatformFunctions {
+};
+
+struct TextureHashNode {
+  char *name;
+  SDL_Texture *texture;
+  TextureHashNode *next;
+};
+
 struct GameContext {
   char* resourcePath;
   int screenWidth;
   int screenHeight;
-  bool isInitialized;
   SDL_Renderer *renderer;
   MemoryPartition permanentMemory;
   MemoryPartition longTimeMemory;
@@ -100,7 +98,17 @@ struct GameContext {
   GameState currentState;
   GameStateChange stateChange;
   UserInput userInput;
+  TextureHashNode *textureHash[4096];
+  TextureHashNode *freeTextureHashNodes;
 };
+
+void exitFromGame(GameContext *gameContext);
+
+void startPlay(GameContext *gameContext);
+
+void mainMenu(GameContext *gameContext);
+
+void resumePlay(GameContext *gameContext);
 
 using GameContextCallbackFunc = void(GameContext *);
 

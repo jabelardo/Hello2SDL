@@ -7,14 +7,25 @@ set(SOURCE_FILES
         src/AnimatedGraphic.cpp
         src/AnimatedGraphic.h
         src/Bitmap.h
+        src/Entity.cpp
         src/Entity.h
         src/Game.cpp
         src/Game.h
+        src/GameOverMenu.cpp
+        src/GameOverMenu.h
         src/main.cpp
+        src/MainMenu.cpp
+        src/MainMenu.h
         src/MenuButton.cpp
         src/MenuButton.h
+        src/PauseMenu.cpp
+        src/PauseMenu.h
+        src/PlayState.cpp
+        src/PlayState.h
         src/RenderUtils.cpp
         src/RenderUtils.h
+        src/TextureStorage.cpp
+        src/TextureStorage.h
         src/TileMap.cpp
         src/TileMap.h
         src/V2D.h)

@@ -1,9 +1,7 @@
 #ifdef __APPLE__
 #include <SDL2/SDL.h>
-#include <SDL2_image/SDL_image.h>
 #else
 #include <SDL.h>
-#include <SDL_image.h>
 #endif
 
 #if _MSC_VER
@@ -42,35 +40,14 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-struct TextureHashNode {
-  char *name;
-  SDL_Texture *texture;
-  TextureHashNode *next;
-};
-
 GameContext G_gameContext = {};
-
 
 /*
  * TODO:
  *  - dynamic library loading
- *  - sound system
  *  - loop game recording / playback
- *  - improve textureHash to its final version
+ *  - sound system
  */
-
-// TODO: this should live in the long time memory partition and have a provision to recycle instead
-//       of freeing the nodes on unload texture
-TextureHashNode *G_textureHash[4096] = {};
-
-uint32_t
-sdbmHash(const char *str) {
-  uint32_t hash = 0;
-  while (int c = *str++) {
-    hash = c + (hash << 6) + (hash << 16) - hash;
-  }
-  return hash;
-}
 
 char *
 getResourcePath(MemoryPartition *partition) {
@@ -88,88 +65,6 @@ getResourcePath(MemoryPartition *partition) {
   strcat(resourcePath, PATH_SEP);
   SDL_free(basePath);
   return resourcePath;
-}
-
-bool
-sdlLoadTexture(const char *textureName, const char *filename, SDL_Renderer *renderer,
-               MemoryPartition *partition) {
-  uint32_t hashVal32 = sdbmHash(textureName);
-  uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(G_textureHash) - 1;
-  assert(hashPos12 < SDL_arraysize(G_textureHash));
-
-  TextureHashNode *node = G_textureHash[hashPos12];
-  TextureHashNode *parent = node;
-  while (node) {
-    if (strcmp(node->name, textureName) == 0) {
-      return true;
-    }
-    parent = node;
-    node = node->next;
-  }
-  node = (TextureHashNode *) reserveMemory(partition, sizeof(TextureHashNode));
-  *node = {};
-  if (parent) {
-    parent->next = node;
-  } else {
-    G_textureHash[hashPos12] = node;
-  }
-  char *filePath = stringConcat(G_gameContext.resourcePath, filename,
-                                &G_gameContext.shortTimeMemory);
-  SDL_Surface *tempSurface = IMG_Load(filePath);
-  if (!tempSurface) {
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error IMG_Load: %s\n", SDL_GetError());
-    return false;
-  }
-  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-  SDL_FreeSurface(tempSurface);
-  if (!texture) {
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Error SDL_CreateTextureFromSurface: %s\n",
-                 SDL_GetError());
-    return false;
-  }
-  node->texture = texture;
-  size_t textureNameLen = strlen(textureName);
-  node->name = (char *) reserveMemory(partition, textureNameLen + 1);
-  strcpy(node->name, textureName);
-  return true;
-}
-
-SDL_Texture *
-sdlGetTexture(const char *textureName) {
-  uint32_t hashVal32 = sdbmHash(textureName);
-  uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(G_textureHash) - 1;
-  assert(hashPos12 < SDL_arraysize(G_textureHash));
-
-  TextureHashNode *node = G_textureHash[hashPos12];
-  while (node) {
-    if (strcmp(node->name, textureName) == 0) {
-      return node->texture;
-    }
-    node = node->next;
-  }
-  return 0;
-}
-
-bool
-sdlUnloadTexture(const char *textureName, MemoryPartition *partition) {
-  uint32_t hashVal32 = sdbmHash(textureName);
-  uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(G_textureHash) - 1;
-  assert(hashPos12 < SDL_arraysize(G_textureHash));
-
-  TextureHashNode *node = G_textureHash[hashPos12];
-  TextureHashNode *parent = 0;
-  while (node) {
-    if (strcmp(node->name, textureName) == 0) {
-      parent->next = node->next;
-      SDL_DestroyTexture(node->texture);
-      freeMemory(partition, node->name);
-      freeMemory(partition, node);
-      return true;
-    }
-    parent = node;
-    node = node->next;
-  }
-  return false;
 }
 
 int
@@ -440,10 +335,8 @@ main(int argc, char *args[]) {
   int monitorRefreshHz = sdlGetWindowRefreshRate(window);
   float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
   char *resourcePath = getResourcePath(&permanentMemory);
-  G_gameContext = GameContext{resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, false,
-                              renderer,
-                              permanentMemory, longTimeMemory, shortTimeMemory,
-                              PlatformFunctions{sdlLoadTexture, sdlGetTexture, sdlUnloadTexture}};
+  G_gameContext = {resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, renderer, permanentMemory,
+                   longTimeMemory, shortTimeMemory};
   G_gameContext.userInput.shouldQuit = false;
 
   while (!G_gameContext.userInput.shouldQuit) {
