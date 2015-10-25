@@ -28,7 +28,7 @@ struct MenuButton {
   int y;
   Bitmap bitmap;
   GameStateChange stateChange;
-  bool buttonReleased;
+  uint32_t clickedTime;
 };
 
 void drawMenuButton(MenuButton* menuButton, SDL_Renderer *renderer);

@@ -115,17 +115,7 @@ void * reserveMemory(MemoryPartition *partition, size_t reserveSize);
 
 bool freeMemory(MemoryPartition *partition, void* memory);
 
-inline char *
-stringConcat(const char * str1, const char * str2, MemoryPartition* memoryPartition) {
-  char *result = (char *) reserveMemory(memoryPartition, strlen(str1) + strlen(str2) + 1);
-  if (!result) {
-    return 0;
-  }
-  result[0] = 0;
-  strcpy(result, str1);
-  strcat(result, str2);
-  return result;
-}
+char * stringConcat(const char * str1, const char * str2, MemoryPartition* memoryPartition);
 
 #ifdef __cplusplus
 extern "C" {

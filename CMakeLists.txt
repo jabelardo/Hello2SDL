@@ -16,6 +16,7 @@ set(SOURCE_FILES
         src/main.cpp
         src/MainMenu.cpp
         src/MainMenu.h
+        src/MemoryPartition.cpp
         src/MenuButton.cpp
         src/MenuButton.h
         src/PauseMenu.cpp

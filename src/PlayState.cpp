@@ -52,7 +52,7 @@ updatePlayState(PlayState *playState, GameContext *gameContext) {
   updateEntity(playState->enemy, &gameContext->userInput);
 
   if (checkEntityCollision(playState->enemy, playState->tileMap->objectLayer->player)) {
-   // gameContext->stateChange = GAME_OVER;
+    gameContext->stateChange = GAME_OVER;
   }
 }
 

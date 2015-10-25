@@ -13,7 +13,18 @@
 #include <assert.h>
 
 #include "TextureStorage.h"
-#include "Game.h"
+
+char *
+stringConcat(const char * str1, const char * str2, MemoryPartition* memoryPartition) {
+  char *result = (char *) reserveMemory(memoryPartition, strlen(str1) + strlen(str2) + 1);
+  if (!result) {
+    return 0;
+  }
+  result[0] = 0;
+  strcpy(result, str1);
+  strcat(result, str2);
+  return result;
+}
 
 static uint32_t
 sdbmHash(const char *str) {

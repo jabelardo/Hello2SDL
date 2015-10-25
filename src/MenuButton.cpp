@@ -1,6 +1,13 @@
 //
 // Created by Jose Gutierrez on 10/15/15.
 //
+#ifdef __APPLE__
+
+#include <SDL2/SDL_timer.h>
+
+#else
+#include <SDL_timer.h>
+#endif
 
 #include "MenuButton.h"
 #include "RenderUtils.h"
@@ -19,14 +26,17 @@ updateMenuButton(MenuButton* menuButton, GameContext *gameContext) {
       && mousePositionY < (menuButton->y + menuButton->bitmap.height)
       && mousePositionY > menuButton->y) {
 
-    if (gameContext->userInput.mouseButtonLeft.endedDown && menuButton->buttonReleased) {
+    if (menuButton->clickedTime && menuButton->clickedTime + 125 <= SDL_GetTicks()) {
       menuButton->bitmap.currentFrame = MenuButton::CLICKED;
-      menuButton->buttonReleased = false;
+      menuButton->clickedTime = 0;
       gameContext->stateChange = menuButton->stateChange;
 
     } else if (gameContext->userInput.mouseButtonLeft.endedDown) {
+      menuButton->bitmap.currentFrame = MenuButton::MOUSE_OUT;
+      menuButton->clickedTime = SDL_GetTicks();
+
+    } else {
       menuButton->bitmap.currentFrame = MenuButton::MOUSE_OVER;
-      menuButton->buttonReleased = true;
     }
   } else {
     menuButton->bitmap.currentFrame = MenuButton::MOUSE_OUT;
