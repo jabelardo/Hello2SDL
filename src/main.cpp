@@ -309,8 +309,7 @@ handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state,
     case SDL_MOUSEBUTTONUP: {
       Uint8 button = event->button.button;
       bool isDown = (event->button.state == SDL_PRESSED);
-      bool wasDown = (event->button.state == SDL_RELEASED) ||
-                     (event->button.clicks != 0);
+      bool wasDown = (event->button.state == SDL_RELEASED) || (event->button.clicks != 0);
       switch (button) {
         case SDL_BUTTON_LEFT: {
           processKeyPress(&userInput->mouseButtonLeft, isDown, wasDown);
@@ -336,8 +335,7 @@ handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state,
     case SDL_KEYUP: {
       SDL_Keycode keyCode = event->key.keysym.sym;
       bool isDown = (event->key.state == SDL_PRESSED);
-      bool wasDown = (event->key.state == SDL_RELEASED) ||
-                     (event->key.repeat != 0);
+      bool wasDown = (event->key.state == SDL_RELEASED) || (event->key.repeat != 0);
       if (event->key.repeat == 0) {
         switch (keyCode) {
           case SDLK_w: {
