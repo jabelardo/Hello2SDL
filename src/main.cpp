@@ -14,13 +14,13 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
-#include <assert.h>
 #include <unistd.h>
 #include <sys/errno.h>
 
 #endif
 
-#include "SharedDefinitions.h"
+#include <assert.h>
+#include "Platform.h"
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
 // On the vast majority of those systems, one can use MAP_ANON instead.
@@ -35,15 +35,6 @@
 #define DEFAULT_REFRESH_RATE 60
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
-
-using gameUpdateAndRenderFunc = int(PlatformConfig *, GameMemory *, UserInput *, SDL_Renderer *);
-
-struct GameLibrary {
-  void *dl;
-  time_t lastWriteTime;
-  gameUpdateAndRenderFunc *gameUpdateAndRender;
-  bool initialized;
-};
 
 #if _MSC_VER
 #else
@@ -148,163 +139,113 @@ getSecondsElapsed(Uint64 oldCounter, Uint64 currentCounter) {
           (float) (SDL_GetPerformanceFrequency()));
 }
 
-enum ReplayStreamType {
-  INPUT_REPLAY_STREAM,
-  STATE_REPLAY_STREAM
-};
-
-struct PlatformReplayBuffer {
-  int stateFileHandle;
-  void *stateMemoryBlock;
-  char stateFilename[PLATFORM_MAX_PATH];
-  char inputFilename[PLATFORM_MAX_PATH];
-};
-
-struct PlatformReplayState {
-  int recordingHandle;
-  int recordingIndex;
-
-  int playbackHandle;
-  int playingIndex;
-
-  GameMemory *gameMemory;
-
-  PlatformReplayBuffer replayBuffers[4];
-
-  ssize_t bytesWritten;
-  ssize_t bytesToRead;
-};
-
 static int
-getInputFileLocation(char *destName, size_t destSize, int slotIndex, ReplayStreamType type) {
-  return snprintf(destName, destSize, "%sloop_edit_%d_%s.mem", G_basePath, slotIndex,
+getInputFileLocation(char *destName, size_t destSize, ReplayStreamType type) {
+  return snprintf(destName, destSize, "%sloop_edit_%s.mem", G_basePath,
                   (type == INPUT_REPLAY_STREAM) ? "input" : "state");
 }
 
 static void
-setupPlatformReplayBuffers(PlatformReplayState *state) {
+setupPlatformReplayBuffers(PlatformReplayState *state, GameMemory *gameMemory) {
 
-  size_t totalSize = state->gameMemory->permanentMemory.totalSize +
-                     state->gameMemory->longTimeMemory.totalSize;
+  size_t totalSize = gameMemory->permanentMemory.totalSize + gameMemory->longTimeMemory.totalSize;
 
-  for (int replayBufferIdx = 0; replayBufferIdx < SDL_arraysize(state->replayBuffers);
-       ++replayBufferIdx) {
-    PlatformReplayBuffer *replayBuffer = &state->replayBuffers[replayBufferIdx];
+  getInputFileLocation(state->stateFilename, SDL_arraysize(state->stateFilename),
+                       STATE_REPLAY_STREAM);
 
-    getInputFileLocation(replayBuffer->stateFilename, SDL_arraysize(replayBuffer->stateFilename),
-                         replayBufferIdx, STATE_REPLAY_STREAM);
+  state->stateFileHandle = open(state->stateFilename,
+                                O_RDWR | O_CREAT | O_TRUNC,
+                                0644);
 
-    replayBuffer->stateFileHandle = open(replayBuffer->stateFilename,
-                                         O_RDWR | O_CREAT | O_TRUNC,
-                                         0644);
+  if (state->stateFileHandle != -1) {
+    state->stateMemoryBlock = mmap(0, totalSize,
+                                   PROT_READ | PROT_WRITE,
+                                   MAP_PRIVATE,
+                                   state->stateFileHandle,
+                                   0);
+    if (state->stateMemoryBlock != MAP_FAILED) {
+      fstore_t fstore = {};
+      fstore.fst_flags = F_ALLOCATECONTIG;
+      fstore.fst_posmode = F_PEOFPOSMODE;
+      fstore.fst_offset = 0;
+      fstore.fst_length = totalSize;
 
-    if (replayBuffer->stateFileHandle != -1) {
-      replayBuffer->stateMemoryBlock = mmap(0, totalSize,
-                                       PROT_READ | PROT_WRITE,
-                                       MAP_PRIVATE,
-                                       replayBuffer->stateFileHandle,
-                                       0);
-      if (replayBuffer->stateMemoryBlock != MAP_FAILED) {
-        fstore_t fstore = {};
-        fstore.fst_flags = F_ALLOCATECONTIG;
-        fstore.fst_posmode = F_PEOFPOSMODE;
-        fstore.fst_offset = 0;
-        fstore.fst_length = totalSize;
+      int result = fcntl(state->stateFileHandle, F_PREALLOCATE, &fstore);
+      if (result != -1) {
+        result = ftruncate(state->stateFileHandle, totalSize);
 
-        int result = fcntl(replayBuffer->stateFileHandle, F_PREALLOCATE, &fstore);
-        if (result != -1) {
-          result = ftruncate(replayBuffer->stateFileHandle, totalSize);
-
-          if (result != 0) {
-            printf("ftruncate error on replayBuffer[%d]: %d: %s\n",
-                   replayBufferIdx, errno, strerror(errno));
-          }
-        } else {
-          printf("fcntl error on replayBuffer[%d]: %d: %s\n",
-                 replayBufferIdx, errno, strerror(errno));
+        if (result != 0) {
+          printf("ftruncate error on replayBuffer: %d: %s\n", errno, strerror(errno));
         }
       } else {
-        printf("mmap error on replayBuffer[%d]: %d  %s",
-               replayBufferIdx, errno, strerror(errno));
+        printf("fcntl error on replayBuffer: %d: %s\n", errno, strerror(errno));
       }
     } else {
-      printf("Error creating replayBuffer[%d] file %s: %d : %s\n",
-             replayBufferIdx, replayBuffer->stateFilename, errno, strerror(errno));
+      printf("mmap error on replayBuffer: %d  %s", errno, strerror(errno));
     }
+  } else {
+    printf("Error creating replayBuffer file %s: %d : %s\n",
+           state->stateFilename, errno, strerror(errno));
   }
 }
 
-static PlatformReplayBuffer *
-getReplayBuffer(PlatformReplayState *state, int index) {
-  assert(index < SDL_arraysize(state->replayBuffers));
-  PlatformReplayBuffer *result = &state->replayBuffers[index];
-  return result;
-}
-
 static void
-beginInputRecording(int inputRecordingIndex, PlatformReplayState *state) {
+beginInputRecording(PlatformReplayState *state, GameMemory *gameMemory) {
   printf("beginning recording input\n");
 
-  PlatformReplayBuffer *replayBuffer = getReplayBuffer(state, inputRecordingIndex);
+  assert(state->playbackHandle < 0);
 
-  assert(state->playingIndex < 0);
-
-  if (replayBuffer->stateMemoryBlock) {
-    state->recordingIndex = inputRecordingIndex;
-
-    getInputFileLocation(replayBuffer->inputFilename, SDL_arraysize(replayBuffer->inputFilename),
-                         inputRecordingIndex, INPUT_REPLAY_STREAM);
-    state->recordingHandle = open(replayBuffer->inputFilename, O_WRONLY | O_CREAT, 0644);
+  if (state->stateMemoryBlock) {
+    getInputFileLocation(state->inputFilename, SDL_arraysize(state->inputFilename),
+                         INPUT_REPLAY_STREAM);
+    state->recordingHandle = open(state->inputFilename, O_WRONLY | O_CREAT, 0644);
     state->bytesWritten = 0;
     state->bytesToRead = 0;
 
-    memcpy(replayBuffer->stateMemoryBlock,
-           state->gameMemory->permanentMemory.base,
-           state->gameMemory->permanentMemory.totalSize);
+    memcpy(state->stateMemoryBlock,
+           gameMemory->permanentMemory.base,
+           gameMemory->permanentMemory.totalSize);
 
-    memcpy((int8_t *) replayBuffer->stateMemoryBlock + state->gameMemory->permanentMemory.totalSize,
-           state->gameMemory->longTimeMemory.base,
-           state->gameMemory->longTimeMemory.totalSize);
+    memcpy((int8_t *) state->stateMemoryBlock + gameMemory->permanentMemory.totalSize,
+           gameMemory->longTimeMemory.base,
+           gameMemory->longTimeMemory.totalSize);
   }
 }
 
 static void
 endInputRecording(PlatformReplayState *state) {
   close(state->recordingHandle);
-  state->recordingIndex = -1;
+  state->recordingHandle = -1;
   printf("ended recording input\n");
 }
 
 static void
-beginInputPlayback(int inputPlayingIndex, PlatformReplayState *state) {
+beginInputPlayback(PlatformReplayState *state, GameMemory *gameMemory) {
   printf("beginning input playback\n");
 
-  PlatformReplayBuffer *replayBuffer = getReplayBuffer(state, inputPlayingIndex);
-
-  if (replayBuffer->stateMemoryBlock) {
-    state->playingIndex = inputPlayingIndex;
-    state->playbackHandle = open(replayBuffer->inputFilename, O_RDONLY);
+  if (state->stateMemoryBlock) {
+    state->playbackHandle = open(state->inputFilename, O_RDONLY);
     state->bytesToRead = state->bytesWritten;
 
-    memcpy(state->gameMemory->permanentMemory.base,
-           replayBuffer->stateMemoryBlock,
-           state->gameMemory->permanentMemory.totalSize);
+    memcpy(gameMemory->permanentMemory.base,
+           state->stateMemoryBlock,
+           gameMemory->permanentMemory.totalSize);
 
-    memcpy(state->gameMemory->longTimeMemory.base,
-           (int8_t *) replayBuffer->stateMemoryBlock + state->gameMemory->permanentMemory.totalSize,
-           state->gameMemory->longTimeMemory.totalSize);
+    memcpy(gameMemory->longTimeMemory.base,
+           (int8_t *) state->stateMemoryBlock + gameMemory->permanentMemory.totalSize,
+           gameMemory->longTimeMemory.totalSize);
   }
 }
 
 static void
 endInputPlayback(PlatformReplayState *state) {
   close(state->playbackHandle);
-  state->playingIndex = -1;
+  state->playbackHandle = -1;
   printf("ended input playback\n");
 }
 
 static void
-recordInput(PlatformReplayState *state, UserInput *userInput) {
+recordInput(UserInput *userInput, PlatformReplayState *state) {
 
   ssize_t bytesWritten = write(state->recordingHandle, userInput, sizeof(UserInput));
 
@@ -316,7 +257,7 @@ recordInput(PlatformReplayState *state, UserInput *userInput) {
 }
 
 static void
-playbackInput(PlatformReplayState *state, UserInput *userInput) {
+playbackInput(UserInput *userInput, PlatformReplayState *state, GameMemory *gameMemory) {
 
   ssize_t bytesRead = 0;
 
@@ -326,9 +267,8 @@ playbackInput(PlatformReplayState *state, UserInput *userInput) {
 
   if (bytesRead == 0) {
     // We've hit the end of the stream, go back to the beginning
-    int playingIndex = state->playingIndex;
     endInputPlayback(state);
-    beginInputPlayback(playingIndex, state);
+    beginInputPlayback(state, gameMemory);
 
     bytesRead = read(state->playbackHandle, userInput, sizeof(UserInput));
 
@@ -354,7 +294,8 @@ processKeyPress(ButtonState *newState, bool isDown, bool wasDown) {
 }
 
 static void
-handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state) {
+handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state,
+            GameMemory* gameMemory) {
   switch (event->type) {
     case SDL_QUIT: {
       userInput->shouldQuit = true;
@@ -456,12 +397,12 @@ handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state) 
           }
           case SDLK_l: {
             if (isDown) {
-              if (state->playingIndex == -1) {
-                if (state->recordingIndex == -1) {
-                  beginInputRecording(0, state);
+              if (state->playbackHandle == -1) {
+                if (state->recordingHandle == -1) {
+                  beginInputRecording(state, gameMemory);
                 } else {
                   endInputRecording(state);
-                  beginInputPlayback(0, state);
+                  beginInputPlayback(state, gameMemory);
                 }
               } else {
                 endInputPlayback(state);
@@ -531,11 +472,11 @@ main(int argc, char *args[]) {
 
   PlatformConfig platformConfig = {G_resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT};
   GameMemory gameMemory = {permanentMemory, longTimeMemory, shortTimeMemory};
-  PlatformReplayState state = {-1, -1, -1, -1, &gameMemory};
+  PlatformReplayState state = {-1, -1, -1};
   UserInput userInput = {};
   GameLibrary gameLibrary = {};
 
-  setupPlatformReplayBuffers(&state);
+  setupPlatformReplayBuffers(&state, &gameMemory);
 
   while (!userInput.shouldQuit) {
 
@@ -553,17 +494,17 @@ main(int argc, char *args[]) {
 
     SDL_Event event = {};
     while (SDL_PollEvent(&event)) {
-      handleEvent(&event, &userInput, &state);
+      handleEvent(&event, &userInput, &state, &gameMemory);
     }
 #ifdef BUILD_INTERNAL
     if (userInput.globalPause) {
       continue;
     }
-    if (state.recordingIndex > -1) {
-      recordInput(&state, &userInput);
+    if (state.recordingHandle > -1) {
+      recordInput(&userInput, &state);
     }
-    if (state.playingIndex > -1) {
-      playbackInput(&state, &userInput);
+    if (state.playbackHandle > -1) {
+      playbackInput(&userInput, &state, &gameMemory);
     }
 #endif
 
@@ -571,11 +512,11 @@ main(int argc, char *args[]) {
 
 #ifdef BUILD_INTERNAL
     if ((result = gameLibrary.gameUpdateAndRender(
-        &platformConfig, &gameMemory, &userInput, renderer) != 0)) {
+        &platformConfig, &userInput, &gameMemory, renderer) != 0)) {
       return result;
     }
 #else
-    if ((result = gameUpdateAndRender(&platformConfig, &gameMemory, &userInput, renderer) != 0)) {
+    if ((result = gameUpdateAndRender(&platformConfig, &userInput, &gameMemory, renderer) != 0)) {
       return result;
     }
 #endif

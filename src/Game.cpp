@@ -102,7 +102,7 @@ processStateChange(GameContext *gameContext, UserInput* userInput) {
 }
 
 extern "C" int
-gameUpdateAndRender(PlatformConfig *platformConfig, GameMemory* gameMemory, UserInput* userInput,
+gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMemory* gameMemory,
                     SDL_Renderer *renderer) {
 
   GameContext *gameContext = (GameContext *) gameMemory->permanentMemory.base;

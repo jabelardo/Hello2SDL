@@ -22,6 +22,7 @@ set(SOURCE_FILES
         src/MenuButton.h
         src/PauseMenu.cpp
         src/PauseMenu.h
+        src/Platform.h
         src/PlayState.cpp
         src/PlayState.h
         src/RenderUtils.cpp

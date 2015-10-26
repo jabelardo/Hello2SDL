@@ -69,8 +69,8 @@ struct SDL_Renderer;
 extern "C" {
 #endif
 
-int gameUpdateAndRender(PlatformConfig *platformConfig, GameMemory* gameMemory,
-                        UserInput* userInput, SDL_Renderer *renderer);
+int gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput,
+                        GameMemory* gameMemory, SDL_Renderer *renderer);
 
 #ifdef __cplusplus
 }
