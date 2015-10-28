@@ -45,6 +45,11 @@ startGame(PlayState *playState, GameContext *gameContext) {
 
   *playState->enemy = {ENEMY_TYPE, {400, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f},
                        {0, .33f}};
+
+  playState->enemy->alpha = 255;
+  playState->tileMap->objectLayer->player->alpha = 255;
+  playState->tileMap->objectLayer->player->dyingTime = 160;
+  playState->tileMap->objectLayer->player->invulnerableTime = 320;
   return true;
 }
 
@@ -55,10 +60,15 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput* userI
     return;
   }
   updateTileMap(playState->tileMap, gameContext, userInput);
-  updateEntity(playState->enemy, userInput);
+  updateEntity(playState->enemy, gameContext, userInput);
 
   if (checkEntityCollision(playState->enemy, playState->tileMap->objectLayer->player)) {
-    gameContext->stateChange = GAME_OVER;
+    if (!playState->tileMap->objectLayer->player->isDying &&
+        !playState->tileMap->objectLayer->player->isDead &&
+        !playState->tileMap->objectLayer->player->invulnerable) {
+      playState->tileMap->objectLayer->player->isDying = true;
+    }
+    //gameContext->stateChange = GAME_OVER;
   }
 }
 

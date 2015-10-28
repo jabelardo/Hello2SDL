@@ -9,7 +9,8 @@ enum GameState {
   MAIN_MENU_STATE = 0,
   PLAY_STATE,
   PAUSE_MENU_STATE,
-  GAME_OVER_STATE
+  GAME_OVER_STATE,
+  BETWEEN_LEVEL_STATE
 };
 
 enum GameStateChange {
@@ -19,7 +20,8 @@ enum GameStateChange {
   MAIN_MENU,
   RESUME_PLAY,
   PAUSE_MENU,
-  GAME_OVER
+  GAME_OVER,
+  BETWEEN_LEVEL
 };
 
 struct TextureHashNode;
@@ -38,6 +40,11 @@ struct GameContext {
 
   TextureHashNode *textureHash[4096];
   TextureHashNode *freeTextureHashNodes;
+  bool isLevelCompleted;
+  int gameWidth;
+  int currentLevel;
+  int scrollSpeed;
+  bool levelComplete;
 };
 
 #endif //HELLO2SDL_GAME_H

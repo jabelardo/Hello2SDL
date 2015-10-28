@@ -23,9 +23,20 @@ struct Entity {
   Bitmap bitmap;
   V2D velocity;
   V2D acceleration;
+  bool isDying;
+  int dyingCounter;
+  int dyingTime;
+  bool isDead;
+  bool invulnerable;
+  int invulnerableTime;
+  int invulnerableCounter;
+  uint8_t alpha;
+  double angle;
+  int currentLives;
+  bool alphaDown;
 };
 
-void updateEntity(Entity *entity, UserInput *userInput);
+void updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput);
 
 void drawEntity(Entity *entity, SDL_Renderer *renderer);
 

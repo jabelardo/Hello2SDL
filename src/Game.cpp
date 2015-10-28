@@ -37,6 +37,9 @@ updateGame(GameContext *gameContext, UserInput* userInput) {
       updateGameOverMenu(gameContext->gameOverMenu, gameContext, userInput);
       break;
     }
+    case BETWEEN_LEVEL_STATE:{
+      break;
+    }
   }
 }
 
@@ -57,6 +60,9 @@ renderGame(GameContext *gameContext, SDL_Renderer *renderer) {
     }
     case GAME_OVER_STATE: {
       renderGameOverMenu(gameContext->gameOverMenu, renderer);
+      break;
+    }
+    case BETWEEN_LEVEL_STATE:{
       break;
     }
   }
@@ -96,6 +102,9 @@ processStateChange(GameContext *gameContext, UserInput* userInput) {
     case GAME_OVER: {
       *userInput = {};
       gameContext->currentState = GAME_OVER_STATE;
+      break;
+    }
+    case BETWEEN_LEVEL:{
       break;
     }
   }
