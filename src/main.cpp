@@ -202,13 +202,17 @@ beginInputRecording(PlatformReplayState *state, GameMemory *gameMemory) {
     state->bytesWritten = 0;
     state->bytesToRead = 0;
 
-    memcpy(state->stateMemoryBlock,
-           gameMemory->permanentMemory.base,
-           gameMemory->permanentMemory.totalSize);
+    int8_t *writePtr = (int8_t *) state->stateMemoryBlock;
 
-    memcpy((int8_t *) state->stateMemoryBlock + gameMemory->permanentMemory.totalSize,
-           gameMemory->longTimeMemory.base,
-           gameMemory->longTimeMemory.totalSize);
+    memcpy(writePtr, &gameMemory->permanentMemory.usedSize, sizeof(gameMemory->permanentMemory.usedSize));
+
+    writePtr += sizeof(gameMemory->permanentMemory.usedSize);
+
+    memcpy(writePtr, gameMemory->permanentMemory.base, gameMemory->permanentMemory.usedSize);
+
+    writePtr += gameMemory->permanentMemory.usedSize;
+
+    memcpy(writePtr, gameMemory->longTimeMemory.base, gameMemory->longTimeMemory.totalSize);
   }
 }
 
@@ -227,13 +231,17 @@ beginInputPlayback(PlatformReplayState *state, GameMemory *gameMemory) {
     state->playbackHandle = open(state->inputFilename, O_RDONLY);
     state->bytesToRead = state->bytesWritten;
 
-    memcpy(gameMemory->permanentMemory.base,
-           state->stateMemoryBlock,
-           gameMemory->permanentMemory.totalSize);
+    int8_t *readPtr = (int8_t *) state->stateMemoryBlock;
 
-    memcpy(gameMemory->longTimeMemory.base,
-           (int8_t *) state->stateMemoryBlock + gameMemory->permanentMemory.totalSize,
-           gameMemory->longTimeMemory.totalSize);
+    memcpy(&gameMemory->permanentMemory.usedSize, readPtr, sizeof(gameMemory->permanentMemory.usedSize));
+
+    readPtr += sizeof(gameMemory->permanentMemory.usedSize);
+
+    memcpy(gameMemory->permanentMemory.base, readPtr, gameMemory->permanentMemory.usedSize);
+
+    readPtr += gameMemory->permanentMemory.usedSize;
+
+    memcpy(gameMemory->longTimeMemory.base, readPtr, gameMemory->longTimeMemory.totalSize);
   }
 }
 
