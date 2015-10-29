@@ -19,16 +19,10 @@ void drawTile(SDL_Renderer *renderer,
               int margin, int spacing, int x, int y, Bitmap *bitmap);
 
 void drawBitmap(SDL_Renderer *renderer,
-                int x, int y, Bitmap *bitmap,
-                double angle, uint8_t alpha, uint8_t r, uint8_t g, uint8_t b,
-                SDL_RendererFlip flip = SDL_FLIP_NONE);
+                  int x, int y, Bitmap *bitmap,
+                  SDL_RendererFlip flip = SDL_FLIP_NONE);
 
-void drawBitmap(SDL_Renderer *renderer,
-                int x, int y, Bitmap *bitmap,
-                double angle, uint8_t r, uint8_t g, uint8_t b,
-                SDL_RendererFlip flip = SDL_FLIP_NONE);
-
-void drawBitmap(SDL_Renderer *renderer,
+void drawBitmapEx(SDL_Renderer *renderer,
                int x, int y, Bitmap *bitmap,
                SDL_RendererFlip flip = SDL_FLIP_NONE);
 

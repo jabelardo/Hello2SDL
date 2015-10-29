@@ -38,22 +38,13 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
   switch (entity->type) {
     case ENEMY_TYPE:
     case PLAYER_TYPE: {
-      if (entity->isDying) {
-        if (entity->velocity.x > 0) {
-          drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-                     entity->angle, 255, 0, 0, SDL_FLIP_HORIZONTAL);
+      if (entity->velocity.x > 0) {
+        drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
+                   SDL_FLIP_HORIZONTAL);
 
-        } else {
-          drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-                     entity->angle, 255, 0, 0);
-
-        }
-      } else if (entity->velocity.x > 0) {
-        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-                   entity->angle, entity->alpha, 255, 255, 255, SDL_FLIP_HORIZONTAL);
       } else {
-        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-                   entity->angle, entity->alpha, 255, 255, 255);
+        drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
+
       }
     }
   }
@@ -64,91 +55,112 @@ void scroll(int speed) {
 
 }
 
-void 
+void
 doDyingAnimation(Entity *entity) {
   // keep scrolling with the map
   //scroll(gameContext->scrollSpeed);
   entity->bitmap.currentFrame = int(((SDL_GetTicks() / (1000 / 3)) % entity->bitmap.totalFrames));
-  if(entity->dyingCounter == entity->dyingTime) {
+  if (entity->dyingCounter == entity->dyingTime) {
     entity->isDead = true;
   }
   ++entity->dyingCounter; //simple counter, fine with fixed frame rate
 }
 
 void
-handleAnimation(Entity *entity) {
-  // if the player is invulnerable we can flash its alpha to let people know
-  if (entity->invulnerable) {
-    // invulnerability is finished, set values back
-    if (entity->invulnerableCounter == entity->invulnerableTime) {
-      entity->invulnerable = false;
+resetEntity(Entity *entity) {
+  switch (entity->type) {
+    case PLAYER_TYPE:{
+      entity->position.x = 10;
+      entity->position.y = 200;
+      entity->dyingTime = 160;
+      entity->dyingCounter = 0;
+      entity->isDead = false;
+      entity->bitmap.currentFrame = 1;
+      entity->bitmap.alpha = 255;
+      entity->bitmap.r = 255;
+      entity->bitmap.g = 255;
+      entity->bitmap.b = 255;
+      entity->invulnerableTime = 320;
       entity->invulnerableCounter = 0;
-      entity->alpha = 255;
-
-    }  else {
-      // otherwise, flash the alpha on and off
-
-      if (entity->alpha == 255) {
-        entity->alphaDown = true;
-      } else if (entity->alpha == 125) {
-        entity->alphaDown = false;
-      }
-      if (entity->alphaDown) {
-        entity->alpha -= 10;
-      } else {
-        entity->alpha += 10;
-      }
+      break;
     }
-    if (entity->invulnerableCounter < entity->invulnerableTime) {
-      ++entity->invulnerableCounter;
+    case ENEMY_TYPE:{
+      entity->dyingTime = 160;
+      entity->dyingCounter = 0;
+      entity->isDead = false;
+      entity->bitmap.currentFrame = 1;
+      entity->bitmap.alpha = 255;
+      entity->bitmap.r = 255;
+      entity->bitmap.g = 255;
+      entity->bitmap.b = 255;
+      entity->invulnerableTime = 320;
+      entity->invulnerableCounter = 0;
+      break;
     }
   }
-  // if the player is not dead then we can change the angle with the velocity to give the impression
-  // of a moving helicopter
-  if (!entity->isDead) {
-    if (entity->velocity.x < 0) {
-      entity->angle = -10.0;
-    } else if (entity->velocity.y > 0) {
-      entity->angle = 10.0;
-    } else {
-      entity->angle = 0.0;
-    }
-  }
-//  if (entity->isDying) {
-  //  doDyingAnimation(entity);
-  //} else {
-    // our standard animation code - for helicopter propellors
-    entity->bitmap.currentFrame = int(((SDL_GetTicks() / (100)) % entity->bitmap.totalFrames));
-  //}
 }
 
 void
-resurrect(Entity *entity) {
+resurrectPlayer(Entity *entity) {
+  resetEntity(entity);
   --entity->currentLives;
-  entity->position.x= 10;
-  entity->position.y = 200;
-  entity->isDying = false;
-  entity->isDead = false;
-  entity->bitmap.currentFrame = 1;
-  entity->alpha = 255;
-  entity->dyingCounter = 0;
-  entity->invulnerable = true;
+  entity->invulnerableCounter = entity->invulnerableTime;
+}
+
+void
+handlePlayerAnimation(Entity *entity) {
+  // if the player is invulnerable we can flash its alpha to let people know
+  if (entity->invulnerableCounter == 1) {
+    entity->invulnerableCounter = 0;
+    entity->bitmap.alpha = 255;
+
+  } else if (entity->invulnerableCounter > 1) {
+    // otherwise, flash the alpha on and off
+
+    if (entity->bitmap.alpha == 255) {
+      entity->decreasingAlpha = true;
+    } else if (entity->bitmap.alpha == 125) {
+      entity->decreasingAlpha = false;
+    }
+    if (entity->decreasingAlpha) {
+      entity->bitmap.alpha -= 10;
+    } else {
+      entity->bitmap.alpha += 10;
+    }
+    --entity->invulnerableCounter;
+  }
+
+  // player is dying
+  if (entity->dyingCounter > 0) {
+    // if the death animation has completed
+    if (entity->dyingCounter == 1) {
+      resurrectPlayer(entity);
+    } else {
+      entity->bitmap.r = 255;
+      entity->bitmap.g = 0;
+      entity->bitmap.b = 0;
+      --entity->dyingCounter;
+    }
+  }
+
+  // if the player is not dead then we can change the angle with the velocity to give the impression
+  // of a moving helicopter
+  else if (!entity->isDead) {
+    if (entity->velocity.x < 0) {
+      entity->bitmap.angle = -10.0;
+    } else if (entity->velocity.y > 0) {
+      entity->bitmap.angle = 10.0;
+    } else {
+      entity->bitmap.angle = 0.0;
+    }
+  }
+  entity->bitmap.currentFrame = (SDL_GetTicks() / 100) % entity->bitmap.totalFrames;
 }
 
 void
 updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
   switch (entity->type) {
     case PLAYER_TYPE: {
-#if 0
-      entity->bitmap.currentFrame = (int) ((SDL_GetTicks() / 100) % entity->bitmap.totalFrames);
-      entity->velocity = V2D{0, 0};
-
-      V2D target = {(float) userInput->mousePositionX, (float) userInput->mousePositionY};
-      entity->velocity = (target - entity->position) / 50;
-
-      entity->velocity += entity->acceleration;
-      entity->position += entity->velocity;
-#else
       // if the level is complete then fly off the screen
       if (gameContext->isLevelCompleted) {
         if (entity->position.x >= gameContext->gameWidth) {
@@ -160,33 +172,23 @@ updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
           entity->velocity = V2D{3, 0};
           entity->velocity += entity->acceleration;
           entity->position += entity->velocity;
-          handleAnimation(entity);
+          handlePlayerAnimation(entity);
         }
       } else {
         // if the player is not doing its death animation then update it normally
-        if (!entity->isDying) {
+        if (entity->dyingCounter == 0) {
           V2D target = {(float) userInput->mousePositionX, (float) userInput->mousePositionY};
           entity->velocity = (target - entity->position) / 50;
           entity->velocity += entity->acceleration;
-          entity->position += entity->velocity;
-          handleAnimation(entity);
         } else {
           // if the player is doing the death animation
-
           entity->velocity += V2D{0, .05};
-          entity->position += entity->velocity;
-          entity->bitmap.currentFrame = int(((SDL_GetTicks() / (100)) % entity->bitmap.totalFrames));
-          // if the death animation has completed
-          if (entity->dyingCounter == entity->dyingTime) {
-            resurrect(entity);
-          } else {
-            ++entity->dyingCounter;
-          }
         }
+        entity->position += entity->velocity;
+        handlePlayerAnimation(entity);
       }
-#endif
-    }
       break;
+    }
 
     case ENEMY_TYPE: {
       entity->bitmap.currentFrame = (int) ((SDL_GetTicks() / 100) % entity->bitmap.totalFrames);
@@ -203,7 +205,7 @@ updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
       }
       entity->velocity += entity->acceleration;
       entity->position += entity->velocity;
-    }
       break;
+    }
   }
 }

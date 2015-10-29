@@ -25,36 +25,19 @@ drawBitmap(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, SDL_RendererFli
 }
 
 void
-drawBitmap(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, double angle, uint8_t alpha,
-           uint8_t r, uint8_t g, uint8_t b, SDL_RendererFlip flip) {
+drawBitmapEx(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, SDL_RendererFlip flip) {
   SDL_Rect srcRect;
   SDL_Rect destRect;
   srcRect.x = bitmap->width * bitmap->currentFrame;
-  srcRect.y = bitmap->height * (bitmap->currentRow - 1);
+  srcRect.y = bitmap->height * (bitmap->currentRow - 1); // TODO: remove -1 and fix client code
   srcRect.w = destRect.w = bitmap->width;
   srcRect.h = destRect.h = bitmap->height;
   destRect.x = x;
   destRect.y = y;
-  SDL_SetTextureColorMod(bitmap->texture, r, g, b);
-  SDL_SetTextureAlphaMod(bitmap->texture, alpha);
+  SDL_SetTextureColorMod(bitmap->texture, bitmap->r, bitmap->g, bitmap->b);
+  SDL_SetTextureAlphaMod(bitmap->texture, bitmap->alpha);
 
-  SDL_RenderCopyEx(renderer, bitmap->texture, &srcRect, &destRect, angle, 0, flip);
-}
-
-void
-drawBitmap(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, double angle, uint8_t r, uint8_t g,
-           uint8_t b, SDL_RendererFlip flip) {
-  SDL_Rect srcRect;
-  SDL_Rect destRect;
-  srcRect.x = bitmap->width * bitmap->currentFrame;
-  srcRect.y = bitmap->height * (bitmap->currentRow - 1);
-  srcRect.w = destRect.w = bitmap->width;
-  srcRect.h = destRect.h = bitmap->height;
-  destRect.x = x;
-  destRect.y = y;
-  SDL_SetTextureColorMod(bitmap->texture, r, g, b);
-
-  SDL_RenderCopyEx(renderer, bitmap->texture, &srcRect, &destRect, angle, 0, flip);
+  SDL_RenderCopyEx(renderer, bitmap->texture, &srcRect, &destRect, bitmap->angle, 0, flip);
 }
 
 void

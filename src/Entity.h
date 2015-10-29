@@ -23,18 +23,16 @@ struct Entity {
   Bitmap bitmap;
   V2D velocity;
   V2D acceleration;
-  bool isDying;
+  bool isDead;
   int dyingCounter;
   int dyingTime;
-  bool isDead;
-  bool invulnerable;
-  int invulnerableTime;
   int invulnerableCounter;
-  uint8_t alpha;
-  double angle;
+  int invulnerableTime;
   int currentLives;
-  bool alphaDown;
+  bool decreasingAlpha;
 };
+
+void resetEntity(Entity *entity);
 
 void updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput);
 

@@ -11,7 +11,7 @@
 
 bool
 initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer,
-              GameMemory* gameMemory, PlatformConfig *platformConfig) {
+              GameMemory *gameMemory, PlatformConfig *platformConfig) {
   if (!loadTexture("HELICOPTER2", "helicopter2.png", platformConfig->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
@@ -46,15 +46,14 @@ startGame(PlayState *playState, GameContext *gameContext) {
   *playState->enemy = {ENEMY_TYPE, {400, 100}, {helicopter2, 128, 55, 5, 1, 1}, {2, .33f},
                        {0, .33f}};
 
-  playState->enemy->alpha = 255;
-  playState->tileMap->objectLayer->player->alpha = 255;
-  playState->tileMap->objectLayer->player->dyingTime = 160;
-  playState->tileMap->objectLayer->player->invulnerableTime = 320;
+  resetEntity(playState->enemy);
+  resetEntity(playState->tileMap->objectLayer->player);
+
   return true;
 }
 
 void
-updatePlayState(PlayState *playState, GameContext *gameContext, UserInput* userInput) {
+updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userInput) {
   if (userInput->back.endedDown) {
     gameContext->stateChange = PAUSE_MENU;
     return;
@@ -63,10 +62,11 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput* userI
   updateEntity(playState->enemy, gameContext, userInput);
 
   if (checkEntityCollision(playState->enemy, playState->tileMap->objectLayer->player)) {
-    if (!playState->tileMap->objectLayer->player->isDying &&
+    if (!playState->tileMap->objectLayer->player->dyingCounter &&
         !playState->tileMap->objectLayer->player->isDead &&
-        !playState->tileMap->objectLayer->player->invulnerable) {
-      playState->tileMap->objectLayer->player->isDying = true;
+        !playState->tileMap->objectLayer->player->invulnerableCounter) {
+      playState->tileMap->objectLayer->player->dyingCounter =
+          playState->tileMap->objectLayer->player->dyingTime;
     }
     //gameContext->stateChange = GAME_OVER;
   }
