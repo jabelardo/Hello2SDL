@@ -491,6 +491,7 @@ main(int argc, char *args[]) {
     if (gameLibraryLastWriteTime > gameLibrary.lastWriteTime) {
       unloadGameLibrary(&gameLibrary);
       loadGameLibrary(&gameLibrary, "libGame.dylib");
+      printf("loadGameLibrary\n");
     }
     if (!gameLibrary.initialized) {
       // TODO SDL_LogError

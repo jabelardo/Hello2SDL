@@ -40,9 +40,10 @@ struct GameContext {
 
   TextureHashNode *textureHash[4096];
   TextureHashNode *freeTextureHashNodes;
-  bool isLevelCompleted;
   int gameWidth;
+  int gameHeight;
   int currentLevel;
+  bool isLevelCompleted;
   int scrollSpeed;
   bool levelComplete;
 };

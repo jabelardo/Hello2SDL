@@ -9,12 +9,15 @@
 #include "Bitmap.h"
 #include "Game.h"
 
+struct GameMemory;
 struct UserInput;
 struct SDL_Renderer;
 
 enum EntityType {
   PLAYER_TYPE = 0,
-  ENEMY_TYPE
+  ENEMY_TYPE,
+  PLAYER_BULLET_TYPE,
+  ENEMY_BULLET_TYPE,
 };
 
 struct Entity {
@@ -23,18 +26,20 @@ struct Entity {
   Bitmap bitmap;
   V2D velocity;
   V2D acceleration;
-  bool isDead;
   int dyingCounter;
   int dyingTime;
   int invulnerableCounter;
   int invulnerableTime;
+  int bulletCounter;
+  int bulletTime;
   int currentLives;
   bool decreasingAlpha;
 };
 
 void resetEntity(Entity *entity);
 
-void updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput);
+void updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput,
+                  PlayState* playState, GameMemory *gameMemory);
 
 void drawEntity(Entity *entity, SDL_Renderer *renderer);
 

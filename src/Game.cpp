@@ -19,10 +19,10 @@
 #include "TileMap.cpp"
 
 void
-updateGame(GameContext *gameContext, UserInput* userInput) {
+updateGame(GameContext *gameContext, UserInput* userInput, GameMemory* gameMemory) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
-      updatePlayState(gameContext->playState, gameContext, userInput);
+      updatePlayState(gameContext->playState, gameContext, userInput, gameMemory);
       break;
     }
     case MAIN_MENU_STATE: {
@@ -136,10 +136,12 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
       return -1;
     }
     gameContext->currentState = MAIN_MENU_STATE;
+    gameContext->gameWidth = platformConfig->screenWidth;
+    gameContext->gameHeight = platformConfig->screenHeight;
     gameMemory->isInitialized = true;
   }
   gameContext->stateChange = NO_CHANGE;
-  updateGame(gameContext, userInput);
+  updateGame(gameContext, userInput, gameMemory);
   processStateChange(gameContext, userInput);
   renderGame(gameContext, renderer);
 

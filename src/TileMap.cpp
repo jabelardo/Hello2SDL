@@ -95,16 +95,18 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 }
 
 void
-updateObjectLayer(ObjectLayer *objectLayer, GameContext *gameContext, UserInput *userInput) {
-  updateEntity(objectLayer->player, gameContext, userInput);
+updateObjectLayer(ObjectLayer *objectLayer, GameContext *gameContext, UserInput *userInput,
+                  PlayState* playState, GameMemory *gameMemory) {
+  updateEntity(objectLayer->player, gameContext, userInput, playState, gameMemory);
 }
 
 void
-updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput) {
+updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput,
+              PlayState* playState, GameMemory *gameMemory) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
   }
-  updateObjectLayer(tileMap->objectLayer, gameContext, userInput);
+  updateObjectLayer(tileMap->objectLayer, gameContext, userInput, playState, gameMemory);
 }
 
 char *

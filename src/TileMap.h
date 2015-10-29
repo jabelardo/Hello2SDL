@@ -12,6 +12,7 @@ struct GameContext;
 struct GameMemory;
 struct GameMemory;
 struct PlatformConfig;
+struct PlayState;
 struct SDL_Renderer;
 struct SDL_Texture;
 struct UserInput;
@@ -67,7 +68,8 @@ struct TileMap {
 bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                  SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig);
 
-void updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput);
+void updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput,
+                   PlayState* playState, GameMemory *gameMemory);
 
 void drawTileMap(TileMap *tileMap, SDL_Renderer *renderer);
 
