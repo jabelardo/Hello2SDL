@@ -114,7 +114,7 @@ resetEntity(Entity *entity) {
       entity->bitmap.b = 255;
       entity->invulnerableTime = 320;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 13;
+      entity->bulletTime = 10;
       entity->bulletCounter = 0;
       break;
     }
@@ -128,7 +128,7 @@ resetEntity(Entity *entity) {
       entity->bitmap.b = 255;
       entity->invulnerableTime = 320;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 13;
+      entity->bulletTime = 10;
       entity->bulletCounter = 0;
       break;
     }

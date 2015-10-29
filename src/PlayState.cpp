@@ -88,6 +88,20 @@ startGame(PlayState *playState, GameContext *gameContext) {
 }
 
 static void
+freeEntityNode(PlayState *playState, EntityNode **entityNode) {
+  (*entityNode)->entity.dyingCounter = 0;
+
+  EntityNode* freeEntity = *entityNode;
+
+  // NOTE: must modify the pointer itself
+  *entityNode = (*entityNode)->next;
+
+  freeEntity->next = playState->freeEntities;
+  playState->freeEntities = freeEntity;
+  assert((*entityNode == 0) || (*entityNode != (*entityNode)->next));
+}
+
+static void
 updateBullets(EntityNode** bullets, PlayState *playState, GameContext *gameContext,
               UserInput *userInput, GameMemory *gameMemory) {
   for (EntityNode **bullet = bullets; *bullet;) {
@@ -97,16 +111,7 @@ updateBullets(EntityNode** bullets, PlayState *playState, GameContext *gameConte
         (*bullet)->entity.position.y > gameContext->gameHeight ||
         (*bullet)->entity.dyingCounter == 1) {
 
-      (*bullet)->entity.dyingCounter = 0;
-
-      EntityNode* freeEntity = *bullet;
-
-      // NOTE: must modify the pointer itself
-      *bullet = (*bullet)->next;
-
-      freeEntity->next = playState->freeEntities;
-      playState->freeEntities = freeEntity;
-      assert((*bullet == 0) || (*bullet != (*bullet)->next));
+      freeEntityNode(playState, bullet);
 
     } else {
       updateEntity(&(*bullet)->entity, gameContext, userInput, playState, gameMemory);
@@ -130,7 +135,7 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userI
   updateBullets(&playState->playerBullets, playState, gameContext, userInput,gameMemory);
 
   updateBullets(&playState->enemyBullets, playState, gameContext, userInput,gameMemory);
-  
+
   if (checkEntityCollision(&playState->enemies->entity, playState->tileMap->objectLayer->player)) {
     if (!playState->tileMap->objectLayer->player->dyingCounter &&
         !playState->tileMap->objectLayer->player->invulnerableCounter) {
@@ -142,19 +147,18 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userI
 
 void
 renderPlayState(PlayState *playState, SDL_Renderer *renderer) {
+
   drawTileMap(playState->tileMap, renderer);
-  drawEntity(&playState->enemies->entity, renderer);
 
   for (int i = 0; i < playState->tileMap->objectLayer->player->currentLives; ++i) {
     drawTextureFrame(renderer, playState->liveTexture, i * 30, 0, 32, 30, 1, 0);
   }
 
-  int i = 0;
+  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
+    drawEntity(&enemy->entity, renderer);
+  }
+
   for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
-    ++i;
-    if (i > 1) {
-      int a = 0;
-    }
     drawEntity(&bullet->entity, renderer);
   }
 
@@ -174,7 +178,7 @@ addPlayerBullet(PlayState* playState, GameMemory *gameMemory, V2D position, V2D 
     bullet = RESERVE_MEMORY(&gameMemory->permanentMemory, EntityNode);
   }
 
-  bullet->next = (bullet != playState->playerBullets) ? playState->playerBullets : 0;
+  bullet->next = playState->playerBullets;
 
   playState->playerBullets = bullet;
 

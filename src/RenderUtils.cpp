@@ -34,9 +34,12 @@ drawBitmapEx(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, SDL_RendererF
   srcRect.h = destRect.h = bitmap->height;
   destRect.x = x;
   destRect.y = y;
-  SDL_SetTextureColorMod(bitmap->texture, bitmap->r, bitmap->g, bitmap->b);
-  SDL_SetTextureAlphaMod(bitmap->texture, bitmap->alpha);
-
+  if (bitmap->r != 255 || bitmap->g != 255||bitmap->b != 255) {
+    SDL_SetTextureColorMod(bitmap->texture, bitmap->r, bitmap->g, bitmap->b);
+  }
+  if (bitmap->alpha != 255) {
+    SDL_SetTextureAlphaMod(bitmap->texture, bitmap->alpha);
+  }
   SDL_RenderCopyEx(renderer, bitmap->texture, &srcRect, &destRect, bitmap->angle, 0, flip);
 }
 

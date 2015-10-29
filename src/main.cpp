@@ -536,7 +536,7 @@ main(int argc, char *args[]) {
         SDL_Delay(timeToSleep);
       }
     } else {
-//      printf("MISSED FRAME RATE!\n");
+      printf("MISSED FRAME RATE!\n");
     }
 
     SDL_RenderPresent(renderer);

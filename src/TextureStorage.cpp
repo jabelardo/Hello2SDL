@@ -131,18 +131,20 @@ unloadTexture(const char *textureName, GameContext *gameContext) {
   uint32_t hashPos12 = hashVal32 & (uint32_t) SDL_arraysize(gameContext->textureHash) - 1;
   assert(hashPos12 < SDL_arraysize(gameContext->textureHash));
 
-  TextureHashNode *node = gameContext->textureHash[hashPos12];
-  TextureHashNode *parent = 0;
+  TextureHashNode **node = &gameContext->textureHash[hashPos12];
   while (node) {
-    if (strcmp(node->name, textureName) == 0) {
-      parent->next = node->next;
-      SDL_DestroyTexture(node->texture);
-      node->next = (gameContext->freeTextureHashNodes)? gameContext->freeTextureHashNodes : 0;
-      gameContext->freeTextureHashNodes = node;
+    if (strcmp((*node)->name, textureName) == 0) {
+      SDL_DestroyTexture((*node)->texture);
+      TextureHashNode *toRemove = *node;
+      *node = (*node)->next;
+
+      toRemove->next = gameContext->freeTextureHashNodes;
+      gameContext->freeTextureHashNodes = toRemove;
       return true;
+
+    } else {
+      node = &(*node)->next;
     }
-    parent = node;
-    node = node->next;
   }
   return false;
 }
