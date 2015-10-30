@@ -24,42 +24,82 @@ getTileSetById(TileLayer *tileLayer, int tileId) {
 void
 drawTileLayer(TileLayer *tileLayer, SDL_Renderer *renderer) {
 
-  SDL_Rect srcRect1;
-  SDL_Rect destRect1;
-  srcRect1.x = (tileLayer->position.x >= 0)
-               ? (int) tileLayer->position.x
-               : -1 * (int) tileLayer->position.x;
-  srcRect1.y = (int) tileLayer->position.y;
-  destRect1.x = 0;
-  destRect1.y = 0;
-  srcRect1.w = destRect1.w = tileLayer->screenWidth;
-  srcRect1.h = destRect1.h = tileLayer->screenHeight;
-
   int mapWidth = tileLayer->mapWidth * tileLayer->tileWidth;
 
-  if (tileLayer->position.x >= mapWidth - tileLayer->screenWidth) {
-    srcRect1.w = destRect1.w = mapWidth - (int) tileLayer->position.x;
-  }
+  if (tileLayer->position.x >= 0) {
 
-  if (tileLayer->position.x <= tileLayer->screenWidth - mapWidth) {
-    srcRect1.w = destRect1.w = mapWidth + (int) tileLayer->position.x;
-  }
+    SDL_Rect srcMainRect;
+    srcMainRect.x = (int) tileLayer->position.x;
+    srcMainRect.y = (int) tileLayer->position.y;
 
-  SDL_RenderCopy(renderer, tileLayer->texture, &srcRect1, &destRect1);
+    SDL_Rect destMainRect;
+    destMainRect.x = 0;
+    destMainRect.y = 0;
 
-  if ((tileLayer->position.x >= mapWidth - tileLayer->screenWidth) ||
-      (tileLayer->position.x <= tileLayer->screenWidth - mapWidth)) {
+    srcMainRect.h = destMainRect.h = tileLayer->screenHeight;
 
-    SDL_Rect srcRect2;
-    SDL_Rect destRect2;
-    srcRect2.x = 0;
-    srcRect2.y = (int) tileLayer->position.y;
-    destRect2.x = srcRect1.w;
-    destRect2.y = 0;
-    srcRect2.w = destRect2.w = tileLayer->screenWidth - srcRect1.w;
-    srcRect2.h = destRect2.h = tileLayer->screenHeight;
+    if (tileLayer->position.x < mapWidth - tileLayer->screenWidth) {
+      srcMainRect.w = destMainRect.w = tileLayer->screenWidth;
 
-    SDL_RenderCopy(renderer, tileLayer->texture, &srcRect2, &destRect2);
+    } else {
+
+      int mainRectWidth = mapWidth - (int) tileLayer->position.x;
+
+      srcMainRect.w = destMainRect.w = mainRectWidth;
+
+      SDL_Rect srcAuxRect;
+      srcAuxRect.x = 0;
+      srcAuxRect.y = (int) tileLayer->position.y;
+
+      SDL_Rect destAuxRect;
+      destAuxRect.x = mainRectWidth;
+      destAuxRect.y = 0;
+
+      srcAuxRect.w = destAuxRect.w = tileLayer->screenWidth - destAuxRect.x;
+      srcAuxRect.h = destAuxRect.h = tileLayer->screenHeight;
+
+      SDL_RenderCopy(renderer, tileLayer->texture, &srcAuxRect, &destAuxRect);
+    }
+
+    SDL_RenderCopy(renderer, tileLayer->texture, &srcMainRect, &destMainRect);
+
+  } else {
+
+    SDL_Rect srcMainRect;
+    srcMainRect.y = (int) tileLayer->position.y;
+
+    SDL_Rect destMainRect;
+    destMainRect.y = 0;
+
+    srcMainRect.h = destMainRect.h = tileLayer->screenHeight;
+
+    if (tileLayer->screenWidth + tileLayer->position.x < 0) {
+
+      srcMainRect.x = mapWidth + (int) tileLayer->position.x;
+      destMainRect.x = 0;
+      srcMainRect.w = destMainRect.w = tileLayer->screenWidth;
+
+    } else {
+
+      srcMainRect.x = 0;
+      destMainRect.x = -1 * (int) tileLayer->position.x;
+      srcMainRect.w = destMainRect.w = tileLayer->screenWidth - destMainRect.x;
+
+      SDL_Rect srcAuxRect;
+      srcAuxRect.x = mapWidth - destMainRect.x;
+      srcAuxRect.y = (int) tileLayer->position.y;
+
+      SDL_Rect destAuxRect;
+      destAuxRect.x = 0;
+      destAuxRect.y = 0;
+
+      srcAuxRect.w = destAuxRect.w = tileLayer->screenWidth - srcMainRect.w;
+      srcAuxRect.h = destAuxRect.h = tileLayer->screenHeight;
+
+      SDL_RenderCopy(renderer, tileLayer->texture, &srcAuxRect, &destAuxRect);
+    }
+
+    SDL_RenderCopy(renderer, tileLayer->texture, &srcMainRect, &destMainRect);
   }
 }
 
@@ -99,7 +139,6 @@ createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
   SDL_SetRenderTarget(renderer, 0);
 }
 
-#if 0
 void
 drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
   int x = (int) tileLayer->position.x / tileLayer->tileWidth;
@@ -145,7 +184,6 @@ drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
     }
   }
 }
-#endif
 
 void
 drawObjectLayer(ObjectLayer *objectLayer, SDL_Renderer *renderer) {
@@ -162,7 +200,7 @@ drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
 
 void
 updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
-  tileLayer->velocity.x = 1;
+  tileLayer->velocity.x = -1;
   tileLayer->position += tileLayer->velocity;
   if (tileLayer->position.x >= tileLayer->mapWidth * tileLayer->tileWidth ||
       tileLayer->position.x <= -tileLayer->mapWidth * tileLayer->tileWidth) {
