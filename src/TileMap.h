@@ -5,6 +5,7 @@
 #ifndef HELLO2SDL_TILEMMAP_H
 #define HELLO2SDL_TILEMMAP_H
 
+#include <SDL2/SDL_render.h>
 #include "V2D.h"
 
 struct Entity;
@@ -54,6 +55,7 @@ struct TileLayer {
   size_t tileGidsCount;
   int32_t* tileGids;
   TileLayer* next;
+  SDL_Texture* texture;
 };
 
 struct TileMap {

@@ -23,6 +23,85 @@ getTileSetById(TileLayer *tileLayer, int tileId) {
 
 void
 drawTileLayer(TileLayer *tileLayer, SDL_Renderer *renderer) {
+
+  SDL_Rect srcRect1;
+  SDL_Rect destRect1;
+  srcRect1.x = (tileLayer->position.x >= 0)
+               ? (int) tileLayer->position.x
+               : -1 * (int) tileLayer->position.x;
+  srcRect1.y = (int) tileLayer->position.y;
+  destRect1.x = 0;
+  destRect1.y = 0;
+  srcRect1.w = destRect1.w = tileLayer->screenWidth;
+  srcRect1.h = destRect1.h = tileLayer->screenHeight;
+
+  int mapWidth = tileLayer->mapWidth * tileLayer->tileWidth;
+
+  if (tileLayer->position.x >= mapWidth - tileLayer->screenWidth) {
+    srcRect1.w = destRect1.w = mapWidth - (int) tileLayer->position.x;
+  }
+
+  if (tileLayer->position.x <= tileLayer->screenWidth - mapWidth) {
+    srcRect1.w = destRect1.w = mapWidth + (int) tileLayer->position.x;
+  }
+
+  SDL_RenderCopy(renderer, tileLayer->texture, &srcRect1, &destRect1);
+
+  if ((tileLayer->position.x >= mapWidth - tileLayer->screenWidth) ||
+      (tileLayer->position.x <= tileLayer->screenWidth - mapWidth)) {
+
+    SDL_Rect srcRect2;
+    SDL_Rect destRect2;
+    srcRect2.x = 0;
+    srcRect2.y = (int) tileLayer->position.y;
+    destRect2.x = srcRect1.w;
+    destRect2.y = 0;
+    srcRect2.w = destRect2.w = tileLayer->screenWidth - srcRect1.w;
+    srcRect2.h = destRect2.h = tileLayer->screenHeight;
+
+    SDL_RenderCopy(renderer, tileLayer->texture, &srcRect2, &destRect2);
+  }
+}
+
+void
+createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
+  tileLayer->texture = SDL_CreateTexture(renderer,
+                                         SDL_PIXELFORMAT_UNKNOWN,
+                                         SDL_TEXTUREACCESS_TARGET,
+                                         tileLayer->mapWidth * tileLayer->tileWidth,
+                                         tileLayer->mapHeight * tileLayer->tileHeight);
+  SDL_SetRenderTarget(renderer, tileLayer->texture);
+
+  for (int y = 0; y < tileLayer->mapHeight; ++y) {
+    for (int x = 0; x < tileLayer->mapWidth; ++x) {
+      int tileIdx = y * tileLayer->mapWidth + x;
+      if (tileIdx >= tileLayer->tileGidsCount) {
+        continue;
+      }
+      int32_t tileId = tileLayer->tileGids[tileIdx];
+      if (tileId == 0) {
+        continue;
+      }
+      TileSet *tileSet = getTileSetById(tileLayer, tileId);
+      if (tileSet == 0) {
+        continue;
+      }
+      SDL_Texture *texture = tileSet->texture;
+      int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
+      int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
+      Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame,
+                       currentRow};
+      int x1 = x * tileLayer->tileWidth;
+      int y1 = y * tileLayer->tileHeight;
+      drawTile(renderer, 2, 2, x1, y1, &bitmap);
+    }
+  }
+  SDL_SetRenderTarget(renderer, 0);
+}
+
+#if 0
+void
+drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
   int x = (int) tileLayer->position.x / tileLayer->tileWidth;
   int y = (int) tileLayer->position.y / tileLayer->tileHeight;
   int x2 = (int) tileLayer->position.x % tileLayer->tileWidth;
@@ -66,6 +145,7 @@ drawTileLayer(TileLayer *tileLayer, SDL_Renderer *renderer) {
     }
   }
 }
+#endif
 
 void
 drawObjectLayer(ObjectLayer *objectLayer, SDL_Renderer *renderer) {
@@ -82,7 +162,7 @@ drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
 
 void
 updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
-  tileLayer->velocity.x = -2;
+  tileLayer->velocity.x = 1;
   tileLayer->position += tileLayer->velocity;
   if (tileLayer->position.x >= tileLayer->mapWidth * tileLayer->tileWidth ||
       tileLayer->position.x <= -tileLayer->mapWidth * tileLayer->tileWidth) {
@@ -96,13 +176,13 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 
 void
 updateObjectLayer(ObjectLayer *objectLayer, GameContext *gameContext, UserInput *userInput,
-                  PlayState* playState, GameMemory *gameMemory) {
+                  PlayState *playState, GameMemory *gameMemory) {
   updateEntity(objectLayer->player, gameContext, userInput, playState, gameMemory);
 }
 
 void
 updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput,
-              PlayState* playState, GameMemory *gameMemory) {
+              PlayState *playState, GameMemory *gameMemory) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
   }
@@ -372,8 +452,8 @@ xmlGetProp(xmlNode *node, const xmlChar *name, int *value) {
 }
 
 bool
-initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext, 
-            SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig) {
+initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
+            SDL_Renderer *renderer, GameMemory *gameMemory, PlatformConfig *platformConfig) {
 
   if (xmlMemSetup(xmlFreeFunction(&gameMemory->shortTimeMemory),
                   xmlMallocFunction(&gameMemory->shortTimeMemory),
@@ -537,7 +617,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         newTileLayer->tileWidth = tileMap->tileWidth;
         newTileLayer->tileHeight = tileMap->tileHeight;
         newTileLayer->screenWidth = platformConfig->screenWidth;
-        newTileLayer->screenHeight = platformConfig->screenWidth;
+        newTileLayer->screenHeight = platformConfig->screenHeight;
         newTileLayer->screenColumns = platformConfig->screenWidth / tileMap->tileWidth;
         newTileLayer->screenRows = platformConfig->screenHeight / tileMap->tileHeight;
         newTileLayer->mapWidth = tileMap->width;
@@ -560,6 +640,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                                                            sizeofids);
 
         memcpy(newTileLayer->tileGids, gids, sizeofids);
+        createTileLayerTexture(newTileLayer, renderer);
       }
     }
     tileMap->tileLayerList = tileLayerList;
