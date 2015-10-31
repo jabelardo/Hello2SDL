@@ -7,8 +7,8 @@
 
 #include <SDL2/SDL_render.h>
 #include "V2D.h"
+#include "Entity.h"
 
-struct Entity;
 struct GameContext;
 struct GameMemory;
 struct GameMemory;
@@ -34,8 +34,8 @@ struct TileSet {
 };
 
 struct ObjectLayer {
-  Entity* player;
-  V2D playerInitialPosition;
+  EntityNode* entityList;
+  ObjectLayer* next;
 };
 
 struct TileLayer {
@@ -54,8 +54,8 @@ struct TileLayer {
   TileSet* tileSetList;
   size_t tileGidsCount;
   int32_t* tileGids;
-  TileLayer* next;
   SDL_Texture* texture;
+  TileLayer* next;
 };
 
 struct TileMap {
@@ -63,8 +63,10 @@ struct TileMap {
   int height;
   int tileWidth;
   int tileHeight;
+  Entity* player;
+  V2D playerInitialPosition;
   TileLayer* tileLayerList;
-  ObjectLayer* objectLayer;
+  ObjectLayer* objectLayerList;
 };
 
 bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,

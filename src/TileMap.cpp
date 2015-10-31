@@ -22,7 +22,7 @@ getTileSetById(TileLayer *tileLayer, int tileId) {
 }
 
 void
-drawTileLayer(TileLayer *tileLayer, SDL_Renderer *renderer) {
+drawTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
 
   int mapWidth = tileLayer->mapWidth * tileLayer->tileWidth;
 
@@ -104,7 +104,7 @@ drawTileLayer(TileLayer *tileLayer, SDL_Renderer *renderer) {
 }
 
 void
-createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
+createTileLayerTexture_(TileLayer *tileLayer, SDL_Renderer *renderer) {
   tileLayer->texture = SDL_CreateTexture(renderer,
                                          SDL_PIXELFORMAT_UNKNOWN,
                                          SDL_TEXTUREACCESS_TARGET,
@@ -186,16 +186,16 @@ drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
 }
 
 void
-drawObjectLayer(ObjectLayer *objectLayer, SDL_Renderer *renderer) {
-  drawEntity(objectLayer->player, renderer);
-}
-
-void
 drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
-    drawTileLayer(node, renderer);
+//    drawTileLayerTexture(node, renderer);
+    drawTileLayers(node, renderer);
   }
-  drawObjectLayer(tileMap->objectLayer, renderer);
+  for (ObjectLayer *objNode = tileMap->objectLayerList; objNode; objNode = objNode->next) {
+    for (EntityNode *node = objNode->entityList; node; node = node->next) {
+      drawEntity(&node->entity, renderer);
+    }
+  }
 }
 
 void
@@ -213,18 +213,16 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 }
 
 void
-updateObjectLayer(ObjectLayer *objectLayer, PlayState *playState, GameContext *gameContext,
-                  UserInput *userInput, GameMemory *gameMemory) {
-  updateEntity(objectLayer->player, playState, gameContext, userInput, gameMemory);
-}
-
-void
 updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, UserInput *userInput,
               GameMemory *gameMemory) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
   }
-  updateObjectLayer(tileMap->objectLayer, playState, gameContext, userInput, gameMemory);
+  for (ObjectLayer *objNode = tileMap->objectLayerList; objNode; objNode = objNode->next) {
+    for (EntityNode *node = objNode->entityList; node; node = node->next) {
+      updateEntity(&node->entity, playState, gameContext, userInput, gameMemory);
+    }
+  }
 }
 
 char *
@@ -512,6 +510,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
 
   TileSet *tileSetList = 0;
   TileLayer *tileLayerList = 0;
+  ObjectLayer *objectLayerList = 0;
   if (!doc) {
     goto fail;
   }
@@ -678,83 +677,102 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                                                            sizeofids);
 
         memcpy(newTileLayer->tileGids, gids, sizeofids);
-        createTileLayerTexture(newTileLayer, renderer);
+        // createTileLayerTexture(newTileLayer, renderer);
       }
     }
     tileMap->tileLayerList = tileLayerList;
-    xmlNode *objectgroup = getXmlElement(map, (const xmlChar *) "objectgroup");
-    if (!objectgroup) {
-      goto fail;
-    }
-    xmlNode *object = getXmlElement(objectgroup, (const xmlChar *) "object");
-    if (!object) {
-      goto fail;
-    }
 
-    int objectX = 0;
-    int objectY = 0;
-    if (!xmlGetProp(object, (const xmlChar *) "x", &objectX)) {
-      goto fail;
-    }
-    if (!xmlGetProp(object, (const xmlChar *) "y", &objectY)) {
-      goto fail;
-    }
-    xmlNode *objectProperties = getXmlElement(object, (const xmlChar *) "properties");
-    if (!objectProperties) {
-      goto fail;
-    }
-    int numFrames = 0;
-    int textureHeight = 0;
-    int textureWidth = 0;
-    int callbackId = 0;
-    int animSpeed = 0;
-    char *textureId = 0;
-    for (xmlNode *property = objectProperties->children; property; property = property->next) {
-      if (property->type == XML_ELEMENT_NODE &&
-          xmlStrcmp(property->name, (const xmlChar *) "property") == 0) {
-        char *propertyName = (char *) xmlGetProp(property, (const xmlChar *) "name");
-        if (!propertyName) {
-          goto fail;
+    ObjectLayer *objectLayerNodePrev = 0;
+    for (xmlNode *objectgroup = map->children; objectgroup; objectgroup = objectgroup->next) {
+      if (objectgroup->type == XML_ELEMENT_NODE &&
+          xmlStrcmp(objectgroup->name, (const xmlChar *) "objectgroup") == 0) {
+
+        ObjectLayer *newObjectLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, ObjectLayer);
+        if (!objectLayerList) {
+          objectLayerList = newObjectLayer;
         }
-        char *propertyValue = (char *) xmlGetProp(property, (const xmlChar *) "value");
-        if (!propertyValue) {
-          xmlFree(propertyName);
-          goto fail;
-        } else if (strcmp(propertyName, "numFrames") == 0) {
-          numFrames = atoi(propertyValue);
-
-        } else if (strcmp(propertyName, "textureHeight") == 0) {
-          textureHeight = atoi(propertyValue);
-
-        } else if (strcmp(propertyName, "textureWidth") == 0) {
-          textureWidth = atoi(propertyValue);
-
-        } else if (strcmp(propertyName, "callbackId") == 0) {
-          callbackId = atoi(propertyValue);
-
-        } else if (strcmp(propertyName, "animSpeed") == 0) {
-          animSpeed = atoi(propertyValue);
-
-        } else if (strcmp(propertyName, "textureId") == 0) {
-          size_t propertyValueLen = strlen(propertyValue);
-          textureId = (char *) reserveMemory(&gameMemory->shortTimeMemory, propertyValueLen + 1);
-          memcpy(textureId, propertyValue, propertyValueLen + 1);
+        if (objectLayerNodePrev) {
+          objectLayerNodePrev->next = newObjectLayer;
         }
-        xmlFree(propertyName);
-        xmlFree(propertyValue);
+        objectLayerNodePrev = newObjectLayer;
+        newObjectLayer->next = 0;
+        newObjectLayer->entityList = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+
+        for (xmlNode *object = objectgroup->children; object; object = object->next) {
+          if (object->type == XML_ELEMENT_NODE &&
+              xmlStrcmp(object->name, (const xmlChar *) "object") == 0) {
+
+            int objectX = 0;
+            int objectY = 0;
+            if (!xmlGetProp(object, (const xmlChar *) "x", &objectX)) {
+              goto fail;
+            }
+            if (!xmlGetProp(object, (const xmlChar *) "y", &objectY)) {
+              goto fail;
+            }
+            char *type = (char *) xmlGetProp(object, (const xmlChar *) "type");
+            if (!type) {
+              goto fail;
+            }
+            xmlNode *objectProperties = getXmlElement(object, (const xmlChar *) "properties");
+            if (!objectProperties) {
+              goto fail;
+            }
+            int numFrames = 0;
+            int textureHeight = 0;
+            int textureWidth = 0;
+            char *textureId = 0;
+            for (xmlNode *property = objectProperties->children; property; property = property->next) {
+              if (property->type == XML_ELEMENT_NODE &&
+                  xmlStrcmp(property->name, (const xmlChar *) "property") == 0) {
+                char *propertyName = (char *) xmlGetProp(property, (const xmlChar *) "name");
+                if (!propertyName) {
+                  goto fail;
+                }
+                char *propertyValue = (char *) xmlGetProp(property, (const xmlChar *) "value");
+                if (!propertyValue) {
+                  xmlFree(propertyName);
+                  goto fail;
+                } else if (strcmp(propertyName, "numFrames") == 0) {
+                  numFrames = atoi(propertyValue);
+
+                } else if (strcmp(propertyName, "textureHeight") == 0) {
+                  textureHeight = atoi(propertyValue);
+
+                } else if (strcmp(propertyName, "textureWidth") == 0) {
+                  textureWidth = atoi(propertyValue);
+
+                } else if (strcmp(propertyName, "textureId") == 0) {
+                  size_t propertyValueLen = strlen(propertyValue);
+                  textureId = (char *) reserveMemory(&gameMemory->shortTimeMemory,
+                                                     propertyValueLen + 1);
+                  memcpy(textureId, propertyValue, propertyValueLen + 1);
+                }
+                xmlFree(propertyName);
+                xmlFree(propertyValue);
+              }
+            }
+
+            SDL_Texture *texture = getTexture(textureId, gameContext);
+            EntityNode *node = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+            node->entity.type = parseEntityType(type);
+            node->entity.position = V2D{(float) objectX, (float) objectY};
+            node->entity.bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames};
+            node->entity.velocity = V2D{0, 0};
+            node->entity.acceleration = V2D{0, 0};
+
+            if (node->entity.type != PLAYER_TYPE) {
+              node->next = newObjectLayer->entityList;
+              newObjectLayer->entityList = node;
+
+            } else {
+              tileMap->player = &node->entity;
+              tileMap->playerInitialPosition = tileMap->player->position;
+            }
+          }
+        }
       }
     }
-    SDL_Texture *texture = getTexture(textureId, gameContext);
-    Entity *player = RESERVE_MEMORY(&gameMemory->longTimeMemory, Entity);
-    player->type = PLAYER_TYPE;
-    player->position = V2D{(float) objectX, (float) objectY};
-    player->bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames};
-    player->velocity = V2D{0, 0};
-    player->acceleration = V2D{0, 0};
-
-    tileMap->objectLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, ObjectLayer);
-    tileMap->objectLayer->playerInitialPosition = player->position;
-    tileMap->objectLayer->player = player;
 
     xmlFreeDoc(doc);
 
@@ -780,12 +798,13 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
     }
     freeMemory(&gameMemory->longTimeMemory, tileLayerNode);
   }
-  if (tileMap->objectLayer && tileMap->objectLayer->player) {
-    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer->player);
-  }
-  if (tileMap->objectLayer) {
-    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer);
-  }
+  // TODO !!!!!!
+//  if (tileMap->objectLayer && tileMap->objectLayer->player) {
+//    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer->player);
+//  }
+//  if (tileMap->objectLayer) {
+//    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer);
+//  }
   gameMemory->shortTimeMemory.usedSize = 0;
   return false;
 }

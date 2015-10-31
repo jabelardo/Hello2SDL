@@ -38,7 +38,7 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
 
   playState->tileMap = RESERVE_MEMORY(&gameMemory->permanentMemory, TileMap);
 
-  if (!initTileMap(playState->tileMap, "game1.tmx", gameContext, renderer, gameMemory,
+  if (!initTileMap(playState->tileMap, "map1.tmx", gameContext, renderer, gameMemory,
                    platformConfig)) {
     return false;
   }
@@ -52,8 +52,8 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
 
 bool
 startGame(PlayState *playState, GameContext *gameContext) {
-  playState->glider = getTexture("GLIDER", gameContext);
-  if (!playState->glider) {
+  playState->gliderTexture = getTexture("GLIDER", gameContext);
+  if (!playState->gliderTexture) {
     return false;
   }
   playState->liveTexture = getTexture("LIVES", gameContext);
@@ -64,16 +64,20 @@ startGame(PlayState *playState, GameContext *gameContext) {
   if (!playState->bullet1Texture) {
     return false;
   }
+  playState->bullet2Texture = getTexture("BULLET2", gameContext);
+  if (!playState->bullet2Texture) {
+    return false;
+  }
   for (TileLayer *tileLayer = playState->tileMap->tileLayerList; tileLayer;
        tileLayer = tileLayer->next) {
     tileLayer->position = {0, 0};
   }
 
-  playState->tileMap->objectLayer->player->position =
-      playState->tileMap->objectLayer->playerInitialPosition;
-  
-  resetEntity(playState->tileMap->objectLayer->player);
-  playState->tileMap->objectLayer->player->currentLives = 1;
+  playState->tileMap->player->position =
+      playState->tileMap->playerInitialPosition;
+
+  initEntity(playState->tileMap->player);
+  playState->tileMap->player->currentLives = 1;
 
   return true;
 }
@@ -83,7 +87,7 @@ renderPlayState(PlayState *playState, SDL_Renderer *renderer) {
 
   drawTileMap(playState->tileMap, renderer);
 
-  for (int i = 0; i < playState->tileMap->objectLayer->player->currentLives; ++i) {
+  for (int i = 0; i < playState->tileMap->player->currentLives; ++i) {
     drawTextureFrame(renderer, playState->liveTexture, i * 30, 0, 32, 30, 0, 0);
   }
 
@@ -120,21 +124,35 @@ addPlayerBullet(PlayState* playState, GameMemory *gameMemory, V2D position, V2D 
                     {playState->bullet1Texture, 11, 11, 1},
                     velocity};
 
-  resetEntity(&bullet->entity);
+  initEntity(&bullet->entity);
 
   assert(bullet != bullet->next);
 }
 
-//void
-//addEnemyBullet(int x, int y, int width, int height, const char* textureID, int numFrames,
-//               V2D heading) {
-//  EnemyBullet* pEnemyBullet = new EnemyBullet();
-//  pEnemyBullet->load(std::unique_ptr<LoaderParams>(new
-//                                                       LoaderParams(x, y, width, height, textureID, numFrames)),
-//                     heading);
-//  m_enemyBullets.push_back(pEnemyBullet);
-//}
+void
+addEnemyBullet(PlayState* playState, GameMemory *gameMemory, V2D position, V2D velocity) {
 
+  EntityNode* bullet = playState->freeEntities;
+
+  if (bullet) {
+    playState->freeEntities = bullet->next;
+  } else {
+    bullet = RESERVE_MEMORY(&gameMemory->permanentMemory, EntityNode);
+  }
+
+  bullet->next = playState->enemyBullets;
+
+  playState->enemyBullets = bullet;
+
+  bullet->entity = {ENEMY_BULLET_TYPE,
+                    position,
+                    {playState->bullet2Texture, 16, 16, 1},
+                    velocity};
+
+  initEntity(&bullet->entity);
+
+  assert(bullet != bullet->next);
+}
 
 static void
 updateEntities(EntityNode** entities, PlayState *playState, GameContext *gameContext,
@@ -181,9 +199,10 @@ addEnemy(PlayState *playState, GameContext *gameContext, GameMemory *gameMemory)
   playState->enemies = enemy;
 
   int yPos = rand() % (gameContext->gameHeight / 2);
-  playState->enemies->entity = {GLIDER_TYPE, {600, (float) yPos}, {playState->glider, 38, 34, 1}};
+  playState->enemies->entity = {GLIDER_TYPE, {600, (float) yPos},
+                                {playState->gliderTexture, 38, 34, 1}};
 
-  resetEntity(&enemy->entity);
+  initEntity(&enemy->entity);
 
   assert(enemy != enemy->next);
 }
@@ -208,6 +227,17 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userI
 
   updateEntities(&playState->enemyBullets, playState, gameContext, userInput, gameMemory);
 
+  Entity *player = playState->tileMap->player;
+  for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
+    if (checkEntityCollision(player, &bullet->entity)) {
+      
+    }
+  }
+  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
+    if (checkEntityCollision(player, &enemy->entity)) {
+
+    }
+  }
   for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
     for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
       if (checkEntityCollision(&enemy->entity, &bullet->entity)) {

@@ -80,6 +80,13 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
       break;
     }
     case ENEMY_BULLET_TYPE: break;
+    case SCROLLING_BACKGROUND_TYPE:break;
+    case UNKNOWN_TYPE:break;
+    case SHOT_GLIDER_TYPE:break;
+    case LEVEL_1_BOSS_TYPE:break;
+    case TURRET_TYPE:break;
+    case ROOF_TURRET_TYPE:break;
+    case ESKELETOR_TYPE:break;
   }
 }
 
@@ -93,7 +100,7 @@ doDyingAnimation(Entity *entity) {
 }
 
 void
-resetEntity(Entity *entity) {
+initEntity(Entity *entity) {
   switch (entity->type) {
     case PLAYER_TYPE: {
       entity->health = 1;
@@ -132,18 +139,42 @@ resetEntity(Entity *entity) {
       break;
     }
     case PLAYER_BULLET_TYPE:
-    case ENEMY_BULLET_TYPE:{
+    case ENEMY_BULLET_TYPE: {
       entity->health = 1;
       entity->dyingTime = 1;
       entity->dyingCounter = 0;
       break;
     }
+    case SCROLLING_BACKGROUND_TYPE: {
+//      m_scrollSpeed = 1;
+//      m_srcRect1.x = 0;
+//      m_destRect1.x = m_position.getX();
+//      m_srcRect1.y = 0;
+//      m_destRect1.y = m_position.getY();
+//      m_srcRect1.w = m_destRect1.w = m_srcRect2Width =
+//      m_destRect1Width = m_width;
+//      m_srcRect1.h = m_destRect1.h = m_height;
+//      m_srcRect2.x = 0;
+//      m_destRect2.x = m_position.getX() + m_width;
+//      m_srcRect2.y = 0;
+//      m_destRect2.y = m_position.getY();
+//      m_srcRect2.w = m_destRect2.w = m_srcRect2Width =
+//      m_destRect2Width = 0;
+//      m_srcRect2.h = m_destRect2.h = m_height;
+      break;
+    }
+    case UNKNOWN_TYPE:break;
+    case SHOT_GLIDER_TYPE:break;
+    case LEVEL_1_BOSS_TYPE:break;
+    case TURRET_TYPE:break;
+    case ROOF_TURRET_TYPE:break;
+    case ESKELETOR_TYPE:break;
   }
 }
 
 void
 resurrectPlayer(Entity *entity) {
-  resetEntity(entity);
+  initEntity(entity);
   --entity->currentLives;
   entity->invulnerableCounter = entity->invulnerableTime;
 }
@@ -199,7 +230,6 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
   if (entity->health < 1 && entity->dyingCounter < 1) {
     entity->dyingCounter = entity->dyingTime;
   }
-
   switch (entity->type) {
     case PLAYER_TYPE: {
       // if the level is complete then fly off the screen
@@ -291,6 +321,46 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
       }
       break;
     }
+    case SCROLLING_BACKGROUND_TYPE:break;
+    case UNKNOWN_TYPE:break;
+    case SHOT_GLIDER_TYPE:break;
+    case LEVEL_1_BOSS_TYPE:break;
+    case TURRET_TYPE:break;
+    case ROOF_TURRET_TYPE:break;
+    case ESKELETOR_TYPE:break;
   }
 }
 
+EntityType parseEntityType(const char *str) {
+  if (strcmp(str, "Player") == 0) {
+    return PLAYER_TYPE;
+  }
+  if (strcmp(str, "Glider") == 0) {
+    return GLIDER_TYPE;
+  }
+  if (strcmp(str, "ShotGlider") == 0) {
+    return SHOT_GLIDER_TYPE;
+  }
+  if (strcmp(str, "Level1Boss") == 0) {
+    return LEVEL_1_BOSS_TYPE;
+  }
+  if (strcmp(str, "Turret") == 0) {
+    return TURRET_TYPE;
+  }
+  if (strcmp(str, "RoofTurret") == 0) {
+    return ROOF_TURRET_TYPE;
+  }
+  if (strcmp(str, "Eskeletor") == 0) {
+    return ESKELETOR_TYPE;
+  }
+  if (strcmp(str, "PlayerBullet") == 0) {
+    return PLAYER_BULLET_TYPE;
+  }
+  if (strcmp(str, "EnemyBullet") == 0) {
+    return ENEMY_BULLET_TYPE;
+  }
+  if (strcmp(str, "ScrollingBackground") == 0) {
+    return SCROLLING_BACKGROUND_TYPE;
+  }
+  return UNKNOWN_TYPE;
+}

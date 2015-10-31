@@ -75,6 +75,7 @@ processStateChange(GameContext *gameContext, UserInput* userInput) {
       break;
     }
     case START_PLAY: {
+//      SDL_ShowCursor(SDL_DISABLE);
       *userInput = {};
       startGame(gameContext->playState, gameContext);
       gameContext->currentState = PLAY_STATE;
@@ -85,21 +86,25 @@ processStateChange(GameContext *gameContext, UserInput* userInput) {
       break;
     }
     case MAIN_MENU: {
+//      SDL_ShowCursor(SDL_ENABLE);
       *userInput = {};
       gameContext->currentState = MAIN_MENU_STATE;
       break;
     }
     case RESUME_PLAY: {
+//      SDL_ShowCursor(SDL_DISABLE);
       *userInput = {};
       gameContext->currentState = PLAY_STATE;
       break;
     }
     case PAUSE_MENU: {
+//      SDL_ShowCursor(SDL_ENABLE);
       *userInput = {};
       gameContext->currentState = PAUSE_MENU_STATE;
       break;
     }
     case GAME_OVER: {
+//      SDL_ShowCursor(SDL_ENABLE);
       *userInput = {};
       gameContext->currentState = GAME_OVER_STATE;
       break;

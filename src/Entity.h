@@ -14,10 +14,17 @@ struct UserInput;
 struct SDL_Renderer;
 
 enum EntityType {
-  PLAYER_TYPE = 0,
+  UNKNOWN_TYPE = 0,
+  PLAYER_TYPE,
   GLIDER_TYPE,
+  SHOT_GLIDER_TYPE,
+  LEVEL_1_BOSS_TYPE,
+  TURRET_TYPE,
+  ROOF_TURRET_TYPE,
+  ESKELETOR_TYPE,
   PLAYER_BULLET_TYPE,
   ENEMY_BULLET_TYPE,
+  SCROLLING_BACKGROUND_TYPE,
 };
 
 struct Entity {
@@ -41,7 +48,14 @@ struct Entity {
   int health;
 };
 
-void resetEntity(Entity *entity);
+struct EntityNode {
+  Entity entity;
+  EntityNode *next;
+};
+
+EntityType parseEntityType(const char *str);
+
+void initEntity(Entity *entity);
 
 void updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext,
                   UserInput *userInput, GameMemory *gameMemory);
