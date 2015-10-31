@@ -138,6 +138,7 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
     gameContext->currentState = MAIN_MENU_STATE;
     gameContext->gameWidth = platformConfig->screenWidth;
     gameContext->gameHeight = platformConfig->screenHeight;
+    gameContext->scrollSpeed = 1;
     gameMemory->isInitialized = true;
   }
   gameContext->stateChange = NO_CHANGE;

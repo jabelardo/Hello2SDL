@@ -70,8 +70,8 @@ struct TileMap {
 bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                  SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig);
 
-void updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput,
-                   PlayState* playState, GameMemory *gameMemory);
+void updateTileMap(TileMap *tileMap, PlayState *playState, GameContext *gameContext,
+                   UserInput *userInput, GameMemory *gameMemory);
 
 void drawTileMap(TileMap *tileMap, SDL_Renderer *renderer);
 

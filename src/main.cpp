@@ -20,6 +20,7 @@
 #endif
 
 #include <assert.h>
+#include <time.h>
 #include "Platform.h"
 
 // NOTE: MAP_ANONYMOUS is not defined on Mac OS X and some other UNIX systems.
@@ -425,6 +426,8 @@ handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state,
 
 int
 main(int argc, char *args[]) {
+
+  srand((unsigned int) time(0));
 
   int result = SDL_Init(SDL_INIT_EVERYTHING);
   if (result != 0) {

@@ -15,7 +15,7 @@ struct SDL_Renderer;
 
 enum EntityType {
   PLAYER_TYPE = 0,
-  ENEMY_TYPE,
+  GLIDER_TYPE,
   PLAYER_BULLET_TYPE,
   ENEMY_BULLET_TYPE,
 };
@@ -34,12 +34,17 @@ struct Entity {
   int bulletTime;
   int currentLives;
   bool decreasingAlpha;
+  float maxSpeed;
+  float deltaX;
+  float deltaY;
+  V2D initialPosition;
+  int health;
 };
 
 void resetEntity(Entity *entity);
 
-void updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput,
-                  PlayState* playState, GameMemory *gameMemory);
+void updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext,
+                  UserInput *userInput, GameMemory *gameMemory);
 
 void drawEntity(Entity *entity, SDL_Renderer *renderer);
 

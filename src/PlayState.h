@@ -29,6 +29,7 @@ struct PlayState {
   EntityNode* enemyBullets;
   EntityNode* freeEntities;
   SDL_Texture* bullet1Texture;
+  SDL_Texture *glider;
 };
 
 bool initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer,

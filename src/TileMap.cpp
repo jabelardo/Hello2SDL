@@ -200,7 +200,7 @@ drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
 
 void
 updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
-  tileLayer->velocity.x = -1;
+  tileLayer->velocity.x = gameContext->scrollSpeed;
   tileLayer->position += tileLayer->velocity;
   if (tileLayer->position.x >= tileLayer->mapWidth * tileLayer->tileWidth ||
       tileLayer->position.x <= -tileLayer->mapWidth * tileLayer->tileWidth) {
@@ -213,18 +213,18 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 }
 
 void
-updateObjectLayer(ObjectLayer *objectLayer, GameContext *gameContext, UserInput *userInput,
-                  PlayState *playState, GameMemory *gameMemory) {
-  updateEntity(objectLayer->player, gameContext, userInput, playState, gameMemory);
+updateObjectLayer(ObjectLayer *objectLayer, PlayState *playState, GameContext *gameContext,
+                  UserInput *userInput, GameMemory *gameMemory) {
+  updateEntity(objectLayer->player, playState, gameContext, userInput, gameMemory);
 }
 
 void
-updateTileMap(TileMap *tileMap, GameContext *gameContext, UserInput *userInput,
-              PlayState *playState, GameMemory *gameMemory) {
+updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, UserInput *userInput,
+              GameMemory *gameMemory) {
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
   }
-  updateObjectLayer(tileMap->objectLayer, gameContext, userInput, playState, gameMemory);
+  updateObjectLayer(tileMap->objectLayer, playState, gameContext, userInput, gameMemory);
 }
 
 char *
@@ -748,7 +748,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
     Entity *player = RESERVE_MEMORY(&gameMemory->longTimeMemory, Entity);
     player->type = PLAYER_TYPE;
     player->position = V2D{(float) objectX, (float) objectY};
-    player->bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames, 1, 1};
+    player->bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames};
     player->velocity = V2D{0, 0};
     player->acceleration = V2D{0, 0};
 

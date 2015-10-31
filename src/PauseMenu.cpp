@@ -35,10 +35,10 @@ initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, SDL_Renderer *rend
     return false;
   }
   pauseMenu->mainMenuButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
-  *pauseMenu->mainMenuButton = {200, 100, {mainButton, 200, 80, 3, 1, 1}, MAIN_MENU};
+  *pauseMenu->mainMenuButton = {200, 100, {mainButton, 200, 80, 3}, MAIN_MENU};
 
   pauseMenu->resumePlayButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
-  *pauseMenu->resumePlayButton = {200, 300, {resumeButton, 200, 80, 3, 1, 1}, RESUME_PLAY};
+  *pauseMenu->resumePlayButton = {200, 300, {resumeButton, 200, 80, 3}, RESUME_PLAY};
 
   return true;
 }

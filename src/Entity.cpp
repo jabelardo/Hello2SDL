@@ -56,7 +56,7 @@ rectRect(SDL_Rect *A, SDL_Rect *B) {
 void
 drawEntity(Entity *entity, SDL_Renderer *renderer) {
   switch (entity->type) {
-    case ENEMY_TYPE:
+    case GLIDER_TYPE:
     case PLAYER_TYPE: {
       if (entity->velocity.x > 0) {
         drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
@@ -84,56 +84,60 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
 }
 
 
-void scroll(int speed) {
-
-}
-
 void
 doDyingAnimation(Entity *entity) {
-  // keep scrolling with the map
-  //scroll(gameContext->scrollSpeed);
   entity->bitmap.currentFrame = int(((SDL_GetTicks() / (1000 / 3)) % entity->bitmap.totalFrames));
-  if (entity->dyingCounter == entity->dyingTime) {
-    // entity->isDead = true;
+  if (entity->dyingCounter > 1) {
+    --entity->dyingCounter; //simple counter, fine with fixed frame rate
   }
-  --entity->dyingCounter; //simple counter, fine with fixed frame rate
 }
 
 void
 resetEntity(Entity *entity) {
   switch (entity->type) {
     case PLAYER_TYPE: {
+      entity->health = 1;
       entity->position.x = 10;
       entity->position.y = 200;
       entity->dyingTime = 160;
       entity->dyingCounter = 0;
-      entity->bitmap.currentFrame = 1;
+      entity->bitmap.currentFrame = 0;
       entity->bitmap.alpha = 255;
       entity->bitmap.r = 255;
       entity->bitmap.g = 255;
       entity->bitmap.b = 255;
       entity->invulnerableTime = 320;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 10;
+      entity->bulletTime = 7;
       entity->bulletCounter = 0;
       break;
     }
-    case ENEMY_TYPE: {
-      entity->dyingTime = 160;
+    case GLIDER_TYPE: {
+      entity->deltaY = 60;
+      entity->initialPosition = entity->position;
+      entity->maxSpeed = 2;
+      entity->velocity = {-entity->maxSpeed, entity->maxSpeed / 2.f};
+      entity->health = 1;
+      entity->dyingTime = 25;
       entity->dyingCounter = 0;
-      entity->bitmap.currentFrame = 1;
+      entity->bitmap.currentFrame = 0;
       entity->bitmap.alpha = 255;
       entity->bitmap.r = 255;
       entity->bitmap.g = 255;
       entity->bitmap.b = 255;
-      entity->invulnerableTime = 320;
+      entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 10;
+      entity->bulletTime = 15;
       entity->bulletCounter = 0;
       break;
     }
-    case PLAYER_BULLET_TYPE:break;
-    case ENEMY_BULLET_TYPE:break;
+    case PLAYER_BULLET_TYPE:
+    case ENEMY_BULLET_TYPE:{
+      entity->health = 1;
+      entity->dyingTime = 1;
+      entity->dyingCounter = 0;
+      break;
+    }
   }
 }
 
@@ -189,8 +193,13 @@ handlePlayerAnimation(Entity *entity) {
 }
 
 void
-updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput,
-             PlayState* playState, GameMemory *gameMemory) {
+updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, UserInput *userInput,
+             GameMemory *gameMemory) {
+
+  if (entity->health < 1 && entity->dyingCounter < 1) {
+    entity->dyingCounter = entity->dyingTime;
+  }
+
   switch (entity->type) {
     case PLAYER_TYPE: {
       // if the level is complete then fly off the screen
@@ -248,29 +257,37 @@ updateEntity(Entity *entity, GameContext *gameContext, UserInput *userInput,
       break;
     }
 
-    case ENEMY_TYPE: {
-      entity->bitmap.currentFrame = (int) ((SDL_GetTicks() / 100) % entity->bitmap.totalFrames);
-      if (entity->position.y < 0) {
-        entity->velocity = V2D{2, .33f};
-        entity->acceleration = V2D{0, .33f};
+    case GLIDER_TYPE: {
+      if (entity->dyingCounter == 0) {
 
-      } else if (entity->position.y > 400) {
-        entity->velocity = V2D{2, -.33f};
-        entity->acceleration = V2D{0, -.33f};
+        if (entity->position.y < entity->initialPosition.y - entity->deltaY) {
+          entity->velocity.y = entity->maxSpeed;
+
+        } else if (entity->position.y > entity->initialPosition.y + entity->deltaY) {
+          entity->velocity.y = -entity->maxSpeed;
+        }
+        entity->position += entity->velocity;
+
+        if (entity->position.y < 0) {
+          entity->position.y = 0;
+          entity->velocity.y = entity->maxSpeed;
+
+        } else if (entity->position.y > gameContext->gameHeight) {
+          entity->position.y = gameContext->gameHeight;
+          entity->velocity.y = -entity->maxSpeed;
+        }
+
+      } else {
+        entity->velocity = {(float) -gameContext->scrollSpeed, 0};
+        entity->position += entity->velocity;
+        doDyingAnimation(entity);
       }
-      if (entity->position.x > 640) {
-        entity->position.x = 0;
-      }
-      entity->velocity += entity->acceleration;
-      entity->position += entity->velocity;
       break;
     }
     case PLAYER_BULLET_TYPE:
     case ENEMY_BULLET_TYPE: {
       if (entity->dyingCounter == 0) {
         entity->position += entity->velocity;
-      } else {
-        --entity->dyingCounter;
       }
       break;
     }

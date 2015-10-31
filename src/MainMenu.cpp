@@ -37,10 +37,10 @@ initMainMenu(MainMenu *mainMenu, GameContext *gameContext, SDL_Renderer *rendere
   }
 
   mainMenu->startPlayButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
-  *mainMenu->startPlayButton = {100, 100, {playButtonTexture, 400, 100, 3, 1, 1}, START_PLAY};
+  *mainMenu->startPlayButton = {100, 100, {playButtonTexture, 400, 100, 3}, START_PLAY};
 
   mainMenu->exitButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
-  *mainMenu->exitButton = {100, 300, {exitButtonTexture, 400, 100, 3, 1, 1}, EXIT_FROM_GAME};
+  *mainMenu->exitButton = {100, 300, {exitButtonTexture, 400, 100, 3}, EXIT_FROM_GAME};
 
   return true;
 }

@@ -2,6 +2,12 @@
 // Created by Jose Gutierrez on 10/24/15.
 //
 
+#ifdef __APPLE__
+#include <SDL2/SDL_stdinc.h>
+#else
+#include <SDL_stdinc.h>
+#endif
+
 #include "GameOverMenu.h"
 #include "TextureStorage.h"
 #include "MemoryPartition.h"
@@ -38,16 +44,14 @@ initGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext, SDL_Rende
     return false;
   }
   gameOverMenu->mainMenuButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
-  *gameOverMenu->mainMenuButton = {200, 200, {mainButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1},
-                                   MAIN_MENU};
+  *gameOverMenu->mainMenuButton = {200, 200, {mainButton, 200, 80, 3},MAIN_MENU};
 
   gameOverMenu->startPlayButton = RESERVE_MEMORY(&gameMemory->permanentMemory, MenuButton);
 
-  *gameOverMenu->startPlayButton = {200, 300, {restartButton, 200, 80, 3, MenuButton::MOUSE_OUT, 1},
-                                    START_PLAY};
+  *gameOverMenu->startPlayButton = {200, 300, {restartButton, 200, 80, 3}, START_PLAY};
 
   gameOverMenu->gameOverGraphic = RESERVE_MEMORY(&gameMemory->permanentMemory, AnimatedGraphic);
-  *gameOverMenu->gameOverGraphic = {200, 100, {gameOverText, 190, 30, 2, 1, 1}, 2};
+  *gameOverMenu->gameOverGraphic = {200, 100, {gameOverText, 190, 30, 2}, 2};
 
   return true;
 }
