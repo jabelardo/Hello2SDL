@@ -79,6 +79,13 @@ startGame(PlayState *playState, GameContext *gameContext) {
   initEntity(playState->tileMap->player);
   playState->tileMap->player->currentLives = 3;
 
+  for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode;
+       objNode = objNode->next) {
+    for (EntityNode *node = objNode->entityList; node; node = node->next) {
+      initEntity(&node->entity);
+    }
+  }
+
   return true;
 }
 
@@ -91,9 +98,9 @@ renderPlayState(PlayState *playState, SDL_Renderer *renderer) {
     drawTextureFrame(renderer, playState->liveTexture, i * 30, 0, 32, 30, 0, 0);
   }
 
-  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
-    drawEntity(&enemy->entity, renderer);
-  }
+//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
+//    drawEntity(&enemy->entity, renderer);
+//  }
 
   for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
     drawEntity(&bullet->entity, renderer);
@@ -215,13 +222,13 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userI
     return;
   }
 
-  if (!playState->enemies) {
-    //addEnemy(playState, gameContext, gameMemory);
-  }
+//  if (!playState->enemies) {
+//    addEnemy(playState, gameContext, gameMemory);
+//  }
 
   updateTileMap(playState->tileMap, playState, gameContext, userInput, gameMemory);
 
-  updateEntities(&playState->enemies, playState, gameContext, userInput, gameMemory);
+//  updateEntities(&playState->enemies, playState, gameContext, userInput, gameMemory);
 
   updateEntities(&playState->playerBullets, playState, gameContext, userInput, gameMemory);
 
@@ -233,21 +240,21 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userI
       
     }
   }
-  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
-    if (checkEntityCollision(player, &enemy->entity)) {
-
-    }
-  }
-  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
-    for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
-      if (checkEntityCollision(&enemy->entity, &bullet->entity)) {
-        if (enemy->entity.health > 0) {
-          --enemy->entity.health;
-        }
-        if (bullet->entity.health > 0) {
-          --bullet->entity.health;
-        }
-      }
-    }
-  }
+//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
+//    if (checkEntityCollision(player, &enemy->entity)) {
+//
+//    }
+//  }
+//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
+//    for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
+//      if (checkEntityCollision(&enemy->entity, &bullet->entity)) {
+//        if (enemy->entity.health > 0) {
+//          --enemy->entity.health;
+//        }
+//        if (bullet->entity.health > 0) {
+//          --bullet->entity.health;
+//        }
+//      }
+//    }
+//  }
 }

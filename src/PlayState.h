@@ -18,7 +18,7 @@ struct UserInput;
 
 struct PlayState {
   TileMap *tileMap;
-  EntityNode* enemies;
+//  EntityNode* enemies;
   EntityNode* playerBullets;
   EntityNode* enemyBullets;
   EntityNode* freeEntities;
@@ -39,5 +39,7 @@ void renderPlayState(PlayState *playState, SDL_Renderer *renderer);
 bool startGame(PlayState *playState, GameContext *gameContext);
 
 void addPlayerBullet(PlayState* playState, GameMemory *gameMemory, V2D position, V2D velocity);
+
+void addEnemyBullet(PlayState* playState, GameMemory *gameMemory, V2D position, V2D velocity);
 
 #endif //HELLO2SDL_PLAYSTATE_H

@@ -14,7 +14,7 @@ struct UserInput;
 struct SDL_Renderer;
 
 enum EntityType {
-  UNKNOWN_TYPE = 0,
+  NULL_ENTITY_TYPE = 0,
   PLAYER_TYPE,
   GLIDER_TYPE,
   SHOT_GLIDER_TYPE,

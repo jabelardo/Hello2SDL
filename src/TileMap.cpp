@@ -105,7 +105,7 @@ drawTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
 }
 
 void
-createTileLayerTexture_(TileLayer *tileLayer, SDL_Renderer *renderer) {
+createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
   tileLayer->texture = SDL_CreateTexture(renderer,
                                          SDL_PIXELFORMAT_UNKNOWN,
                                          SDL_TEXTUREACCESS_TARGET,
@@ -206,7 +206,8 @@ drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
 
 void
 updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
-  //tileLayer->velocity.x = gameContext->scrollSpeed;
+#if 0
+  tileLayer->velocity.x = gameContext->scrollSpeed;
   tileLayer->position += tileLayer->velocity;
   if (tileLayer->position.x >= tileLayer->mapWidth * tileLayer->tileWidth ||
       tileLayer->position.x <= -tileLayer->mapWidth * tileLayer->tileWidth) {
@@ -216,6 +217,15 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
       tileLayer->position.y <= -tileLayer->mapHeight * tileLayer->tileHeight) {
     tileLayer->position.y = 0;
   }
+#else
+  if (tileLayer->position.x <
+      (tileLayer->mapWidth * tileLayer->tileWidth) - tileLayer->screenWidth - tileLayer->tileWidth) {
+    tileLayer->velocity.x = gameContext->scrollSpeed;
+    tileLayer->position += tileLayer->velocity;
+  } else {
+    tileLayer->velocity.x = 0;
+  }
+#endif
 }
 
 void
@@ -698,16 +708,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
       if (objectgroup->type == XML_ELEMENT_NODE &&
           xmlStrcmp(objectgroup->name, (const xmlChar *) "objectgroup") == 0) {
 
-        ObjectLayer *newObjectLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, ObjectLayer);
-        if (!objectLayerList) {
-          objectLayerList = newObjectLayer;
-        }
-        if (objectLayerNodePrev) {
-          objectLayerNodePrev->next = newObjectLayer;
-        }
-        objectLayerNodePrev = newObjectLayer;
-        newObjectLayer->next = 0;
-        newObjectLayer->entityList = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+        ObjectLayer *newObjectLayer = 0;
 
         for (xmlNode *object = objectgroup->children; object; object = object->next) {
           if (object->type == XML_ELEMENT_NODE &&
@@ -725,6 +726,13 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             if (!type) {
               goto fail;
             }
+#if 0
+            char *name = (char *) xmlGetProp(object, (const xmlChar *) "name");
+            if (strcmp(name, "Turret1") != 0 && strcmp(type, "ScrollingBackground") != 0 &&
+                strcmp(type, "Player") != 0) {
+              continue;
+            }
+#endif
             xmlNode *objectProperties = getXmlElement(object, (const xmlChar *) "properties");
             if (!objectProperties) {
               goto fail;
@@ -789,8 +797,24 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
               node->entity.bitmap = {texture, textureWidth, textureHeight, numFrames};
               node->entity.velocity = {0, 0};
               node->entity.acceleration = {0, 0};
+              node->next = 0;
 
               if (node->entity.type != PLAYER_TYPE) {
+
+                if (!newObjectLayer) {
+                  newObjectLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, ObjectLayer);
+                  if (!objectLayerList) {
+                    objectLayerList = newObjectLayer;
+                  }
+                  if (objectLayerNodePrev) {
+                    objectLayerNodePrev->next = newObjectLayer;
+                  }
+                  objectLayerNodePrev = newObjectLayer;
+                  newObjectLayer->next = 0;
+                  newObjectLayer->entityList = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+                  newObjectLayer->entityList->next = 0;
+                }
+
                 node->next = newObjectLayer->entityList;
                 newObjectLayer->entityList = node;
 
@@ -803,6 +827,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         }
       }
     }
+    tileMap->objectLayerList = objectLayerList;
 
     xmlFreeDoc(doc);
 

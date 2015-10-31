@@ -56,7 +56,6 @@ rectRect(SDL_Rect *A, SDL_Rect *B) {
 void
 drawEntity(Entity *entity, SDL_Renderer *renderer) {
   switch (entity->type) {
-    case GLIDER_TYPE:
     case PLAYER_TYPE: {
       if (entity->velocity.x < 0) {
         drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
@@ -68,6 +67,7 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
       }
       break;
     }
+    case ENEMY_BULLET_TYPE:
     case PLAYER_BULLET_TYPE: {
       if (entity->velocity.x > 0) {
         drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
@@ -79,13 +79,25 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
       }
       break;
     }
-    case ENEMY_BULLET_TYPE: break;
-    case UNKNOWN_TYPE:break;
-    case SHOT_GLIDER_TYPE:break;
-    case LEVEL_1_BOSS_TYPE:break;
-    case TURRET_TYPE:break;
-    case ROOF_TURRET_TYPE:break;
-    case ESKELETOR_TYPE:break;
+    case GLIDER_TYPE: {
+//      if (entity->velocity.x < 0) {
+//        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
+//                   SDL_FLIP_HORIZONTAL);
+//
+//      } else {
+//        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
+//      }
+//      break;
+    }
+    case SHOT_GLIDER_TYPE:
+    case LEVEL_1_BOSS_TYPE:
+    case ROOF_TURRET_TYPE:
+    case ESKELETOR_TYPE:
+    case TURRET_TYPE: {
+      drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
+      break;
+    }
+    case NULL_ENTITY_TYPE:break;
   }
 }
 
@@ -127,14 +139,16 @@ initEntity(Entity *entity) {
       entity->dyingTime = 25;
       entity->dyingCounter = 0;
       entity->bitmap.currentFrame = 0;
-      entity->bitmap.alpha = 255;
-      entity->bitmap.r = 255;
-      entity->bitmap.g = 255;
-      entity->bitmap.b = 255;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
       entity->bulletTime = 15;
       entity->bulletCounter = 0;
+      break;
+    }
+    case TURRET_TYPE: {
+      entity->dyingTime = 1000;
+      entity->health = 15;
+      entity->bulletTime = 50;
       break;
     }
     case PLAYER_BULLET_TYPE:
@@ -144,12 +158,11 @@ initEntity(Entity *entity) {
       entity->dyingCounter = 0;
       break;
     }
-    case UNKNOWN_TYPE:break;
     case SHOT_GLIDER_TYPE:break;
     case LEVEL_1_BOSS_TYPE:break;
-    case TURRET_TYPE:break;
     case ROOF_TURRET_TYPE:break;
     case ESKELETOR_TYPE:break;
+    case NULL_ENTITY_TYPE:break;
   }
 }
 
@@ -202,6 +215,12 @@ handlePlayerAnimation(Entity *entity) {
     }
   }
   entity->bitmap.currentFrame = (SDL_GetTicks() / 100) % entity->bitmap.totalFrames;
+}
+
+void
+scroll(Entity *entity, float scrollSpeed) {
+  entity->velocity = {-scrollSpeed, 0};
+  entity->position += entity->velocity;
 }
 
 void
@@ -265,7 +284,6 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
       }
       break;
     }
-
     case GLIDER_TYPE: {
       if (entity->dyingCounter == 0) {
 
@@ -287,8 +305,7 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
         }
 
       } else {
-        entity->velocity = {(float) -gameContext->scrollSpeed, 0};
-        entity->position += entity->velocity;
+        scroll(entity, (float) gameContext->scrollSpeed);
         doDyingAnimation(entity);
       }
       break;
@@ -300,12 +317,31 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
       }
       break;
     }
-    case UNKNOWN_TYPE:break;
+    case TURRET_TYPE: {
+      if (entity->dyingCounter == 0) {
+        scroll(entity, (float) gameContext->scrollSpeed);
+
+        if (entity->bulletCounter == 0) {
+          entity->bulletCounter = entity->bulletTime;
+          addEnemyBullet(playState, gameMemory, entity->position,  {-3, -3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{20, 0}, {0, -3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{40, 0}, {3, -3});
+
+
+        } else if (entity->bulletCounter > 0) {
+          --entity->bulletCounter;
+        }
+      } else {
+        scroll(entity, gameContext->scrollSpeed);
+        doDyingAnimation(entity);
+      }
+      break;
+    }
     case SHOT_GLIDER_TYPE:break;
     case LEVEL_1_BOSS_TYPE:break;
-    case TURRET_TYPE:break;
     case ROOF_TURRET_TYPE:break;
     case ESKELETOR_TYPE:break;
+    case NULL_ENTITY_TYPE:break;
   }
 }
 
@@ -337,5 +373,5 @@ EntityType parseEntityType(const char *str) {
   if (strcmp(str, "EnemyBullet") == 0) {
     return ENEMY_BULLET_TYPE;
   }
-  return UNKNOWN_TYPE;
+  return NULL_ENTITY_TYPE;
 }
