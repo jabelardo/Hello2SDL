@@ -24,7 +24,6 @@ enum EntityType {
   ESKELETOR_TYPE,
   PLAYER_BULLET_TYPE,
   ENEMY_BULLET_TYPE,
-  SCROLLING_BACKGROUND_TYPE,
 };
 
 struct Entity {

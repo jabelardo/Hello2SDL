@@ -22,7 +22,7 @@
  <objectgroup name="Object Layer 2" width="150" height="15">
   <object name="Background" type="ScrollingBackground" x="0" y="0" width="32" height="32">
    <properties>
-    <property name="animSpeed" value="0.2"/>
+    <property name="animSpeed" value="1"/>
     <property name="numFrames" value="1"/>
     <property name="textureHeight" value="480"/>
     <property name="textureId" value="clouds"/>
@@ -41,7 +41,7 @@
  <objectgroup color="#00ff00" name="Object Layer 1" width="150" height="15">
   <object name="Player1" type="Player" x="32" y="192" width="32" height="32">
    <properties>
-    <property name="numFrames" value="5"/>
+    <property name="numFrames" value="4"/>
     <property name="textureHeight" value="46"/>
     <property name="textureId" value="player"/>
     <property name="textureWidth" value="101"/>

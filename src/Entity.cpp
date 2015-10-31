@@ -58,7 +58,7 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
   switch (entity->type) {
     case GLIDER_TYPE:
     case PLAYER_TYPE: {
-      if (entity->velocity.x > 0) {
+      if (entity->velocity.x < 0) {
         drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
                      SDL_FLIP_HORIZONTAL);
 
@@ -80,7 +80,6 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
       break;
     }
     case ENEMY_BULLET_TYPE: break;
-    case SCROLLING_BACKGROUND_TYPE:break;
     case UNKNOWN_TYPE:break;
     case SHOT_GLIDER_TYPE:break;
     case LEVEL_1_BOSS_TYPE:break;
@@ -143,24 +142,6 @@ initEntity(Entity *entity) {
       entity->health = 1;
       entity->dyingTime = 1;
       entity->dyingCounter = 0;
-      break;
-    }
-    case SCROLLING_BACKGROUND_TYPE: {
-//      m_scrollSpeed = 1;
-//      m_srcRect1.x = 0;
-//      m_destRect1.x = m_position.getX();
-//      m_srcRect1.y = 0;
-//      m_destRect1.y = m_position.getY();
-//      m_srcRect1.w = m_destRect1.w = m_srcRect2Width =
-//      m_destRect1Width = m_width;
-//      m_srcRect1.h = m_destRect1.h = m_height;
-//      m_srcRect2.x = 0;
-//      m_destRect2.x = m_position.getX() + m_width;
-//      m_srcRect2.y = 0;
-//      m_destRect2.y = m_position.getY();
-//      m_srcRect2.w = m_destRect2.w = m_srcRect2Width =
-//      m_destRect2Width = 0;
-//      m_srcRect2.h = m_destRect2.h = m_height;
       break;
     }
     case UNKNOWN_TYPE:break;
@@ -241,7 +222,6 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
 
         } else {
           entity->velocity = V2D{3, 0};
-          entity->velocity += entity->acceleration;
           entity->position += entity->velocity;
           handlePlayerAnimation(entity);
         }
@@ -250,7 +230,6 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
         if (entity->dyingCounter == 0) {
           V2D target = {(float) userInput->mousePositionX, (float) userInput->mousePositionY};
           entity->velocity = (target - entity->position) / 50;
-          entity->velocity += entity->acceleration;
 
         } else if (entity->dyingCounter == 1) {
           if (entity->currentLives > 0) {
@@ -321,7 +300,6 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
       }
       break;
     }
-    case SCROLLING_BACKGROUND_TYPE:break;
     case UNKNOWN_TYPE:break;
     case SHOT_GLIDER_TYPE:break;
     case LEVEL_1_BOSS_TYPE:break;
@@ -358,9 +336,6 @@ EntityType parseEntityType(const char *str) {
   }
   if (strcmp(str, "EnemyBullet") == 0) {
     return ENEMY_BULLET_TYPE;
-  }
-  if (strcmp(str, "ScrollingBackground") == 0) {
-    return SCROLLING_BACKGROUND_TYPE;
   }
   return UNKNOWN_TYPE;
 }

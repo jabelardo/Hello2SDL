@@ -7,6 +7,8 @@
 
 #include "Bitmap.h"
 
+struct SDL_Renderer;
+
 struct AnimatedGraphic {
   int x;
   int y;

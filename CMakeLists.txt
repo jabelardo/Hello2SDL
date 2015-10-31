@@ -32,7 +32,7 @@ set(SOURCE_FILES
         src/TextureStorage.h
         src/TileMap.cpp
         src/TileMap.h
-        src/V2D.h)
+        src/V2D.h src/ScrollingBackground.cpp src/ScrollingBackground.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

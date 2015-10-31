@@ -15,6 +15,7 @@
 #include "PauseMenu.cpp"
 #include "PlayState.cpp"
 #include "RenderUtils.cpp"
+#include "ScrollingBackground.cpp"
 #include "TextureStorage.cpp"
 #include "TileMap.cpp"
 

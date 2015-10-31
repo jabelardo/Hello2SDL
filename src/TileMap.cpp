@@ -10,6 +10,7 @@
 #include "Entity.h"
 #include "TextureStorage.h"
 #include "SharedDefinitions.h"
+#include "ScrollingBackground.h"
 
 TileSet *
 getTileSetById(TileLayer *tileLayer, int tileId) {
@@ -187,6 +188,9 @@ drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
 
 void
 drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
+
+  drawScrollingBackground(tileMap->scrollingBackground, renderer);
+
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
 //    drawTileLayerTexture(node, renderer);
     drawTileLayers(node, renderer);
@@ -196,11 +200,13 @@ drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
       drawEntity(&node->entity, renderer);
     }
   }
+
+  drawEntity(tileMap->player, renderer);
 }
 
 void
 updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
-  tileLayer->velocity.x = gameContext->scrollSpeed;
+  //tileLayer->velocity.x = gameContext->scrollSpeed;
   tileLayer->position += tileLayer->velocity;
   if (tileLayer->position.x >= tileLayer->mapWidth * tileLayer->tileWidth ||
       tileLayer->position.x <= -tileLayer->mapWidth * tileLayer->tileWidth) {
@@ -215,6 +221,9 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 void
 updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, UserInput *userInput,
               GameMemory *gameMemory) {
+
+  updateScrollingBackground(tileMap->scrollingBackground);
+
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
   }
@@ -223,6 +232,8 @@ updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, U
       updateEntity(&node->entity, playState, gameContext, userInput, gameMemory);
     }
   }
+
+  updateEntity(tileMap->player, playState, gameContext, userInput, gameMemory);
 }
 
 char *
@@ -721,10 +732,12 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             int numFrames = 0;
             int textureHeight = 0;
             int textureWidth = 0;
+            int animSpeed = 0;
             char *textureId = 0;
             for (xmlNode *property = objectProperties->children; property; property = property->next) {
               if (property->type == XML_ELEMENT_NODE &&
                   xmlStrcmp(property->name, (const xmlChar *) "property") == 0) {
+
                 char *propertyName = (char *) xmlGetProp(property, (const xmlChar *) "name");
                 if (!propertyName) {
                   goto fail;
@@ -733,8 +746,12 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                 if (!propertyValue) {
                   xmlFree(propertyName);
                   goto fail;
+
                 } else if (strcmp(propertyName, "numFrames") == 0) {
                   numFrames = atoi(propertyValue);
+
+                } else if (strcmp(propertyName, "animSpeed") == 0) {
+                  animSpeed = atoi(propertyValue);
 
                 } else if (strcmp(propertyName, "textureHeight") == 0) {
                   textureHeight = atoi(propertyValue);
@@ -752,22 +769,35 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                 xmlFree(propertyValue);
               }
             }
+            if (strcmp(type, "ScrollingBackground") == 0) {
+              SDL_Texture *texture = getTexture(textureId, gameContext);
+              tileMap->scrollingBackground = RESERVE_MEMORY(&gameMemory->longTimeMemory,
+                                                            ScrollingBackground);
 
-            SDL_Texture *texture = getTexture(textureId, gameContext);
-            EntityNode *node = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
-            node->entity.type = parseEntityType(type);
-            node->entity.position = V2D{(float) objectX, (float) objectY};
-            node->entity.bitmap = Bitmap{texture, textureWidth, textureHeight, numFrames};
-            node->entity.velocity = V2D{0, 0};
-            node->entity.acceleration = V2D{0, 0};
-
-            if (node->entity.type != PLAYER_TYPE) {
-              node->next = newObjectLayer->entityList;
-              newObjectLayer->entityList = node;
+              *tileMap->scrollingBackground = {};
+              tileMap->scrollingBackground->maxCount = 10;
+              tileMap->scrollingBackground->position = {(float) objectX, (float) objectY};
+              tileMap->scrollingBackground->animSpeed = animSpeed;
+              tileMap->scrollingBackground->bitmap = {texture, textureWidth, textureHeight,
+                                                      numFrames};
 
             } else {
-              tileMap->player = &node->entity;
-              tileMap->playerInitialPosition = tileMap->player->position;
+              SDL_Texture *texture = getTexture(textureId, gameContext);
+              EntityNode *node = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+              node->entity.type = parseEntityType(type);
+              node->entity.position = {(float) objectX, (float) objectY};
+              node->entity.bitmap = {texture, textureWidth, textureHeight, numFrames};
+              node->entity.velocity = {0, 0};
+              node->entity.acceleration = {0, 0};
+
+              if (node->entity.type != PLAYER_TYPE) {
+                node->next = newObjectLayer->entityList;
+                newObjectLayer->entityList = node;
+
+              } else {
+                tileMap->player = &node->entity;
+                tileMap->playerInitialPosition = tileMap->player->position;
+              }
             }
           }
         }

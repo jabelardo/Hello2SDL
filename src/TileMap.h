@@ -14,6 +14,7 @@ struct GameMemory;
 struct GameMemory;
 struct PlatformConfig;
 struct PlayState;
+struct ScrollingBackground;
 struct SDL_Renderer;
 struct SDL_Texture;
 struct UserInput;
@@ -67,6 +68,7 @@ struct TileMap {
   V2D playerInitialPosition;
   TileLayer* tileLayerList;
   ObjectLayer* objectLayerList;
+  ScrollingBackground *scrollingBackground;
 };
 
 bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,

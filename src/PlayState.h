@@ -24,7 +24,7 @@ struct PlayState {
   EntityNode* freeEntities;
   SDL_Texture* liveTexture;
   SDL_Texture* bullet1Texture;
-  SDL_Texture *gliderTexture;
+//  SDL_Texture *gliderTexture;
   SDL_Texture* bullet2Texture;
 };
 
