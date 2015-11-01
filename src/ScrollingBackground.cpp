@@ -9,6 +9,7 @@
 #endif
 
 #include "ScrollingBackground.h"
+#include "RenderUtils.h"
 
 void updateScrollingBackground(ScrollingBackground *scrollingBackground) {
   if (scrollingBackground->count == scrollingBackground->maxCount) {
@@ -55,9 +56,13 @@ void updateScrollingBackground(ScrollingBackground *scrollingBackground) {
 }
 
 void drawScrollingBackground(ScrollingBackground *scrollingBackground, SDL_Renderer *renderer) {
-  SDL_RenderCopyEx(renderer, scrollingBackground->bitmap.texture, &scrollingBackground->srcRect1,
-                   &scrollingBackground->destRect1, 0, 0, SDL_FLIP_NONE);
+#if 0
+  SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &scrollingBackground->srcRect1,
+                   &scrollingBackground->destRect1);
 
-  SDL_RenderCopyEx(renderer, scrollingBackground->bitmap.texture, &scrollingBackground->srcRect2,
+  SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &scrollingBackground->srcRect2,
                    &scrollingBackground->destRect2, 0, 0, SDL_FLIP_NONE);
+#else
+  drawBitmap(renderer, 0, 0, &scrollingBackground->bitmap);
+#endif
 }

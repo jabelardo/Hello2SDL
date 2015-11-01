@@ -659,6 +659,32 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
     for (xmlNode *layer = map->children; layer; layer = layer->next) {
       if (layer->type == XML_ELEMENT_NODE &&
           xmlStrcmp(layer->name, (const xmlChar *) "layer") == 0) {
+
+        bool collidable = false;
+
+        xmlNode *layerProperties = getXmlElement(layer, (const xmlChar *) "properties");
+        if (layerProperties) {
+          for (xmlNode *property = layerProperties->children; property; property = property->next) {
+            if (property->type == XML_ELEMENT_NODE &&
+                xmlStrcmp(property->name, (const xmlChar *) "property") == 0) {
+              char *name = (char *) xmlGetProp(property, (const xmlChar *) "name");
+              if (!name) {
+                goto fail;
+              }
+              char *value = (char *) xmlGetProp(property, (const xmlChar *) "value");
+              if (!value) {
+                xmlFree(name);
+                goto fail;
+              }
+              if ((strcmp(name, "collidable")) == 0 && (strcmp(value, "true")) == 0) {
+                collidable = true;
+              }
+              xmlFree(name);
+              xmlFree(value);
+            }
+          }
+        }
+        
         xmlNode *data = getXmlElement(layer, (const xmlChar *) "data");
         if (!data) {
           goto fail;
@@ -682,6 +708,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         newTileLayer->mapHeight = tileMap->height;
         newTileLayer->tileSetList = tileSetList;
         newTileLayer->tileGidsCount = (size_t) (tileMap->height * tileMap->width);
+        newTileLayer->collidable = collidable;
 
         xmlChar *base64Gids = xmlNodeGetContent(data);
         char *trimBase64Gids = stringTrim((char *) base64Gids);

@@ -31,10 +31,6 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
                    gameContext, gameMemory)) {
     return false;
   }
-//  if (!loadTexture("GLIDER", "enemy1.png", platformConfig->resourcePath, renderer,
-//                   gameContext, gameMemory)) {
-//    return false;
-//  }
 
   playState->tileMap = RESERVE_MEMORY(&gameMemory->permanentMemory, TileMap);
 
@@ -52,10 +48,6 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
 
 bool
 startGame(PlayState *playState, GameContext *gameContext) {
-//  playState->gliderTexture = getTexture("GLIDER", gameContext);
-//  if (!playState->gliderTexture) {
-//    return false;
-//  }
   playState->liveTexture = getTexture("LIVES", gameContext);
   if (!playState->liveTexture) {
     return false;
@@ -97,10 +89,6 @@ renderPlayState(PlayState *playState, SDL_Renderer *renderer) {
   for (int i = 0; i < playState->tileMap->player->currentLives; ++i) {
     drawTextureFrame(renderer, playState->liveTexture, i * 30, 0, 32, 30, 0, 0);
   }
-
-//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
-//    drawEntity(&enemy->entity, renderer);
-//  }
 
   for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
     drawEntity(&bullet->entity, renderer);
@@ -190,29 +178,31 @@ updateEntities(EntityNode** entities, PlayState *playState, GameContext *gameCon
   }
 }
 
+#if 0
 void
 addEnemy(PlayState *playState, GameContext *gameContext, GameMemory *gameMemory) {
 
-//  EntityNode* enemy = playState->freeEntities;
-//
-//  if (enemy) {
-//    playState->freeEntities = enemy->next;
-//  } else {
-//    enemy = RESERVE_MEMORY(&gameMemory->permanentMemory, EntityNode);
-//  }
-//
-//  enemy->next = playState->enemies;
-//
-//  playState->enemies = enemy;
-//
-//  int yPos = rand() % (gameContext->gameHeight / 2);
-//  playState->enemies->entity = {GLIDER_TYPE, {600, (float) yPos},
-//                                {playState->gliderTexture, 38, 34, 1}};
-//
-//  initEntity(&enemy->entity);
-//
-//  assert(enemy != enemy->next);
+  EntityNode* enemy = playState->freeEntities;
+
+  if (enemy) {
+    playState->freeEntities = enemy->next;
+  } else {
+    enemy = RESERVE_MEMORY(&gameMemory->permanentMemory, EntityNode);
+  }
+
+  enemy->next = playState->enemies;
+
+  playState->enemies = enemy;
+
+  int yPos = rand() % (gameContext->gameHeight / 2);
+  playState->enemies->entity = {GLIDER_TYPE, {600, (float) yPos},
+                                {playState->gliderTexture, 38, 34, 1}};
+
+  initEntity(&enemy->entity);
+
+  assert(enemy != enemy->next);
 }
+#endif
 
 void
 updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userInput,
@@ -222,13 +212,7 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userI
     return;
   }
 
-//  if (!playState->enemies) {
-//    addEnemy(playState, gameContext, gameMemory);
-//  }
-
   updateTileMap(playState->tileMap, playState, gameContext, userInput, gameMemory);
-
-//  updateEntities(&playState->enemies, playState, gameContext, userInput, gameMemory);
 
   updateEntities(&playState->playerBullets, playState, gameContext, userInput, gameMemory);
 

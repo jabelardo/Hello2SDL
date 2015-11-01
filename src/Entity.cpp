@@ -57,47 +57,28 @@ void
 drawEntity(Entity *entity, SDL_Renderer *renderer) {
   switch (entity->type) {
     case PLAYER_TYPE: {
-      if (entity->velocity.x < 0) {
-        drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-                     SDL_FLIP_HORIZONTAL);
-
-      } else {
-        drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
-
-      }
+      drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
+                   (entity->velocity.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
       break;
     }
     case ENEMY_BULLET_TYPE:
-    case PLAYER_BULLET_TYPE: {
-      if (entity->velocity.x > 0) {
-        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-                   SDL_FLIP_HORIZONTAL);
-
-      } else {
-        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
-
-      }
-      break;
-    }
-    case GLIDER_TYPE: {
-//      if (entity->velocity.x < 0) {
-//        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-//                   SDL_FLIP_HORIZONTAL);
-//
-//      } else {
-//        drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
-//      }
-//      break;
-    }
+    case PLAYER_BULLET_TYPE:
+    case GLIDER_TYPE:
     case SHOT_GLIDER_TYPE:
     case LEVEL_1_BOSS_TYPE:
-    case ROOF_TURRET_TYPE:
     case ESKELETOR_TYPE:
     case TURRET_TYPE: {
       drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
       break;
     }
-    case NULL_ENTITY_TYPE:break;
+    case ROOF_TURRET_TYPE: {
+      drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
+                 SDL_FLIP_VERTICAL);
+      break;
+    }
+    case NULL_ENTITY_TYPE: {
+      break;
+    }
   }
 }
 
@@ -133,7 +114,7 @@ initEntity(Entity *entity) {
     case GLIDER_TYPE: {
       entity->deltaY = 60;
       entity->initialPosition = entity->position;
-      entity->maxSpeed = 2;
+      entity->maxSpeed = 3;
       entity->velocity = {-entity->maxSpeed, entity->maxSpeed / 2.f};
       entity->health = 1;
       entity->dyingTime = 25;
@@ -141,14 +122,45 @@ initEntity(Entity *entity) {
       entity->bitmap.currentFrame = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 15;
+      entity->bulletTime = 0;
       entity->bulletCounter = 0;
       break;
     }
+    case SHOT_GLIDER_TYPE: {
+      entity->deltaY = 0;
+      entity->initialPosition = entity->position;
+      entity->maxSpeed = 3;
+      entity->velocity = {-entity->maxSpeed, 0};
+      entity->health = 1;
+      entity->dyingTime = 25;
+      entity->dyingCounter = 0;
+      entity->bitmap.currentFrame = 0;
+      entity->invulnerableTime = 0;
+      entity->invulnerableCounter = 0;
+      entity->bulletTime = 25;
+      entity->bulletCounter = 0;
+      break;
+    }
+    case ROOF_TURRET_TYPE:
     case TURRET_TYPE: {
       entity->dyingTime = 1000;
       entity->health = 15;
       entity->bulletTime = 50;
+      break;
+    }
+    case ESKELETOR_TYPE: {
+      entity->deltaY = 0;
+      entity->initialPosition = entity->position;
+      entity->maxSpeed = 3;
+      entity->velocity = {0, 0};
+      entity->health = 3;
+      entity->dyingTime = 50;
+      entity->dyingCounter = 0;
+      entity->bitmap.currentFrame = 0;
+      entity->invulnerableTime = 0;
+      entity->invulnerableCounter = 0;
+      entity->bulletTime = 50;
+      entity->bulletCounter = 0;
       break;
     }
     case PLAYER_BULLET_TYPE:
@@ -158,10 +170,21 @@ initEntity(Entity *entity) {
       entity->dyingCounter = 0;
       break;
     }
-    case SHOT_GLIDER_TYPE:break;
-    case LEVEL_1_BOSS_TYPE:break;
-    case ROOF_TURRET_TYPE:break;
-    case ESKELETOR_TYPE:break;
+    case LEVEL_1_BOSS_TYPE: {
+      entity->deltaY = 0;
+      entity->initialPosition = entity->position;
+      entity->maxSpeed = 2;
+      entity->velocity = {-entity->maxSpeed, 0};
+      entity->health = 100;
+      entity->dyingTime = 100;
+      entity->dyingCounter = 0;
+      entity->bitmap.currentFrame = 0;
+      entity->invulnerableTime = 0;
+      entity->invulnerableCounter = 0;
+      entity->bulletTime = 100;
+      entity->bulletCounter = 0;
+      break;
+    }
     case NULL_ENTITY_TYPE:break;
   }
 }
@@ -219,16 +242,18 @@ handlePlayerAnimation(Entity *entity) {
 
 void
 scroll(Entity *entity, float scrollSpeed) {
-  entity->velocity = {-scrollSpeed, 0};
-  entity->position += entity->velocity;
+  entity->position += {-scrollSpeed, 0};
 }
 
 void
-updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, UserInput *userInput,
+updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, UserInput *userInput,
              GameMemory *gameMemory) {
 
   if (entity->health < 1 && entity->dyingCounter < 1) {
     entity->dyingCounter = entity->dyingTime;
+  }
+  if (entity->type != PLAYER_TYPE) {
+    scroll(entity, (float) gameContext->scrollSpeed);
   }
   switch (entity->type) {
     case PLAYER_TYPE: {
@@ -286,15 +311,15 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
     }
     case GLIDER_TYPE: {
       if (entity->dyingCounter == 0) {
-
-        if (entity->position.y < entity->initialPosition.y - entity->deltaY) {
-          entity->velocity.y = entity->maxSpeed;
-
-        } else if (entity->position.y > entity->initialPosition.y + entity->deltaY) {
+        if (entity->position.y >= entity->initialPosition.y + entity->deltaY) {
           entity->velocity.y = -entity->maxSpeed;
+
+        } else if (entity->position.y <= entity->initialPosition.y - entity->deltaY) {
+          entity->velocity.y = entity->maxSpeed;
         }
         entity->position += entity->velocity;
 
+        // TODO: improve movement with collision detection
         if (entity->position.y < 0) {
           entity->position.y = 0;
           entity->velocity.y = entity->maxSpeed;
@@ -305,7 +330,23 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
         }
 
       } else {
-        scroll(entity, (float) gameContext->scrollSpeed);
+        doDyingAnimation(entity);
+      }
+      break;
+    }
+    case SHOT_GLIDER_TYPE: {
+      if (entity->dyingCounter == 0) {
+
+        if (entity->bulletCounter == 0) {
+          entity->bulletCounter = entity->bulletTime;
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 15}, {-10, 0});
+
+
+        } else if (entity->bulletCounter > 0) {
+          --entity->bulletCounter;
+        }
+
+      } else {
         doDyingAnimation(entity);
       }
       break;
@@ -319,29 +360,104 @@ updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext, Use
     }
     case TURRET_TYPE: {
       if (entity->dyingCounter == 0) {
-        scroll(entity, (float) gameContext->scrollSpeed);
 
         if (entity->bulletCounter == 0) {
           entity->bulletCounter = entity->bulletTime;
-          addEnemyBullet(playState, gameMemory, entity->position,  {-3, -3});
+          addEnemyBullet(playState, gameMemory, entity->position, {-3, -3});
           addEnemyBullet(playState, gameMemory, entity->position + V2D{20, 0}, {0, -3});
           addEnemyBullet(playState, gameMemory, entity->position + V2D{40, 0}, {3, -3});
+
+        } else if (entity->bulletCounter > 0) {
+          --entity->bulletCounter;
+        }
+      } else {
+        doDyingAnimation(entity);
+      }
+      break;
+    }
+    case ROOF_TURRET_TYPE: {
+      if (entity->dyingCounter == 0) {
+
+        if (entity->bulletCounter == 0) {
+          entity->bulletCounter = entity->bulletTime;
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 20}, {-3, 3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{20, 20}, {0, 3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{40, 20}, {3, 3});
+
+        } else if (entity->bulletCounter > 0) {
+          --entity->bulletCounter;
+        }
+      } else {
+        doDyingAnimation(entity);
+      }
+      break;
+    }
+    case ESKELETOR_TYPE: {
+      if (entity->dyingCounter == 0) {
+        entity->velocity.y = entity->maxSpeed;
+        entity->position += entity->velocity;
+
+        // TODO improve or remove when region simulation is completed
+        if (entity->position.y > gameContext->gameHeight) {
+          entity->position.y = entity->initialPosition.y;
+        }
+
+        if (entity->bulletCounter == 0) {
+          entity->bulletCounter = entity->bulletTime;
+          addEnemyBullet(playState, gameMemory, entity->position, {-3, 0});
+          addEnemyBullet(playState, gameMemory, entity->position, {3, 0});
 
 
         } else if (entity->bulletCounter > 0) {
           --entity->bulletCounter;
         }
       } else {
-        scroll(entity, gameContext->scrollSpeed);
+        entity->velocity.y = 0;
         doDyingAnimation(entity);
       }
       break;
     }
-    case SHOT_GLIDER_TYPE:break;
-    case LEVEL_1_BOSS_TYPE:break;
-    case ROOF_TURRET_TYPE:break;
-    case ESKELETOR_TYPE:break;
-    case NULL_ENTITY_TYPE:break;
+    case LEVEL_1_BOSS_TYPE: {
+
+      if (entity->position.x < gameContext->gameWidth - (entity->bitmap.width + 20)) {
+
+        if (entity->dyingCounter == 0) {
+          // counter scrolling
+          scroll(entity, (float) -gameContext->scrollSpeed);
+
+          if (entity->position.y + entity->bitmap.height >= gameContext->gameHeight) {
+            entity->velocity.y = -entity->maxSpeed;
+          } else if (entity->position.y <= 0) {
+            entity->velocity.y = entity->maxSpeed;
+          }
+
+          if (entity->bulletCounter == 0) {
+            entity->bulletCounter = entity->bulletTime;
+
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 15}, {-10, 0});
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 25}, {-10, 0});
+
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 200}, {-10, 0});
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 215}, {-10, 0});
+
+          } else if (entity->bulletCounter > 0) {
+            --entity->bulletCounter;
+          }
+        } else {
+          entity->bitmap.currentFrame = int(((SDL_GetTicks() / (1000 / 3)) % entity->bitmap.totalFrames));
+
+          if (entity->dyingCounter == 1) {
+            gameContext->levelComplete = true;
+          } else {
+            --entity->dyingCounter;
+          }
+        }
+      }
+      break;
+    }
+    case NULL_ENTITY_TYPE: {
+      break;
+    }
   }
 }
 

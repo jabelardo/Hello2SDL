@@ -51,6 +51,7 @@ struct TileLayer {
 
   int screenColumns;
   int screenRows;
+  bool collidable;
 
   TileSet* tileSetList;
   size_t tileGidsCount;

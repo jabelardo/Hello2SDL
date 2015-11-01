@@ -32,7 +32,7 @@
  </objectgroup>
  <layer name="Collision" width="150" height="15">
   <properties>
-   <property name="collidable" value=""/>
+   <property name="collidable" value="true"/>
   </properties>
   <data encoding="base64" compression="zlib">
    eJzt2NEJgzAQgOFzjMbuU1doV7ArtEu0dYFi5/QKfQiCNUJicuH/4IhnkMR4hKBIXfpG5NrkG3/U+Pzavbw0Bo3HQv/3/vNPP9blrivUiboCAAAAynfSM3vHuR2RnbWmLtQVIuM/A1K4aU3dqSszrOwDOeZpZW1KZGUfyDFPK2tTolhr9/ZCvHbrc0tif+OQcVPWVeh7l+ag4TTa2fVxlruVfnJyP58AWs0rUg==
