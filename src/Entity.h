@@ -31,20 +31,18 @@ struct Entity {
   V2D position;
   Bitmap bitmap;
   V2D velocity;
-  V2D acceleration;
   int dyingCounter;
   int dyingTime;
   int invulnerableCounter;
   int invulnerableTime;
   int bulletCounter;
   int bulletTime;
-  int currentLives;
   bool decreasingAlpha;
   float maxSpeed;
-  float deltaX;
-  float deltaY;
+  float deltaMovement;
   V2D initialPosition;
   int health;
+  float halfDimension;
 };
 
 struct EntityNode {

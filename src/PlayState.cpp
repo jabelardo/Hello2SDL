@@ -65,11 +65,9 @@ startGame(PlayState *playState, GameContext *gameContext) {
     tileLayer->position = {0, 0};
   }
 
-  playState->tileMap->player->position =
-      playState->tileMap->playerInitialPosition;
-
   initEntity(playState->tileMap->player);
-  playState->tileMap->player->currentLives = 3;
+
+  playState->currentLives = 3;
 
   for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode;
        objNode = objNode->next) {
@@ -82,11 +80,11 @@ startGame(PlayState *playState, GameContext *gameContext) {
 }
 
 void
-renderPlayState(PlayState *playState, SDL_Renderer *renderer) {
+renderPlayState(PlayState *playState, GameContext* gameContext, SDL_Renderer *renderer) {
 
-  drawTileMap(playState->tileMap, renderer);
+  drawTileMap(playState->tileMap, gameContext, renderer);
 
-  for (int i = 0; i < playState->tileMap->player->currentLives; ++i) {
+  for (int i = 0; i < playState->currentLives; ++i) {
     drawTextureFrame(renderer, playState->liveTexture, i * 30, 0, 32, 30, 0, 0);
   }
 
@@ -153,10 +151,10 @@ static void
 updateEntities(EntityNode** entities, PlayState *playState, GameContext *gameContext,
                UserInput *userInput, GameMemory *gameMemory) {
   for (EntityNode **entityNode = entities; *entityNode;) {
-    if ((*entityNode)->entity.position.x < 0 ||
-        (*entityNode)->entity.position.x > gameContext->gameWidth ||
-        (*entityNode)->entity.position.y < 0 ||
-        (*entityNode)->entity.position.y > gameContext->gameHeight ||
+    if ((*entityNode)->entity.position.x < -(*entityNode)->entity.bitmap.width ||
+        (*entityNode)->entity.position.x > gameContext->gameWidth + (*entityNode)->entity.bitmap.width ||
+        (*entityNode)->entity.position.y < -(*entityNode)->entity.bitmap.height ||
+        (*entityNode)->entity.position.y > gameContext->gameHeight + (*entityNode)->entity.bitmap.height ||
         (*entityNode)->entity.dyingCounter == 1) {
 
       (*entityNode)->entity.dyingCounter = 0;

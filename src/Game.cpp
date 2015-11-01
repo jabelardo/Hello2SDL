@@ -48,7 +48,7 @@ void
 renderGame(GameContext *gameContext, SDL_Renderer *renderer) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
-      renderPlayState(gameContext->playState, renderer);
+      renderPlayState(gameContext->playState, gameContext, renderer);
       break;
     }
     case MAIN_MENU_STATE: {

@@ -10,59 +10,91 @@
 
 #include "ScrollingBackground.h"
 #include "RenderUtils.h"
+#include "Game.h"
 
 void updateScrollingBackground(ScrollingBackground *scrollingBackground) {
-  if (scrollingBackground->count == scrollingBackground->maxCount) {
-    // make first rectangle smaller
-    scrollingBackground->srcRect1.x += scrollingBackground->animSpeed;
-    scrollingBackground->srcRect1.w -= scrollingBackground->animSpeed;
-    scrollingBackground->destRect1.w -= scrollingBackground->animSpeed;
-
-    // make second rectangle bigger
-    scrollingBackground->srcRect2.w += scrollingBackground->animSpeed;
-    scrollingBackground->destRect2.w += scrollingBackground->animSpeed;
-    scrollingBackground->destRect2.x -= scrollingBackground->animSpeed;
-
-    // reset and start again
-    if (scrollingBackground->destRect2.w >= scrollingBackground->bitmap.width) {
-      scrollingBackground->srcRect1.x = 0;
-      scrollingBackground->destRect1.x = scrollingBackground->position.x;
-      scrollingBackground->srcRect1.y = 0;
-      scrollingBackground->destRect1.y = scrollingBackground->position.y;
-
-      scrollingBackground->srcRect1.w = scrollingBackground->destRect1.w =
-        scrollingBackground->srcRect2Width = scrollingBackground->destRect1Width =
-          scrollingBackground->bitmap.width;
-
-      scrollingBackground->srcRect1.h = scrollingBackground->destRect1.h =
-          scrollingBackground->bitmap.height;
-
-      scrollingBackground->srcRect2.x = 0;
-      scrollingBackground->destRect2.x =
-          scrollingBackground->position.x + scrollingBackground->bitmap.width;
-      scrollingBackground->srcRect2.y = 0;
-      scrollingBackground->destRect2.y = scrollingBackground->position.y;
-
-      scrollingBackground->srcRect2.w = scrollingBackground->destRect2.w =
-        scrollingBackground->srcRect2Width = scrollingBackground->destRect2Width = 0;
-
-      scrollingBackground->srcRect2.h = scrollingBackground->destRect2.h =
-          scrollingBackground->bitmap.height;
-    }
-    scrollingBackground->count = 0;
+  scrollingBackground->position.x += scrollingBackground->animSpeed * 2;
+  if (scrollingBackground->position.x >= scrollingBackground->bitmap.width ||
+      scrollingBackground->position.x <= -scrollingBackground->bitmap.width) {
+    scrollingBackground->position.x = 0;
   }
-
-  ++scrollingBackground->count;
 }
 
-void drawScrollingBackground(ScrollingBackground *scrollingBackground, SDL_Renderer *renderer) {
-#if 0
-  SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &scrollingBackground->srcRect1,
-                   &scrollingBackground->destRect1);
+void drawScrollingBackground(ScrollingBackground* scrollingBackground, GameContext* gameContext,
+                             SDL_Renderer *renderer) {
+  if (scrollingBackground->position.x >= 0) {
 
-  SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &scrollingBackground->srcRect2,
-                   &scrollingBackground->destRect2, 0, 0, SDL_FLIP_NONE);
-#else
-  drawBitmap(renderer, 0, 0, &scrollingBackground->bitmap);
-#endif
+    SDL_Rect srcMainRect;
+    srcMainRect.x = (int) scrollingBackground->position.x;
+    srcMainRect.y = (int) scrollingBackground->position.y;
+
+    SDL_Rect destMainRect;
+    destMainRect.x = 0;
+    destMainRect.y = 0;
+
+    srcMainRect.h = destMainRect.h = gameContext->gameHeight;
+
+    if (scrollingBackground->position.x < scrollingBackground->bitmap.width - gameContext->gameWidth) {
+      srcMainRect.w = destMainRect.w = gameContext->gameWidth;
+
+    } else {
+
+      int mainRectWidth = scrollingBackground->bitmap.width - (int) scrollingBackground->position.x;
+
+      srcMainRect.w = destMainRect.w = mainRectWidth;
+
+      SDL_Rect srcAuxRect;
+      srcAuxRect.x = 0;
+      srcAuxRect.y = (int) scrollingBackground->position.y;
+
+      SDL_Rect destAuxRect;
+      destAuxRect.x = mainRectWidth;
+      destAuxRect.y = 0;
+
+      srcAuxRect.w = destAuxRect.w = gameContext->gameWidth - destAuxRect.x;
+      srcAuxRect.h = destAuxRect.h = gameContext->gameHeight;
+
+      SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &srcAuxRect, &destAuxRect);
+    }
+
+    SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &srcMainRect, &destMainRect);
+
+  } else {
+
+    SDL_Rect srcMainRect;
+    srcMainRect.y = (int) scrollingBackground->position.y;
+
+    SDL_Rect destMainRect;
+    destMainRect.y = 0;
+
+    srcMainRect.h = destMainRect.h = gameContext->gameHeight;
+
+    if (gameContext->gameWidth + scrollingBackground->position.x < 0) {
+
+      srcMainRect.x = scrollingBackground->bitmap.width + (int) scrollingBackground->position.x;
+      destMainRect.x = 0;
+      srcMainRect.w = destMainRect.w = gameContext->gameWidth;
+
+    } else {
+
+      srcMainRect.x = 0;
+      destMainRect.x = -1 * (int) scrollingBackground->position.x;
+      srcMainRect.w = destMainRect.w = gameContext->gameWidth - destMainRect.x;
+
+      SDL_Rect srcAuxRect;
+      srcAuxRect.x = scrollingBackground->bitmap.width - destMainRect.x;
+      srcAuxRect.y = (int) scrollingBackground->position.y;
+
+      SDL_Rect destAuxRect;
+      destAuxRect.x = 0;
+      destAuxRect.y = 0;
+
+      srcAuxRect.w = destAuxRect.w = gameContext->gameWidth - srcMainRect.w;
+      srcAuxRect.h = destAuxRect.h = gameContext->gameHeight;
+
+      SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &srcAuxRect, &destAuxRect);
+    }
+
+    SDL_RenderCopy(renderer, scrollingBackground->bitmap.texture, &srcMainRect, &destMainRect);
+  }
 }

@@ -40,8 +40,8 @@ struct ObjectLayer {
 };
 
 struct TileLayer {
-  int screenWidth;
-  int screenHeight;
+//  int screenWidth;
+//  int screenHeight;
   int mapWidth;
   int mapHeight;
   int tileWidth;
@@ -78,6 +78,6 @@ bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameCon
 void updateTileMap(TileMap *tileMap, PlayState *playState, GameContext *gameContext,
                    UserInput *userInput, GameMemory *gameMemory);
 
-void drawTileMap(TileMap *tileMap, SDL_Renderer *renderer);
+void drawTileMap(TileMap *tileMap, GameContext* gameContext, SDL_Renderer *renderer);
 
 #endif //HELLO2SDL_TILEMMAP_H

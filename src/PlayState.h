@@ -24,6 +24,7 @@ struct PlayState {
   SDL_Texture* liveTexture;
   SDL_Texture* bullet1Texture;
   SDL_Texture* bullet2Texture;
+  int currentLives;
 };
 
 bool initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer,
@@ -32,7 +33,7 @@ bool initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer 
 void updatePlayState(PlayState *playState, GameContext *gameContext, UserInput* userInput,
                      GameMemory *gameMemory);
 
-void renderPlayState(PlayState *playState, SDL_Renderer *renderer);
+void renderPlayState(PlayState *playState, GameContext* gameContext, SDL_Renderer *renderer);
 
 bool startGame(PlayState *playState, GameContext *gameContext);
 

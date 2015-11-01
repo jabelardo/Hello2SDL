@@ -55,9 +55,11 @@ rectRect(SDL_Rect *A, SDL_Rect *B) {
 
 void
 drawEntity(Entity *entity, SDL_Renderer *renderer) {
+  int x = (int) floorf(entity->position.x - (float) entity->bitmap.width / 2.f);
+  int y = (int) floorf(entity->position.y - (float) entity->bitmap.height / 2.f);
   switch (entity->type) {
     case PLAYER_TYPE: {
-      drawBitmapEx(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
+      drawBitmapEx(renderer, x, y, &entity->bitmap,
                    (entity->velocity.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
       break;
     }
@@ -68,12 +70,11 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
     case LEVEL_1_BOSS_TYPE:
     case ESKELETOR_TYPE:
     case TURRET_TYPE: {
-      drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap);
+      drawBitmap(renderer, x, y, &entity->bitmap);
       break;
     }
     case ROOF_TURRET_TYPE: {
-      drawBitmap(renderer, (int) entity->position.x, (int) entity->position.y, &entity->bitmap,
-                 SDL_FLIP_VERTICAL);
+      drawBitmap(renderer, x, y, &entity->bitmap, SDL_FLIP_VERTICAL);
       break;
     }
     case NULL_ENTITY_TYPE: {
@@ -95,24 +96,26 @@ void
 initEntity(Entity *entity) {
   switch (entity->type) {
     case PLAYER_TYPE: {
+      entity->halfDimension = 15;
       entity->health = 1;
-      entity->position.x = 10;
-      entity->position.y = 200;
-      entity->dyingTime = 160;
+      entity->initialPosition = entity->position;
+      entity->maxSpeed = 3;
+      entity->dyingTime = 100;
       entity->dyingCounter = 0;
       entity->bitmap.currentFrame = 0;
       entity->bitmap.alpha = 255;
       entity->bitmap.r = 255;
       entity->bitmap.g = 255;
       entity->bitmap.b = 255;
-      entity->invulnerableTime = 320;
+      entity->invulnerableTime = 200;
       entity->invulnerableCounter = 0;
       entity->bulletTime = 7;
       entity->bulletCounter = 0;
       break;
     }
     case GLIDER_TYPE: {
-      entity->deltaY = 60;
+      entity->halfDimension = 9;
+      entity->deltaMovement = 60;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {-entity->maxSpeed, entity->maxSpeed / 2.f};
@@ -127,7 +130,7 @@ initEntity(Entity *entity) {
       break;
     }
     case SHOT_GLIDER_TYPE: {
-      entity->deltaY = 0;
+      entity->halfDimension = 9;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {-entity->maxSpeed, 0};
@@ -143,13 +146,14 @@ initEntity(Entity *entity) {
     }
     case ROOF_TURRET_TYPE:
     case TURRET_TYPE: {
+      entity->halfDimension = 14;
       entity->dyingTime = 1000;
       entity->health = 15;
       entity->bulletTime = 50;
       break;
     }
     case ESKELETOR_TYPE: {
-      entity->deltaY = 0;
+      entity->halfDimension = 8;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {0, 0};
@@ -165,13 +169,14 @@ initEntity(Entity *entity) {
     }
     case PLAYER_BULLET_TYPE:
     case ENEMY_BULLET_TYPE: {
+      entity->halfDimension = 5;
       entity->health = 1;
       entity->dyingTime = 1;
       entity->dyingCounter = 0;
       break;
     }
     case LEVEL_1_BOSS_TYPE: {
-      entity->deltaY = 0;
+      entity->halfDimension = 28;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 2;
       entity->velocity = {-entity->maxSpeed, 0};
@@ -190,9 +195,9 @@ initEntity(Entity *entity) {
 }
 
 void
-resurrectPlayer(Entity *entity) {
+resurrectPlayer(Entity *entity, PlayState *playState) {
   initEntity(entity);
-  --entity->currentLives;
+  --playState->currentLives;
   entity->invulnerableCounter = entity->invulnerableTime;
 }
 
@@ -254,12 +259,16 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
   }
   if (entity->type != PLAYER_TYPE) {
     scroll(entity, (float) gameContext->scrollSpeed);
+    if ((entity->position.x > gameContext->gameWidth + entity->bitmap.width) ||
+        (entity->position.x < -entity->bitmap.width)) {
+      return;
+    }
   }
   switch (entity->type) {
     case PLAYER_TYPE: {
       // if the level is complete then fly off the screen
       if (gameContext->isLevelCompleted) {
-        if (entity->position.x >= gameContext->gameWidth) {
+        if (entity->position.x >= gameContext->gameWidth + entity->bitmap.width) {
           ++gameContext->currentLevel;
           gameContext->stateChange = BETWEEN_LEVEL;
           gameContext->levelComplete = false;
@@ -276,8 +285,8 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
           entity->velocity = (target - entity->position) / 50;
 
         } else if (entity->dyingCounter == 1) {
-          if (entity->currentLives > 0) {
-            resurrectPlayer(entity);
+          if (playState->currentLives > 0) {
+            resurrectPlayer(entity, playState);
           } else {
             gameContext->stateChange = GAME_OVER;
             break;
@@ -311,10 +320,10 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
     }
     case GLIDER_TYPE: {
       if (entity->dyingCounter == 0) {
-        if (entity->position.y >= entity->initialPosition.y + entity->deltaY) {
+        if (entity->position.y >= entity->initialPosition.y + entity->deltaMovement) {
           entity->velocity.y = -entity->maxSpeed;
 
-        } else if (entity->position.y <= entity->initialPosition.y - entity->deltaY) {
+        } else if (entity->position.y <= entity->initialPosition.y - entity->deltaMovement) {
           entity->velocity.y = entity->maxSpeed;
         }
         entity->position += entity->velocity;

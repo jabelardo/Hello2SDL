@@ -14,31 +14,17 @@
 #include "V2D.h"
 #include "Bitmap.h"
 
+struct GameContext;
 struct SDL_Renderer;
 
 struct ScrollingBackground {
   V2D position;
   Bitmap bitmap;
-
   int animSpeed;
-
-  int count;
-  int maxCount;
-
-  SDL_Rect srcRect1;
-  SDL_Rect srcRect2;
-
-  SDL_Rect destRect1;
-  SDL_Rect destRect2;
-
-  int srcRect1Width;
-  int srcRect2Width;
-
-  int destRect1Width;
-  int destRect2Width;
 };
 
-void drawScrollingBackground(ScrollingBackground* scrollingBackground, SDL_Renderer *renderer);
+void drawScrollingBackground(ScrollingBackground* scrollingBackground, GameContext* gameContext,
+                             SDL_Renderer *renderer);
 
 void updateScrollingBackground(ScrollingBackground* scrollingBackground);
 

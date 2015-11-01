@@ -23,7 +23,7 @@ getTileSetById(TileLayer *tileLayer, int tileId) {
 }
 
 void
-drawTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
+drawTileLayerTexture(TileLayer *tileLayer, GameContext* gameContext, SDL_Renderer *renderer) {
 
   int mapWidth = tileLayer->mapWidth * tileLayer->tileWidth;
 
@@ -37,10 +37,10 @@ drawTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
     destMainRect.x = 0;
     destMainRect.y = 0;
 
-    srcMainRect.h = destMainRect.h = tileLayer->screenHeight;
+    srcMainRect.h = destMainRect.h = gameContext->gameHeight;
 
-    if (tileLayer->position.x < mapWidth - tileLayer->screenWidth) {
-      srcMainRect.w = destMainRect.w = tileLayer->screenWidth;
+    if (tileLayer->position.x < mapWidth - gameContext->gameWidth) {
+      srcMainRect.w = destMainRect.w = gameContext->gameWidth;
 
     } else {
 
@@ -56,8 +56,8 @@ drawTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
       destAuxRect.x = mainRectWidth;
       destAuxRect.y = 0;
 
-      srcAuxRect.w = destAuxRect.w = tileLayer->screenWidth - destAuxRect.x;
-      srcAuxRect.h = destAuxRect.h = tileLayer->screenHeight;
+      srcAuxRect.w = destAuxRect.w = gameContext->gameWidth - destAuxRect.x;
+      srcAuxRect.h = destAuxRect.h = gameContext->gameHeight;
 
       SDL_RenderCopy(renderer, tileLayer->texture, &srcAuxRect, &destAuxRect);
     }
@@ -72,19 +72,19 @@ drawTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
     SDL_Rect destMainRect;
     destMainRect.y = 0;
 
-    srcMainRect.h = destMainRect.h = tileLayer->screenHeight;
+    srcMainRect.h = destMainRect.h = gameContext->gameHeight;
 
-    if (tileLayer->screenWidth + tileLayer->position.x < 0) {
+    if (gameContext->gameWidth + tileLayer->position.x < 0) {
 
       srcMainRect.x = mapWidth + (int) tileLayer->position.x;
       destMainRect.x = 0;
-      srcMainRect.w = destMainRect.w = tileLayer->screenWidth;
+      srcMainRect.w = destMainRect.w = gameContext->gameWidth;
 
     } else {
 
       srcMainRect.x = 0;
       destMainRect.x = -1 * (int) tileLayer->position.x;
-      srcMainRect.w = destMainRect.w = tileLayer->screenWidth - destMainRect.x;
+      srcMainRect.w = destMainRect.w = gameContext->gameWidth - destMainRect.x;
 
       SDL_Rect srcAuxRect;
       srcAuxRect.x = mapWidth - destMainRect.x;
@@ -94,8 +94,8 @@ drawTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
       destAuxRect.x = 0;
       destAuxRect.y = 0;
 
-      srcAuxRect.w = destAuxRect.w = tileLayer->screenWidth - srcMainRect.w;
-      srcAuxRect.h = destAuxRect.h = tileLayer->screenHeight;
+      srcAuxRect.w = destAuxRect.w = gameContext->gameWidth - srcMainRect.w;
+      srcAuxRect.h = destAuxRect.h = gameContext->gameHeight;
 
       SDL_RenderCopy(renderer, tileLayer->texture, &srcAuxRect, &destAuxRect);
     }
@@ -187,9 +187,9 @@ drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
 }
 
 void
-drawTileMap(TileMap *tileMap, SDL_Renderer *renderer) {
+drawTileMap(TileMap *tileMap, GameContext* gameContext, SDL_Renderer *renderer) {
 
-  drawScrollingBackground(tileMap->scrollingBackground, renderer);
+  drawScrollingBackground(tileMap->scrollingBackground, gameContext, renderer);
 
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
 //    drawTileLayerTexture(node, renderer);
@@ -219,7 +219,7 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
   }
 #else
   if (tileLayer->position.x <
-      (tileLayer->mapWidth * tileLayer->tileWidth) - tileLayer->screenWidth - tileLayer->tileWidth) {
+      (tileLayer->mapWidth * tileLayer->tileWidth) - gameContext->gameWidth - tileLayer->tileWidth) {
     tileLayer->velocity.x = gameContext->scrollSpeed;
     tileLayer->position += tileLayer->velocity;
   } else {
@@ -700,8 +700,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         newTileLayer->next = 0;
         newTileLayer->tileWidth = tileMap->tileWidth;
         newTileLayer->tileHeight = tileMap->tileHeight;
-        newTileLayer->screenWidth = platformConfig->screenWidth;
-        newTileLayer->screenHeight = platformConfig->screenHeight;
         newTileLayer->screenColumns = platformConfig->screenWidth / tileMap->tileWidth;
         newTileLayer->screenRows = platformConfig->screenHeight / tileMap->tileHeight;
         newTileLayer->mapWidth = tileMap->width;
@@ -810,7 +808,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                                                             ScrollingBackground);
 
               *tileMap->scrollingBackground = {};
-              tileMap->scrollingBackground->maxCount = 10;
               tileMap->scrollingBackground->position = {(float) objectX, (float) objectY};
               tileMap->scrollingBackground->animSpeed = animSpeed;
               tileMap->scrollingBackground->bitmap = {texture, textureWidth, textureHeight,
@@ -820,10 +817,10 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
               SDL_Texture *texture = getTexture(textureId, gameContext);
               EntityNode *node = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
               node->entity.type = parseEntityType(type);
-              node->entity.position = {(float) objectX, (float) objectY};
+              node->entity.position = {ceilf((float) objectX) + ((float) textureWidth) / 2.f,
+                                        ceilf((float) objectY) + ((float) textureHeight) / 2.f};
               node->entity.bitmap = {texture, textureWidth, textureHeight, numFrames};
               node->entity.velocity = {0, 0};
-              node->entity.acceleration = {0, 0};
               node->next = 0;
 
               if (node->entity.type != PLAYER_TYPE) {
