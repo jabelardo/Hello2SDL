@@ -22,7 +22,7 @@
  <objectgroup name="Object Layer 2" width="150" height="15">
   <object name="Background" type="ScrollingBackground" x="0" y="0" width="32" height="32">
    <properties>
-    <property name="animSpeed" value="1"/>
+    <property name="animSpeed" value="0.25"/>
     <property name="numFrames" value="1"/>
     <property name="textureHeight" value="480"/>
     <property name="textureId" value="clouds"/>

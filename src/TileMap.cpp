@@ -232,7 +232,7 @@ void
 updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, UserInput *userInput,
               GameMemory *gameMemory) {
 
-  updateScrollingBackground(tileMap->scrollingBackground);
+  updateScrollingBackground(tileMap->scrollingBackground, gameContext);
 
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
     updateTileLayer(node, gameContext);
@@ -765,7 +765,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             int numFrames = 0;
             int textureHeight = 0;
             int textureWidth = 0;
-            int animSpeed = 0;
+            float animSpeed = 0;
             char *textureId = 0;
             for (xmlNode *property = objectProperties->children; property; property = property->next) {
               if (property->type == XML_ELEMENT_NODE &&
@@ -784,7 +784,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                   numFrames = atoi(propertyValue);
 
                 } else if (strcmp(propertyName, "animSpeed") == 0) {
-                  animSpeed = atoi(propertyValue);
+                  animSpeed = (float) atof(propertyValue);
 
                 } else if (strcmp(propertyName, "textureHeight") == 0) {
                   textureHeight = atoi(propertyValue);

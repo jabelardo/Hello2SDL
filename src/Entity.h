@@ -42,7 +42,7 @@ struct Entity {
   float deltaMovement;
   V2D initialPosition;
   int health;
-  float halfDimension;
+  float halfCollisionDim;
 };
 
 struct EntityNode {

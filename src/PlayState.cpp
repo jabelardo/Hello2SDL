@@ -205,10 +205,8 @@ addEnemy(PlayState *playState, GameContext *gameContext, GameMemory *gameMemory)
 void
 updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userInput,
                 GameMemory *gameMemory) {
-  if (userInput->back.endedDown) {
-    gameContext->stateChange = PAUSE_MENU;
-    return;
-  }
+
+  gameContext->cameraPosition += {gameContext->scrollSpeed, 0};
 
   updateTileMap(playState->tileMap, playState, gameContext, userInput, gameMemory);
 

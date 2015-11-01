@@ -12,8 +12,8 @@
 #include "RenderUtils.h"
 #include "Game.h"
 
-void updateScrollingBackground(ScrollingBackground *scrollingBackground) {
-  scrollingBackground->position.x += scrollingBackground->animSpeed * 2;
+void updateScrollingBackground(ScrollingBackground *scrollingBackground, GameContext *gameContext) {
+  scrollingBackground->position.x += scrollingBackground->animSpeed * gameContext->scrollSpeed;
   if (scrollingBackground->position.x >= scrollingBackground->bitmap.width ||
       scrollingBackground->position.x <= -scrollingBackground->bitmap.width) {
     scrollingBackground->position.x = 0;

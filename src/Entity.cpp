@@ -96,7 +96,7 @@ void
 initEntity(Entity *entity) {
   switch (entity->type) {
     case PLAYER_TYPE: {
-      entity->halfDimension = 15;
+      entity->halfCollisionDim = 15;
       entity->health = 1;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
@@ -114,7 +114,7 @@ initEntity(Entity *entity) {
       break;
     }
     case GLIDER_TYPE: {
-      entity->halfDimension = 9;
+      entity->halfCollisionDim = 9;
       entity->deltaMovement = 60;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
@@ -130,7 +130,7 @@ initEntity(Entity *entity) {
       break;
     }
     case SHOT_GLIDER_TYPE: {
-      entity->halfDimension = 9;
+      entity->halfCollisionDim = 9;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {-entity->maxSpeed, 0};
@@ -146,14 +146,14 @@ initEntity(Entity *entity) {
     }
     case ROOF_TURRET_TYPE:
     case TURRET_TYPE: {
-      entity->halfDimension = 14;
+      entity->halfCollisionDim = 14;
       entity->dyingTime = 1000;
       entity->health = 15;
       entity->bulletTime = 50;
       break;
     }
     case ESKELETOR_TYPE: {
-      entity->halfDimension = 8;
+      entity->halfCollisionDim = 8;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {0, 0};
@@ -169,14 +169,14 @@ initEntity(Entity *entity) {
     }
     case PLAYER_BULLET_TYPE:
     case ENEMY_BULLET_TYPE: {
-      entity->halfDimension = 5;
+      entity->halfCollisionDim = 5;
       entity->health = 1;
       entity->dyingTime = 1;
       entity->dyingCounter = 0;
       break;
     }
     case LEVEL_1_BOSS_TYPE: {
-      entity->halfDimension = 28;
+      entity->halfCollisionDim = 28;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 2;
       entity->velocity = {-entity->maxSpeed, 0};
@@ -247,7 +247,7 @@ handlePlayerAnimation(Entity *entity) {
 
 void
 scroll(Entity *entity, float scrollSpeed) {
-  entity->position += {-scrollSpeed, 0};
+ // entity->position += {-scrollSpeed, 0};
 }
 
 void
@@ -271,7 +271,6 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
         if (entity->position.x >= gameContext->gameWidth + entity->bitmap.width) {
           ++gameContext->currentLevel;
           gameContext->stateChange = BETWEEN_LEVEL;
-          gameContext->levelComplete = false;
 
         } else {
           entity->velocity = V2D{3, 0};
@@ -456,7 +455,7 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
           entity->bitmap.currentFrame = int(((SDL_GetTicks() / (1000 / 3)) % entity->bitmap.totalFrames));
 
           if (entity->dyingCounter == 1) {
-            gameContext->levelComplete = true;
+            gameContext->isLevelCompleted = true;
           } else {
             --entity->dyingCounter;
           }

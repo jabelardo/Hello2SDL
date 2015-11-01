@@ -20,12 +20,12 @@ struct SDL_Renderer;
 struct ScrollingBackground {
   V2D position;
   Bitmap bitmap;
-  int animSpeed;
+  float animSpeed;
 };
 
 void drawScrollingBackground(ScrollingBackground* scrollingBackground, GameContext* gameContext,
                              SDL_Renderer *renderer);
 
-void updateScrollingBackground(ScrollingBackground* scrollingBackground);
+void updateScrollingBackground(ScrollingBackground* scrollingBackground, GameContext *gameContext);
 
 #endif //HELLO2SDL_SCROLLINGBACKGROUND_H

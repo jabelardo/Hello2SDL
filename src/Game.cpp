@@ -23,7 +23,11 @@ void
 updateGame(GameContext *gameContext, UserInput* userInput, GameMemory* gameMemory) {
   switch (gameContext->currentState) {
     case PLAY_STATE: {
-      updatePlayState(gameContext->playState, gameContext, userInput, gameMemory);
+      if (userInput->back.endedDown) {
+        gameContext->stateChange = PAUSE_MENU;
+      } else {
+        updatePlayState(gameContext->playState, gameContext, userInput, gameMemory);
+      }
       break;
     }
     case MAIN_MENU_STATE: {
@@ -145,6 +149,7 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
     gameContext->gameWidth = platformConfig->screenWidth;
     gameContext->gameHeight = platformConfig->screenHeight;
     gameContext->scrollSpeed = 1;
+    gameContext->cameraPosition = {-gameContext->scrollSpeed, 0};
     gameMemory->isInitialized = true;
   }
   gameContext->stateChange = NO_CHANGE;

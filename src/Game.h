@@ -5,6 +5,8 @@
 #ifndef HELLO2SDL_GAME_H
 #define HELLO2SDL_GAME_H
 
+#include "V2D.h"
+
 enum GameState {
   MAIN_MENU_STATE = 0,
   PLAY_STATE,
@@ -40,12 +42,12 @@ struct GameContext {
 
   TextureHashNode *textureHash[4096];
   TextureHashNode *freeTextureHashNodes;
-  int gameWidth;
-  int gameHeight;
+  float gameWidth;
+  float gameHeight;
+  V2D cameraPosition;
   int currentLevel;
+  float scrollSpeed;
   bool isLevelCompleted;
-  int scrollSpeed;
-  bool levelComplete;
 };
 
 #endif //HELLO2SDL_GAME_H
