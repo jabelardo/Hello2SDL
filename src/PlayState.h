@@ -23,6 +23,10 @@ struct PlayState {
   SDL_Texture* liveTexture;
   SDL_Texture* bullet1Texture;
   SDL_Texture* bullet2Texture;
+  SDL_Texture* smallExplosionTexture;
+  SDL_Texture* explosionTexture;
+  SDL_Texture* largeExplosionTexture;
+  SDL_Texture* bossExplosionTexture;
   int currentLives;
 };
 

@@ -40,6 +40,22 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
                    gameContext, gameMemory)) {
     return false;
   }
+  if (!loadTexture("SMALL_EXPLOSION", "smallexplosion.png", platformConfig->resourcePath, renderer,
+                   gameContext, gameMemory)) {
+    return false;
+  }
+  if (!loadTexture("EXPLOSION", "explosion.png", platformConfig->resourcePath, renderer,
+                   gameContext, gameMemory)) {
+    return false;
+  }
+  if (!loadTexture("LARGE_EXPLOSION", "largeexplosion.png", platformConfig->resourcePath, renderer,
+                   gameContext, gameMemory)) {
+    return false;
+  }
+  if (!loadTexture("BOSS_EXPLOSION", "bossexplosion.png", platformConfig->resourcePath, renderer,
+                   gameContext, gameMemory)) {
+    return false;
+  }
 
   playState->tileMap = RESERVE_MEMORY(&gameMemory->permanentMemory, TileMap);
 
@@ -66,6 +82,22 @@ startGame(PlayState *playState, GameContext *gameContext) {
   }
   playState->bullet2Texture = getTexture("BULLET2", gameContext);
   if (!playState->bullet2Texture) {
+    return false;
+  }
+  playState->smallExplosionTexture  = getTexture("SMALL_EXPLOSION", gameContext);
+  if (!playState->smallExplosionTexture) {
+    return false;
+  }
+  playState->explosionTexture  = getTexture("EXPLOSION", gameContext);
+  if (!playState->explosionTexture) {
+    return false;
+  }
+  playState->largeExplosionTexture  = getTexture("LARGE_EXPLOSION", gameContext);
+  if (!playState->largeExplosionTexture) {
+    return false;
+  }
+  playState->bossExplosionTexture  = getTexture("BOSS_EXPLOSION", gameContext);
+  if (!playState->bossExplosionTexture) {
     return false;
   }
   for (TileLayer *tileLayer = playState->tileMap->tileLayerList; tileLayer;
@@ -372,19 +404,31 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
 
 bool
 checkEntityCollision(Entity *entity1, Entity *entity2) {
+
   if (entity1 == entity2) {
     return false;
   }
-  float leftA = entity1->position.x;
-  float rightA = entity1->position.x + entity1->bitmap.width;
-  float topA = entity1->position.y;
-  float bottomA = entity1->position.y + entity1->bitmap.height;
+
+  if (entity1->type > entity2->type) {
+    Entity *tmp = entity1;
+    entity1 = entity2;
+    entity2 = tmp;
+  }
+
+  if (entity1->type == NULL_ENTITY_TYPE) {
+    return false;
+  }
+
+  float leftA = entity1->position.x   - entity1->halfCollisionDim;
+  float rightA = entity1->position.x  + entity1->halfCollisionDim;
+  float topA = entity1->position.y    - entity1->halfCollisionDim;
+  float bottomA = entity1->position.y + entity1->halfCollisionDim;
 
   //Calculate the sides of rect B
-  float leftB = entity2->position.x;
-  float rightB = entity2->position.x + entity2->bitmap.width;
-  float topB = entity2->position.y;
-  float bottomB = entity2->position.y + entity2->bitmap.height;
+  float leftB = entity2->position.x   - entity2->halfCollisionDim;
+  float rightB = entity2->position.x  + entity2->halfCollisionDim;
+  float topB = entity2->position.y    - entity2->halfCollisionDim;
+  float bottomB = entity2->position.y + entity2->halfCollisionDim;
 
   //If any of the sides from A are outside of B
   if (bottomA <= topB) { return false; }
@@ -392,33 +436,75 @@ checkEntityCollision(Entity *entity1, Entity *entity2) {
   if (rightA <= leftB) { return false; }
   if (leftA >= rightB) { return false; }
 
-//  if (!entity1->invulnerableCounter && entity1->health > 0) {
-//    --entity1->health;
-//  }
-//  if (!entity2->invulnerableCounter && entity2->health > 0) {
-//    --entity2->health;
-//  }
-
   return true;
 }
 
-void doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext) {
+void
+handleCollision(PlayState* playState, Entity *entity1, Entity *entity2) {
+  if (entity1->type > entity2->type) {
+    Entity *tmp = entity1;
+    entity1 = entity2;
+    entity2 = tmp;
+  }
+  if (entity1->type == PLAYER_BULLET_TYPE) {
 
-  V2D oldPosition = entity->position;
+    if (entity2->type == PLAYER_TYPE) {
+     return;
+
+    } else if (entity2->type == ENEMY_BULLET_TYPE) {
+      entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+      entity1->health = entity2->health = 0;
+
+    } else if (entity2->type == GLIDER_TYPE || entity2->type == SHOT_GLIDER_TYPE) {
+      entity1->health = 0;
+      --entity2->health;
+      if (entity2->health < 1) {
+        entity2->bitmap = {playState->explosionTexture, 40, 40, 9};
+      }
+
+    } else if (entity2->type == ESKELETOR_TYPE || entity2->type == TURRET_TYPE ||
+               entity2->type == ROOF_TURRET_TYPE) {
+      entity1->health = 0;
+      --entity2->health;
+      if (entity2->health < 1) {
+        entity2->bitmap = {playState->largeExplosionTexture, 60, 60, 9};
+      }
+
+    } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
+      entity1->health = 0;
+      --entity2->health;
+      if (entity2->health < 1) {
+        entity2->bitmap = {playState->bossExplosionTexture, 180, 180, 9};
+      }
+    }
+
+  } else if (entity1->type == ENEMY_BULLET_TYPE) {
+    if (entity2->type == ENEMY_BULLET_TYPE) {
+      entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+      entity1->health = entity2->health = 0;
+    }
+  }
+}
+
+void
+doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext) {
+
   entity->position += entity->velocity;
 
-  if (entity->type != PLAYER_BULLET_TYPE) {
-    checkEntityCollision(entity, playState->tileMap->player);
+  if (checkEntityCollision(entity, playState->tileMap->player)) {
+    handleCollision(playState, entity, playState->tileMap->player);
   }
 
   for (EntityNode *node = playState->bullets; node; node = node->next) {
-    checkEntityCollision(entity, &node->entity);
+    if (checkEntityCollision(entity, &node->entity)) {
+      handleCollision(playState,entity, &node->entity);
+    }
   }
 
-  if (entity->type != ENEMY_BULLET_TYPE) {
-    for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
-      for (EntityNode *node = objNode->entityList; node; node = node->next) {
-        checkEntityCollision(entity, &node->entity);
+  for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
+    for (EntityNode *node = objNode->entityList; node; node = node->next) {
+      if (checkEntityCollision(entity, &node->entity)) {
+        handleCollision(playState,entity, &node->entity);
       }
     }
   }
