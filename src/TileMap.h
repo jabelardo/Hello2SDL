@@ -39,8 +39,6 @@ struct ObjectLayer {
 };
 
 struct TileLayer {
-//  int screenWidth;
-//  int screenHeight;
   int mapWidth;
   int mapHeight;
   int tileWidth;
@@ -65,7 +63,6 @@ struct TileMap {
   int tileWidth;
   int tileHeight;
   Entity* player;
-  V2D playerInitialPosition;
   TileLayer* tileLayerList;
   ObjectLayer* objectLayerList;
   ScrollingBackground *scrollingBackground;
@@ -75,5 +72,7 @@ bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameCon
                  SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig);
 
 void drawTileMap(TileMap *tileMap, GameContext* gameContext, SDL_Renderer *renderer);
+
+TileSet * getTileSetById(TileLayer *tileLayer, int tileId);
 
 #endif //HELLO2SDL_TILEMMAP_H

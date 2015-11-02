@@ -843,7 +843,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
 
               } else {
                 tileMap->player = &node->entity;
-                tileMap->playerInitialPosition = tileMap->player->position;
               }
             }
           }

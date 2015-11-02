@@ -257,7 +257,6 @@ handleDying(Entity *entity) {
     entity->bitmap.g = 0;
     entity->bitmap.b = 0;
     entity->bitmap.currentFrame = (SDL_GetTicks() / 100) % entity->bitmap.totalFrames;
-    entity->bitmap.currentFrame = (SDL_GetTicks() / 333) % entity->bitmap.totalFrames;
 
   } else {
     entity->bitmap.currentFrame = (SDL_GetTicks() / 333) % entity->bitmap.totalFrames;
@@ -486,9 +485,33 @@ handleCollision(PlayState* playState, Entity *entity1, Entity *entity2) {
   }
 }
 
+bool
+checkTileLayerCollision(Entity *entity, TileLayer* tileLayer) {
+  int tileColumn = 0;
+  int tileRow = 0;
+
+  if (entity->velocity.x >= 0) {
+    tileColumn = (int) ((entity->position.x + (entity->bitmap.width / 2)) / tileLayer->tileWidth);
+  } else {
+    tileColumn = (int) ((entity->position.x - (entity->bitmap.width / 2)) / tileLayer->tileWidth);
+  }
+  if (entity->velocity.y >= 0) {
+    tileRow = (int) ((entity->position.y + (entity->bitmap.height / 2)) / tileLayer->tileHeight);
+  } else {
+    tileRow = (int) ((entity->position.y - (entity->bitmap.height / 2)) / tileLayer->tileHeight);
+  }
+  int tileIdx = tileRow * tileLayer->mapWidth + tileColumn;
+  if (tileIdx >= tileLayer->tileGidsCount) {
+    return false;;
+  }
+  int32_t tileId = tileLayer->tileGids[tileIdx];
+  return (tileId != 0);
+}
+
 void
 doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext) {
 
+  V2D oldPos = entity->position;
   entity->position += entity->velocity;
 
   if (checkEntityCollision(entity, playState->tileMap->player)) {
@@ -497,14 +520,29 @@ doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext)
 
   for (EntityNode *node = playState->bullets; node; node = node->next) {
     if (checkEntityCollision(entity, &node->entity)) {
-      handleCollision(playState,entity, &node->entity);
+      handleCollision(playState, entity, &node->entity);
     }
   }
 
   for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
     for (EntityNode *node = objNode->entityList; node; node = node->next) {
       if (checkEntityCollision(entity, &node->entity)) {
-        handleCollision(playState,entity, &node->entity);
+        handleCollision(playState, entity, &node->entity);
+      }
+    }
+  }
+
+  for (TileLayer* tileLayer = playState->tileMap->tileLayerList; tileLayer; 
+       tileLayer = tileLayer->next) {
+    if (tileLayer->collidable) {
+      if (checkTileLayerCollision(entity, tileLayer)) {
+        if (entity->type == PLAYER_BULLET_TYPE || entity->type == ENEMY_BULLET_TYPE) {
+          entity->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+          entity->health = 0;
+        } else {
+          //entity->velocity *= -1;
+          entity->position = oldPos;// + entity->velocity;
+        }
       }
     }
   }
