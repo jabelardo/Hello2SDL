@@ -18,8 +18,7 @@ struct UserInput;
 
 struct PlayState {
   TileMap *tileMap;
-  EntityNode* playerBullets;
-  EntityNode* enemyBullets;
+  EntityNode* bullets;
   EntityNode* freeEntities;
   SDL_Texture* liveTexture;
   SDL_Texture* bullet1Texture;
