@@ -243,30 +243,6 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 }
 #endif
 
-void
-updateCameraPosition(TileMap *tileMap, GameContext *gameContext) {
-  if (gameContext->cameraPosition.x + gameContext->gameWidth < tileMap->width * tileMap->tileWidth) {
-    gameContext->cameraPosition += {gameContext->scrollSpeed, 0};
-  }
-}
-
-void
-updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, UserInput *userInput,
-              GameMemory *gameMemory) {
-
-  updateScrollingBackground(tileMap->scrollingBackground, gameContext);
-
-  updateCameraPosition(tileMap, gameContext);
-
-  for (ObjectLayer *objNode = tileMap->objectLayerList; objNode; objNode = objNode->next) {
-    for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      updateEntity(&node->entity, playState, gameContext, userInput, gameMemory);
-    }
-  }
-
-  updateEntity(tileMap->player, playState, gameContext, userInput, gameMemory);
-}
-
 char *
 stringTrim(char *str) {
   char *pos = str;

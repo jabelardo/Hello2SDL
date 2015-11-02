@@ -54,9 +54,6 @@ EntityType parseEntityType(const char *str);
 
 void initEntity(Entity *entity);
 
-void updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext,
-                  UserInput *userInput, GameMemory *gameMemory);
-
 void drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer);
 
 bool checkEntityCollision(Entity *entity1, Entity *entity2);

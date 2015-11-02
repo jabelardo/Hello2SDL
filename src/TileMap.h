@@ -13,7 +13,6 @@ struct GameContext;
 struct GameMemory;
 struct GameMemory;
 struct PlatformConfig;
-struct PlayState;
 struct ScrollingBackground;
 struct SDL_Renderer;
 struct SDL_Texture;
@@ -74,9 +73,6 @@ struct TileMap {
 
 bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                  SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig);
-
-void updateTileMap(TileMap *tileMap, PlayState *playState, GameContext *gameContext,
-                   UserInput *userInput, GameMemory *gameMemory);
 
 void drawTileMap(TileMap *tileMap, GameContext* gameContext, SDL_Renderer *renderer);
 
