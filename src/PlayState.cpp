@@ -89,11 +89,11 @@ renderPlayState(PlayState *playState, GameContext* gameContext, SDL_Renderer *re
   }
 
   for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
-    drawEntity(&bullet->entity, renderer);
+    drawEntity(&bullet->entity, gameContext, renderer);
   }
 
   for (EntityNode *bullet = playState->enemyBullets; bullet; bullet = bullet->next) {
-    drawEntity(&bullet->entity, renderer);
+    drawEntity(&bullet->entity, gameContext, renderer);
   }
 }
 
@@ -151,10 +151,11 @@ static void
 updateEntities(EntityNode** entities, PlayState *playState, GameContext *gameContext,
                UserInput *userInput, GameMemory *gameMemory) {
   for (EntityNode **entityNode = entities; *entityNode;) {
-    if ((*entityNode)->entity.position.x < -(*entityNode)->entity.bitmap.width ||
-        (*entityNode)->entity.position.x > gameContext->gameWidth + (*entityNode)->entity.bitmap.width ||
-        (*entityNode)->entity.position.y < -(*entityNode)->entity.bitmap.height ||
-        (*entityNode)->entity.position.y > gameContext->gameHeight + (*entityNode)->entity.bitmap.height ||
+    V2D position = getEntityScreenPosition(&(*entityNode)->entity, gameContext->cameraPosition);
+    if (position.x < -(*entityNode)->entity.bitmap.width ||
+        position.x > gameContext->gameWidth + (*entityNode)->entity.bitmap.width ||
+        position.y < -(*entityNode)->entity.bitmap.height ||
+        position.y > gameContext->gameHeight + (*entityNode)->entity.bitmap.height ||
         (*entityNode)->entity.dyingCounter == 1) {
 
       (*entityNode)->entity.dyingCounter = 0;
@@ -206,20 +207,19 @@ void
 updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userInput,
                 GameMemory *gameMemory) {
 
-  gameContext->cameraPosition += {gameContext->scrollSpeed, 0};
-
   updateTileMap(playState->tileMap, playState, gameContext, userInput, gameMemory);
 
   updateEntities(&playState->playerBullets, playState, gameContext, userInput, gameMemory);
 
   updateEntities(&playState->enemyBullets, playState, gameContext, userInput, gameMemory);
 
-  Entity *player = playState->tileMap->player;
-  for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
-    if (checkEntityCollision(player, &bullet->entity)) {
-      
-    }
-  }
+//  Entity *player = playState->tileMap->player;
+//  for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
+//    if (checkEntityCollision(player, &bullet->entity)) {
+//
+//    }
+//  }
+
 //  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
 //    if (checkEntityCollision(player, &enemy->entity)) {
 //

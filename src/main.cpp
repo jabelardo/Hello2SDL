@@ -192,7 +192,7 @@ setupPlatformReplayBuffers(PlatformReplayState *state, GameMemory *gameMemory) {
 
 static void
 beginInputRecording(PlatformReplayState *state, GameMemory *gameMemory) {
-  printf("beginning recording input\n");
+  // printf("beginning recording input\n");
 
   assert(state->playbackHandle < 0);
 
@@ -221,12 +221,12 @@ static void
 endInputRecording(PlatformReplayState *state) {
   close(state->recordingHandle);
   state->recordingHandle = -1;
-  printf("ended recording input\n");
+  // printf("ended recording input\n");
 }
 
 static void
 beginInputPlayback(PlatformReplayState *state, GameMemory *gameMemory) {
-  printf("beginning input playback\n");
+  // printf("beginning input playback\n");
 
   if (state->stateMemoryBlock) {
     state->playbackHandle = open(state->inputFilename, O_RDONLY);
@@ -250,7 +250,7 @@ static void
 endInputPlayback(PlatformReplayState *state) {
   close(state->playbackHandle);
   state->playbackHandle = -1;
-  printf("ended input playback\n");
+  // printf("ended input playback\n");
 }
 
 static void
@@ -285,7 +285,7 @@ playbackInput(UserInput *userInput, PlatformReplayState *state, GameMemory *game
       printf("read error rewinding playback input: %d: %s\n", errno, strerror(errno));
 
     } else {
-      printf("rewinding playback...\n");
+      // printf("rewinding playback...\n");
     }
   } else if (bytesRead > 0) {
     state->bytesToRead -= bytesRead;

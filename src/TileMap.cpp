@@ -141,28 +141,38 @@ createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
 }
 
 void
-drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
-  int x = (int) tileLayer->position.x / tileLayer->tileWidth;
-  int y = (int) tileLayer->position.y / tileLayer->tileHeight;
-  int x2 = (int) tileLayer->position.x % tileLayer->tileWidth;
-  int y2 = (int) tileLayer->position.y % tileLayer->tileHeight;
-  for (int i = (y2 < 0 ? -1 : 0);
-       i < (y2 <= 0 ? tileLayer->screenRows : tileLayer->screenRows + 1); ++i) {
-    for (int j = (x2 < 0 ? -1 : 0);
-         j < (x2 <= 0 ? tileLayer->screenColumns : tileLayer->screenColumns + 1); ++j) {
-      int tileX = j + x;
-      if (tileX >= tileLayer->mapWidth) {
-        tileX -= tileLayer->mapWidth;
-      } else if (tileX < 0) {
-        tileX += tileLayer->mapWidth;
+drawTileLayers(TileLayer *tileLayer, V2D cameraPosition, SDL_Renderer *renderer) {
+  int relativeLayerX = (int) (tileLayer->position.x - cameraPosition.x);
+  int relativeLayerY = (int) (tileLayer->position.y - cameraPosition.y);
+
+  int relativeLayerColumn = relativeLayerX / tileLayer->tileWidth;
+  int relativeLayerRow = relativeLayerY / tileLayer->tileHeight;
+
+  int startColumn = (int) tileLayer->position.x / tileLayer->tileWidth;
+  int startRow = (int) tileLayer->position.y / tileLayer->tileHeight;
+
+  int adjustX = -relativeLayerX % tileLayer->tileWidth;
+  int adjustY = -relativeLayerY % tileLayer->tileHeight;
+
+  for (int screenRow = (adjustY < 0 ? -1 : 0);
+       screenRow < (adjustY <= 0 ? tileLayer->screenRows : tileLayer->screenRows + 1);
+       ++screenRow) {
+    for (int screenColumn = (adjustX < 0 ? -1 : 0);
+         screenColumn < (adjustX <= 0 ? tileLayer->screenColumns : tileLayer->screenColumns + 1);
+         ++screenColumn) {
+      int tileColumn = startColumn - relativeLayerColumn + screenColumn;
+      if (tileColumn >= tileLayer->mapWidth) {
+        tileColumn -= tileLayer->mapWidth;
+      } else if (tileColumn < 0) {
+        tileColumn += tileLayer->mapWidth;
       }
-      int tileY = i + y;
-      if (tileY >= tileLayer->mapHeight) {
-        tileY -= tileLayer->mapHeight;
-      } else if (tileY < 0) {
-        tileY += tileLayer->mapHeight;
+      int tileRow = startRow - relativeLayerRow + screenRow;
+      if (tileRow >= tileLayer->mapHeight) {
+        tileRow -= tileLayer->mapHeight;
+      } else if (tileRow < 0) {
+        tileRow += tileLayer->mapHeight;
       }
-      int tileIdx = tileY * tileLayer->mapWidth + tileX;
+      int tileIdx = tileRow * tileLayer->mapWidth + tileColumn;
       if (tileIdx >= tileLayer->tileGidsCount) {
         continue;
       }
@@ -179,9 +189,9 @@ drawTileLayers(TileLayer *tileLayer, SDL_Renderer *renderer) {
       int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
       Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame,
                        currentRow};
-      int x3 = (j * tileLayer->tileWidth) - x2;
-      int y3 = (i * tileLayer->tileHeight) - y2;
-      drawTile(renderer, 2, 2, x3, y3, &bitmap);
+      int x = (screenColumn * tileLayer->tileWidth) - adjustX;
+      int y = (screenRow * tileLayer->tileHeight) - adjustY;
+      drawTile(renderer, 2, 2, x, y, &bitmap);
     }
   }
 }
@@ -192,18 +202,22 @@ drawTileMap(TileMap *tileMap, GameContext* gameContext, SDL_Renderer *renderer) 
   drawScrollingBackground(tileMap->scrollingBackground, gameContext, renderer);
 
   for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
-//    drawTileLayerTexture(node, renderer);
-    drawTileLayers(node, renderer);
+#if 0
+    drawTileLayerTexture(node, gameContext, renderer);
+#else
+    drawTileLayers(node, gameContext->cameraPosition, renderer);
+#endif
   }
   for (ObjectLayer *objNode = tileMap->objectLayerList; objNode; objNode = objNode->next) {
     for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      drawEntity(&node->entity, renderer);
+      drawEntity(&node->entity, gameContext, renderer);
     }
   }
 
-  drawEntity(tileMap->player, renderer);
+  drawEntity(tileMap->player, gameContext, renderer);
 }
 
+#if 0
 void
 updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
 #if 0
@@ -227,6 +241,14 @@ updateTileLayer(TileLayer *tileLayer, GameContext *gameContext) {
   }
 #endif
 }
+#endif
+
+void
+updateCameraPosition(TileMap *tileMap, GameContext *gameContext) {
+  if (gameContext->cameraPosition.x + gameContext->gameWidth < tileMap->width * tileMap->tileWidth) {
+    gameContext->cameraPosition += {gameContext->scrollSpeed, 0};
+  }
+}
 
 void
 updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, UserInput *userInput,
@@ -234,9 +256,8 @@ updateTileMap(TileMap *tileMap,PlayState *playState, GameContext *gameContext, U
 
   updateScrollingBackground(tileMap->scrollingBackground, gameContext);
 
-  for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
-    updateTileLayer(node, gameContext);
-  }
+  updateCameraPosition(tileMap, gameContext);
+
   for (ObjectLayer *objNode = tileMap->objectLayerList; objNode; objNode = objNode->next) {
     for (EntityNode *node = objNode->entityList; node; node = node->next) {
       updateEntity(&node->entity, playState, gameContext, userInput, gameMemory);
@@ -723,7 +744,9 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                                                            sizeofids);
 
         memcpy(newTileLayer->tileGids, gids, sizeofids);
-        // createTileLayerTexture(newTileLayer, renderer);
+#if 0
+         createTileLayerTexture(newTileLayer, renderer);
+#endif
       }
     }
     tileMap->tileLayerList = tileLayerList;

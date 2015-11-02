@@ -57,8 +57,10 @@ void initEntity(Entity *entity);
 void updateEntity(Entity *entity, PlayState* playState, GameContext *gameContext,
                   UserInput *userInput, GameMemory *gameMemory);
 
-void drawEntity(Entity *entity, SDL_Renderer *renderer);
+void drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer);
 
 bool checkEntityCollision(Entity *entity1, Entity *entity2);
+
+V2D getEntityScreenPosition(Entity *entity, V2D cameraPosition);
 
 #endif //HELLO2SDL_ENTITY_H

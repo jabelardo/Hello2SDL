@@ -53,17 +53,44 @@ rectRect(SDL_Rect *A, SDL_Rect *B) {
   return true;
 }
 
+V2D
+getEntityScreenPosition(Entity *entity, V2D cameraPosition) {
+  V2D result = entity->position - cameraPosition;
+  return result;
+}
+
+V2D
+getEntityDrawPosition(Entity *entity, V2D cameraPosition) {
+  V2D result = getEntityScreenPosition(entity, cameraPosition)
+             - V2D{(float) entity->bitmap.width / 2.f, (float) entity->bitmap.height / 2.f};
+
+  return result;
+}
+
 void
-drawEntity(Entity *entity, SDL_Renderer *renderer) {
-  int x = (int) floorf(entity->position.x - (float) entity->bitmap.width / 2.f);
-  int y = (int) floorf(entity->position.y - (float) entity->bitmap.height / 2.f);
+drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
+
+  V2D drawPos = getEntityDrawPosition(entity, gameContext->cameraPosition);
+
+  int x = (int) roundf(drawPos.x);
+  int y = (int) roundf(drawPos.y);
+
+  if ((x < -entity->bitmap.width / 2) ||
+      (x > gameContext->gameWidth + entity->bitmap.width / 2) ||
+      (y < -entity->bitmap.height / 2) ||
+      (y > gameContext->gameHeight + entity->bitmap.height / 2)) {
+    return;
+  }
   switch (entity->type) {
     case PLAYER_TYPE: {
+
       drawBitmapEx(renderer, x, y, &entity->bitmap,
                    (entity->velocity.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
       break;
     }
-    case ENEMY_BULLET_TYPE:
+    case ENEMY_BULLET_TYPE: {
+      int w = 0;
+    }
     case PLAYER_BULLET_TYPE:
     case GLIDER_TYPE:
     case SHOT_GLIDER_TYPE:
@@ -78,9 +105,20 @@ drawEntity(Entity *entity, SDL_Renderer *renderer) {
       break;
     }
     case NULL_ENTITY_TYPE: {
-      break;
+      return;
     }
   }
+  SDL_SetRenderDrawColor(renderer, 0,255,0,255);
+  SDL_Rect rect;
+  rect.x = x;
+  rect.y = y;
+  rect.w = entity->bitmap.width;
+  rect.h = entity->bitmap.height;
+  SDL_RenderDrawRect(renderer, &rect);
+
+  V2D screenPos =  getEntityScreenPosition(entity, gameContext->cameraPosition);
+
+  SDL_RenderDrawLine(renderer, drawPos.x, drawPos.y, screenPos.x, screenPos.y);
 }
 
 
@@ -99,7 +137,7 @@ initEntity(Entity *entity) {
       entity->halfCollisionDim = 15;
       entity->health = 1;
       entity->initialPosition = entity->position;
-      entity->maxSpeed = 3;
+      entity->maxSpeed = 5;
       entity->dyingTime = 100;
       entity->dyingCounter = 0;
       entity->bitmap.currentFrame = 0;
@@ -246,21 +284,18 @@ handlePlayerAnimation(Entity *entity) {
 }
 
 void
-scroll(Entity *entity, float scrollSpeed) {
- // entity->position += {-scrollSpeed, 0};
-}
-
-void
 updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, UserInput *userInput,
              GameMemory *gameMemory) {
 
   if (entity->health < 1 && entity->dyingCounter < 1) {
     entity->dyingCounter = entity->dyingTime;
   }
+
+  V2D screenPosition = getEntityScreenPosition(entity, gameContext->cameraPosition);
+
   if (entity->type != PLAYER_TYPE) {
-    scroll(entity, (float) gameContext->scrollSpeed);
-    if ((entity->position.x > gameContext->gameWidth + entity->bitmap.width) ||
-        (entity->position.x < -entity->bitmap.width)) {
+    if ((screenPosition.x > gameContext->gameWidth + entity->bitmap.width) ||
+        (screenPosition.x < -entity->bitmap.width)) {
       return;
     }
   }
@@ -281,7 +316,18 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
         // if the player is not doing its death animation then update it normally
         if (entity->dyingCounter == 0) {
           V2D target = {(float) userInput->mousePositionX, (float) userInput->mousePositionY};
-          entity->velocity = (target - entity->position) / 50;
+
+          V2D entityVelocity = (target - screenPosition)
+                             / (entity->maxSpeed * entity->maxSpeed);
+
+          if (lengthSquare(entityVelocity) > entity->maxSpeed * entity->maxSpeed) {
+            normalize(entityVelocity);
+            entityVelocity *= entity->maxSpeed;
+          }
+
+
+
+          entity->velocity = entityVelocity + V2D{gameContext->scrollSpeed, 0};
 
         } else if (entity->dyingCounter == 1) {
           if (playState->currentLives > 0) {
@@ -303,11 +349,11 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
             entity->bulletCounter = entity->bulletTime;
             if (entity->velocity.x >= 0) {
               addPlayerBullet(playState, gameMemory,
-                              {entity->position.x + 90, entity->position.y + 12},
+                              {entity->position.x + 40, entity->position.y + 23},
                               {10, 0});
             } else {
               addPlayerBullet(playState, gameMemory,
-                              {entity->position.x + 40, entity->position.y + 12},
+                              {entity->position.x - 40, entity->position.y + 23},
                               {-10, 0});
             }
           }
@@ -347,7 +393,7 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
 
         if (entity->bulletCounter == 0) {
           entity->bulletCounter = entity->bulletTime;
-          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 15}, {-10, 0});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{-20, 0}, {-10, 0});
 
 
         } else if (entity->bulletCounter > 0) {
@@ -371,9 +417,9 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
 
         if (entity->bulletCounter == 0) {
           entity->bulletCounter = entity->bulletTime;
-          addEnemyBullet(playState, gameMemory, entity->position, {-3, -3});
-          addEnemyBullet(playState, gameMemory, entity->position + V2D{20, 0}, {0, -3});
-          addEnemyBullet(playState, gameMemory, entity->position + V2D{40, 0}, {3, -3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{-20, -20}, {-3, -3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, -20}, {0, -3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{20, -20}, {3, -3});
 
         } else if (entity->bulletCounter > 0) {
           --entity->bulletCounter;
@@ -388,9 +434,9 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
 
         if (entity->bulletCounter == 0) {
           entity->bulletCounter = entity->bulletTime;
-          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 20}, {-3, 3});
-          addEnemyBullet(playState, gameMemory, entity->position + V2D{20, 20}, {0, 3});
-          addEnemyBullet(playState, gameMemory, entity->position + V2D{40, 20}, {3, 3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{-20, 20}, {-3, 3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 20}, {0, 3});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{20, 20}, {3, 3});
 
         } else if (entity->bulletCounter > 0) {
           --entity->bulletCounter;
@@ -412,13 +458,15 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
 
         if (entity->bulletCounter == 0) {
           entity->bulletCounter = entity->bulletTime;
-          addEnemyBullet(playState, gameMemory, entity->position, {-3, 0});
-          addEnemyBullet(playState, gameMemory, entity->position, {3, 0});
-
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 10}, {-3, 0});
+          addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 10}, {3, 0});
 
         } else if (entity->bulletCounter > 0) {
           --entity->bulletCounter;
         }
+
+        entity->bitmap.currentFrame = (SDL_GetTicks() / 150) % entity->bitmap.totalFrames;
+
       } else {
         entity->velocity.y = 0;
         doDyingAnimation(entity);
@@ -427,26 +475,34 @@ updateEntity(Entity *entity, PlayState *playState, GameContext *gameContext, Use
     }
     case LEVEL_1_BOSS_TYPE: {
 
-      if (entity->position.x < gameContext->gameWidth - (entity->bitmap.width + 20)) {
+      if (screenPosition.x > gameContext->gameWidth - 32) {
+        entity->velocity.x = -entity->maxSpeed;
+        entity->position += entity->velocity;
+
+      } else {
 
         if (entity->dyingCounter == 0) {
-          // counter scrolling
-          scroll(entity, (float) -gameContext->scrollSpeed);
+          entity->velocity.x = 0;
+          if (entity->velocity.y == 0) {
+            entity->velocity.y = (random() % 2) ? entity->maxSpeed : -entity->maxSpeed;
+          }
 
-          if (entity->position.y + entity->bitmap.height >= gameContext->gameHeight) {
+          if (screenPosition.y + 32 + entity->bitmap.height / 2 >= gameContext->gameHeight) {
             entity->velocity.y = -entity->maxSpeed;
-          } else if (entity->position.y <= 0) {
+
+          } else if (screenPosition.y - entity->bitmap.height / 2 <= 0) {
             entity->velocity.y = entity->maxSpeed;
           }
+          entity->position += entity->velocity;
 
           if (entity->bulletCounter == 0) {
             entity->bulletCounter = entity->bulletTime;
 
-            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 15}, {-10, 0});
-            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 25}, {-10, 0});
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{-80, -97}, {-10, 0});
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{-80, -73}, {-10, 0});
 
-            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 200}, {-10, 0});
-            addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 215}, {-10, 0});
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{-80, 73}, {-10, 0});
+            addEnemyBullet(playState, gameMemory, entity->position + V2D{-80, 97}, {-10, 0});
 
           } else if (entity->bulletCounter > 0) {
             --entity->bulletCounter;
