@@ -84,19 +84,19 @@ startGame(PlayState *playState, GameContext *gameContext) {
   if (!playState->bullet2Texture) {
     return false;
   }
-  playState->smallExplosionTexture  = getTexture("SMALL_EXPLOSION", gameContext);
+  playState->smallExplosionTexture = getTexture("SMALL_EXPLOSION", gameContext);
   if (!playState->smallExplosionTexture) {
     return false;
   }
-  playState->explosionTexture  = getTexture("EXPLOSION", gameContext);
+  playState->explosionTexture = getTexture("EXPLOSION", gameContext);
   if (!playState->explosionTexture) {
     return false;
   }
-  playState->largeExplosionTexture  = getTexture("LARGE_EXPLOSION", gameContext);
+  playState->largeExplosionTexture = getTexture("LARGE_EXPLOSION", gameContext);
   if (!playState->largeExplosionTexture) {
     return false;
   }
-  playState->bossExplosionTexture  = getTexture("BOSS_EXPLOSION", gameContext);
+  playState->bossExplosionTexture = getTexture("BOSS_EXPLOSION", gameContext);
   if (!playState->bossExplosionTexture) {
     return false;
   }
@@ -418,15 +418,15 @@ checkEntityCollision(Entity *entity1, Entity *entity2) {
     return false;
   }
 
-  float leftA = entity1->position.x   - entity1->halfCollisionDim;
-  float rightA = entity1->position.x  + entity1->halfCollisionDim;
-  float topA = entity1->position.y    - entity1->halfCollisionDim;
+  float leftA = entity1->position.x - entity1->halfCollisionDim;
+  float rightA = entity1->position.x + entity1->halfCollisionDim;
+  float topA = entity1->position.y - entity1->halfCollisionDim;
   float bottomA = entity1->position.y + entity1->halfCollisionDim;
 
   //Calculate the sides of rect B
-  float leftB = entity2->position.x   - entity2->halfCollisionDim;
-  float rightB = entity2->position.x  + entity2->halfCollisionDim;
-  float topB = entity2->position.y    - entity2->halfCollisionDim;
+  float leftB = entity2->position.x - entity2->halfCollisionDim;
+  float rightB = entity2->position.x + entity2->halfCollisionDim;
+  float topB = entity2->position.y - entity2->halfCollisionDim;
   float bottomB = entity2->position.y + entity2->halfCollisionDim;
 
   //If any of the sides from A are outside of B
@@ -439,7 +439,7 @@ checkEntityCollision(Entity *entity1, Entity *entity2) {
 }
 
 void
-handleCollision(PlayState* playState, Entity *entity1, Entity *entity2) {
+handleCollision(PlayState *playState, Entity *entity1, Entity *entity2) {
   if (entity1->type > entity2->type) {
     Entity *tmp = entity1;
     entity1 = entity2;
@@ -448,7 +448,7 @@ handleCollision(PlayState* playState, Entity *entity1, Entity *entity2) {
   if (entity1->type == PLAYER_BULLET_TYPE) {
 
     if (entity2->type == PLAYER_TYPE) {
-     return;
+      return;
 
     } else if (entity2->type == ENEMY_BULLET_TYPE) {
       entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
@@ -486,26 +486,28 @@ handleCollision(PlayState* playState, Entity *entity1, Entity *entity2) {
 }
 
 bool
-checkTileLayerCollision(Entity *entity, TileLayer* tileLayer) {
-  int tileColumn = 0;
-  int tileRow = 0;
+checkTileLayerCollision(Entity *entity, TileLayer *tileLayer) {
+  
+  for (int y = (int) (entity->position.y - (entity->bitmap.height / 2));
+       y < entity->position.y + (entity->bitmap.height / 2); ++y) {
 
-  if (entity->velocity.x >= 0) {
-    tileColumn = (int) ((entity->position.x + (entity->bitmap.width / 2)) / tileLayer->tileWidth);
-  } else {
-    tileColumn = (int) ((entity->position.x - (entity->bitmap.width / 2)) / tileLayer->tileWidth);
+    for (int x = (int) (entity->position.x - (entity->bitmap.width / 2));
+         x < entity->position.x + (entity->bitmap.width / 2); ++x) {
+
+      int tileColumn = x / tileLayer->tileWidth;
+      int tileRow = y / tileLayer->tileHeight;
+
+      int tileIdx = tileRow * tileLayer->mapWidth + tileColumn;
+      if (tileIdx >= tileLayer->tileGidsCount) {
+        continue;
+      }
+      int32_t tileId = tileLayer->tileGids[tileIdx];
+      if (tileId != 0) {
+        return true;
+      }
+    }
   }
-  if (entity->velocity.y >= 0) {
-    tileRow = (int) ((entity->position.y + (entity->bitmap.height / 2)) / tileLayer->tileHeight);
-  } else {
-    tileRow = (int) ((entity->position.y - (entity->bitmap.height / 2)) / tileLayer->tileHeight);
-  }
-  int tileIdx = tileRow * tileLayer->mapWidth + tileColumn;
-  if (tileIdx >= tileLayer->tileGidsCount) {
-    return false;;
-  }
-  int32_t tileId = tileLayer->tileGids[tileIdx];
-  return (tileId != 0);
+  return false;
 }
 
 void
@@ -532,7 +534,7 @@ doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext)
     }
   }
 
-  for (TileLayer* tileLayer = playState->tileMap->tileLayerList; tileLayer; 
+  for (TileLayer *tileLayer = playState->tileMap->tileLayerList; tileLayer;
        tileLayer = tileLayer->next) {
     if (tileLayer->collidable) {
       if (checkTileLayerCollision(entity, tileLayer)) {
