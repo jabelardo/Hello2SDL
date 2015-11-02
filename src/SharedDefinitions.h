@@ -61,6 +61,7 @@ struct PlatformConfig {
   char *resourcePath;
   int screenWidth;
   int screenHeight;
+  float dtPerFrame;
 };
 
 struct SDL_Renderer;

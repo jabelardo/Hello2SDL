@@ -2,7 +2,9 @@
 // Created by Jose Gutierrez on 10/24/15.
 //
 #ifdef __APPLE__
+
 #include <SDL2/SDL_timer.h>
+
 #else
 #include <SDL_timer.h>
 #endif
@@ -11,45 +13,6 @@
 #include "RenderUtils.h"
 #include "SharedDefinitions.h"
 #include "PlayState.h"
-
-bool
-checkEntityCollision(Entity *entity1, Entity *entity2) {
-  float leftA = entity1->position.x;
-  float rightA = entity1->position.x + entity1->bitmap.width;
-  float topA = entity1->position.y;
-  float bottomA = entity1->position.y + entity1->bitmap.height;
-  //Calculate the sides of rect B
-  float leftB = entity2->position.x;
-  float rightB = entity2->position.x + entity2->bitmap.width;
-  float topB = entity2->position.y;
-  float bottomB = entity2->position.y + entity2->bitmap.height;
-  //If any of the sides from A are outside of B
-  if (bottomA <= topB) { return false; }
-  if (topA >= bottomB) { return false; }
-  if (rightA <= leftB) { return false; }
-  if (leftA >= rightB) { return false; }
-  return true;
-}
-
-const static int s_buffer = 4;
-
-static bool
-rectRect(SDL_Rect *A, SDL_Rect *B) {
-  int aHBuf = A->h / s_buffer;
-  int aWBuf = A->w / s_buffer;
-  int bHBuf = B->h / s_buffer;
-  int bWBuf = B->w / s_buffer;
-  // if the bottom of A is less than the top of B - no collision
-  if ((A->y + A->h) - aHBuf <= B->y + bHBuf) { return false; }
-  // if the top of A is more than the bottom of B = no collision
-  if (A->y + aHBuf >= (B->y + B->h) - bHBuf) { return false; }
-  // if the right of A is less than the left of B - no collision
-  if ((A->x + A->w) - aWBuf <= B->x + bWBuf) { return false; }
-  // if the left of A is more than the right of B - no collision
-  if (A->x + aWBuf >= (B->x + B->w) - bWBuf) { return false; }
-  // otherwise there has been a collision
-  return true;
-}
 
 V2D
 getEntityScreenPosition(Entity *entity, V2D cameraPosition) {
@@ -104,7 +67,7 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
       return;
     }
   }
-  SDL_SetRenderDrawColor(renderer, 0,255,0,255);
+  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
   SDL_Rect rect;
   rect.x = x;
   rect.y = y;
@@ -115,6 +78,7 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
   V2D screenPos =  getEntityScreenPosition(entity, gameContext->cameraPosition);
 
   SDL_RenderDrawLine(renderer, drawPos.x, drawPos.y, screenPos.x, screenPos.y);
+  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 }
 
 void
@@ -172,7 +136,7 @@ initEntity(Entity *entity) {
     case ROOF_TURRET_TYPE:
     case TURRET_TYPE: {
       entity->halfCollisionDim = 14;
-      entity->dyingTime = 1000;
+      entity->dyingTime = 100;
       entity->health = 15;
       entity->bulletTime = 50;
       break;

@@ -340,8 +340,8 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
     case ESKELETOR_TYPE: {
       if (entity->bulletCounter == 0) {
         entity->bulletCounter = entity->bulletTime;
-        addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 10}, {-3, 0});
-        addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 10}, {3, 0});
+        addEnemyBullet(playState, gameMemory, entity->position + V2D{-10, 10}, {-3, 0});
+        addEnemyBullet(playState, gameMemory, entity->position + V2D{10, 10}, {3, 0});
 
       } else if (entity->bulletCounter > 0) {
         --entity->bulletCounter;
@@ -375,8 +375,96 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
   }
 }
 
+bool
+checkEntityCollision(Entity *entity1, Entity *entity2) {
+  if (entity1 == entity2) {
+    return false;
+  }
+  float leftA = entity1->position.x;
+  float rightA = entity1->position.x + entity1->bitmap.width;
+  float topA = entity1->position.y;
+  float bottomA = entity1->position.y + entity1->bitmap.height;
+
+  //Calculate the sides of rect B
+  float leftB = entity2->position.x;
+  float rightB = entity2->position.x + entity2->bitmap.width;
+  float topB = entity2->position.y;
+  float bottomB = entity2->position.y + entity2->bitmap.height;
+
+  //If any of the sides from A are outside of B
+  if (bottomA <= topB) { return false; }
+  if (topA >= bottomB) { return false; }
+  if (rightA <= leftB) { return false; }
+  if (leftA >= rightB) { return false; }
+
+  if (!entity1->invulnerableCounter && entity1->health > 0) {
+    --entity1->health;
+  }
+  if (!entity2->invulnerableCounter && entity2->health > 0) {
+    --entity2->health;
+  }
+
+  return true;
+}
+
+void doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext) {
+
+  V2D oldPosition = entity->position;
+  entity->position += entity->velocity;
+
+  if (entity->type != PLAYER_BULLET_TYPE) {
+    checkEntityCollision(entity, playState->tileMap->player);
+  }
+
+  if (entity->type != PLAYER_TYPE) {
+    for (EntityNode *node = playState->playerBullets; node; node = node->next) {
+      checkEntityCollision(entity, &node->entity);
+    }
+  }
+
+  if (entity->type != ENEMY_BULLET_TYPE) {
+    for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
+      for (EntityNode *node = objNode->entityList; node; node = node->next) {
+        checkEntityCollision(entity, &node->entity);
+      }
+    }
+  }
+
+  if (entity == playState->tileMap->player ||
+      entity->type == ENEMY_BULLET_TYPE ||
+      entity->type == PLAYER_BULLET_TYPE) {
+    for (EntityNode *node = playState->enemyBullets; node; node = node->next) {
+      checkEntityCollision(entity, &node->entity);
+    }
+  }
+  //  Entity *player = playState->tileMap->player;
+//  for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
+//    if (checkEntityCollision(player, &bullet->entity)) {
+//
+//    }
+//  }
+
+//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
+//    if (checkEntityCollision(player, &enemy->entity)) {
+//
+//    }
+//  }
+//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
+//    for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
+//      if (checkEntityCollision(&enemy->entity, &bullet->entity)) {
+//        if (enemy->entity.health > 0) {
+//          --enemy->entity.health;
+//        }
+//        if (bullet->entity.health > 0) {
+//          --bullet->entity.health;
+//        }
+//      }
+//    }
+//  }
+}
+
 void
-moveEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
+moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserInput *userInput) {
 
   V2D screenPosition = getEntityScreenPosition(entity, gameContext->cameraPosition);
 
@@ -417,7 +505,7 @@ moveEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
           // if the player is dying
           entity->velocity += V2D{0, .05};
         }
-        entity->position += entity->velocity;
+        doEntityMovement(playState, entity, gameContext);
       }
       // change the angle with the velocity to give the impression of a moving helicopter
       if (entity->velocity.x < 0) {
@@ -437,7 +525,7 @@ moveEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
         } else if (entity->position.y <= entity->initialPosition.y - entity->deltaMovement) {
           entity->velocity.y = entity->maxSpeed;
         }
-        entity->position += entity->velocity;
+        doEntityMovement(playState, entity, gameContext);
 
         // TODO: improve movement with collision detection
         if (entity->position.y < 0) {
@@ -448,7 +536,6 @@ moveEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
           entity->position.y = gameContext->gameHeight;
           entity->velocity.y = -entity->maxSpeed;
         }
-
       }
       break;
     }
@@ -458,7 +545,7 @@ moveEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
     case PLAYER_BULLET_TYPE:
     case ENEMY_BULLET_TYPE: {
       if (entity->dyingCounter == 0) {
-        entity->position += entity->velocity;
+        doEntityMovement(playState, entity, gameContext);
       }
       break;
     }
@@ -471,15 +558,12 @@ moveEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
     case ESKELETOR_TYPE: {
       if (entity->dyingCounter == 0) {
         entity->velocity.y = entity->maxSpeed;
-        entity->position += entity->velocity;
+        doEntityMovement(playState, entity, gameContext);
 
         // TODO improve or remove when region simulation is completed
         if (entity->position.y > gameContext->gameHeight) {
           entity->position.y = entity->initialPosition.y;
         }
-
-      } else {
-        entity->velocity.y = 0;
       }
       break;
     }
@@ -502,7 +586,7 @@ moveEntity(Entity *entity, GameContext *gameContext, UserInput *userInput) {
           } else if (screenPosition.y - entity->bitmap.height / 2 <= 0) {
             entity->velocity.y = entity->maxSpeed;
           }
-          entity->position += entity->velocity;
+          doEntityMovement(playState, entity, gameContext);
         }
       }
       break;
@@ -565,47 +649,19 @@ updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userI
   updateTransientEntities(playState, &playState->enemyBullets, gameContext, userInput,
                           gameMemory);
 
-  moveEntity(playState->tileMap->player, gameContext, userInput);
+  moveEntity(playState, playState->tileMap->player, gameContext, userInput);
 
   for (EntityNode *node = playState->playerBullets; node; node = node->next) {
-    moveEntity(&node->entity, gameContext, userInput);
+    moveEntity(playState, &node->entity, gameContext, userInput);
   }
 
   for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
     for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      moveEntity(&node->entity, gameContext, userInput);
+      moveEntity(playState, &node->entity, gameContext, userInput);
     }
   }
 
   for (EntityNode *node = playState->enemyBullets; node; node = node->next) {
-    moveEntity(&node->entity, gameContext, userInput);
+    moveEntity(playState, &node->entity, gameContext, userInput);
   }
-
-
-
-
-//  Entity *player = playState->tileMap->player;
-//  for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
-//    if (checkEntityCollision(player, &bullet->entity)) {
-//
-//    }
-//  }
-
-//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
-//    if (checkEntityCollision(player, &enemy->entity)) {
-//
-//    }
-//  }
-//  for (EntityNode *enemy = playState->enemies; enemy; enemy = enemy->next) {
-//    for (EntityNode *bullet = playState->playerBullets; bullet; bullet = bullet->next) {
-//      if (checkEntityCollision(&enemy->entity, &bullet->entity)) {
-//        if (enemy->entity.health > 0) {
-//          --enemy->entity.health;
-//        }
-//        if (bullet->entity.health > 0) {
-//          --bullet->entity.health;
-//        }
-//      }
-//    }
-//  }
 }

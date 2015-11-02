@@ -47,6 +47,8 @@ struct GameContext {
   V2D cameraPosition;
   int currentLevel;
   float scrollSpeed;
+  float pixelsPerMt;
+  float dtPerFrame;
   bool isLevelCompleted;
 };
 

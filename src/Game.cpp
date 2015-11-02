@@ -149,6 +149,8 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
     gameContext->gameWidth = platformConfig->screenWidth;
     gameContext->gameHeight = platformConfig->screenHeight;
     gameContext->scrollSpeed = 1;
+    gameContext->dtPerFrame = platformConfig->dtPerFrame;
+    gameContext->pixelsPerMt = 10;
     gameContext->cameraPosition = {-gameContext->scrollSpeed, 0};
     gameMemory->isInitialized = true;
   }

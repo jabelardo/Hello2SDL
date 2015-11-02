@@ -479,7 +479,7 @@ main(int argc, char *args[]) {
   int monitorRefreshHz = getWindowRefreshRate(window);
   float targetSecondsPerFrame = 1.0f / (float) monitorRefreshHz;
 
-  PlatformConfig platformConfig = {G_resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT};
+  PlatformConfig platformConfig = {G_resourcePath, SCREEN_WIDTH, SCREEN_HEIGHT, targetSecondsPerFrame};
   GameMemory gameMemory = {permanentMemory, longTimeMemory, shortTimeMemory};
   PlatformReplayState state = {-1, -1, -1};
   UserInput userInput = {};
