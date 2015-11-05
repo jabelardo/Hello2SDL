@@ -38,13 +38,15 @@ operator*=(V2D& v2D, float scalar) {
   return v2D;
 }
 
-void
-normalize(V2D& v2D) {
+V2D
+normalize(const V2D& v2D) {
   float l = length(v2D);
+  V2D result = v2D;
   // we never want to attempt to divide by 0
   if (l > 0) {
-    v2D *= 1 / l;
+    result *= 1 / l;
   }
+  return result;
 }
 
 V2D

@@ -56,7 +56,7 @@ void initEntity(Entity *entity);
 
 void drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer);
 
-bool checkEntityCollision(Entity *entity1, Entity *entity2);
+bool checkEntitiesOverlap(Entity *entity1, Entity *entity2);
 
 V2D getEntityScreenPosition(Entity *entity, V2D cameraPosition);
 

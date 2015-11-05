@@ -49,7 +49,20 @@ struct GameContext {
   float scrollSpeed;
   float pixelsPerMt;
   float dtPerFrame;
+  float tileSideInMt;
   bool isLevelCompleted;
 };
+
+inline float
+pixelsToMeters(int pixels, float pixelsPerMt) {
+  float result = pixels * pixelsPerMt;
+  return result;
+}
+
+inline int
+metersToPixels(float meters, float pixelsPerMt) {
+  int result = (int) (meters / pixelsPerMt);
+  return result;
+}
 
 #endif //HELLO2SDL_GAME_H

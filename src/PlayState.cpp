@@ -11,6 +11,7 @@
 #endif
 
 #include <assert.h>
+#include <float.h>
 #include "PlayState.h"
 #include "Entity.h"
 #include "TextureStorage.h"
@@ -402,7 +403,7 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
 }
 
 bool
-checkEntityCollision(Entity *entity1, Entity *entity2) {
+checkEntitiesOverlap(Entity *entity1, Entity *entity2) {
 
   if (entity1 == entity2) {
     return false;
@@ -423,13 +424,11 @@ checkEntityCollision(Entity *entity1, Entity *entity2) {
   float topA = entity1->position.y - entity1->halfCollisionDim;
   float bottomA = entity1->position.y + entity1->halfCollisionDim;
 
-  //Calculate the sides of rect B
   float leftB = entity2->position.x - entity2->halfCollisionDim;
   float rightB = entity2->position.x + entity2->halfCollisionDim;
   float topB = entity2->position.y - entity2->halfCollisionDim;
   float bottomB = entity2->position.y + entity2->halfCollisionDim;
 
-  //If any of the sides from A are outside of B
   if (bottomA <= topB) { return false; }
   if (topA >= bottomB) { return false; }
   if (rightA <= leftB) { return false; }
@@ -439,7 +438,7 @@ checkEntityCollision(Entity *entity1, Entity *entity2) {
 }
 
 void
-handleCollision(PlayState *playState, Entity *entity1, Entity *entity2) {
+handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2) {
   if (entity1->type > entity2->type) {
     Entity *tmp = entity1;
     entity1 = entity2;
@@ -486,13 +485,15 @@ handleCollision(PlayState *playState, Entity *entity1, Entity *entity2) {
 }
 
 bool
-checkTileLayerCollision(Entity *entity, TileLayer *tileLayer) {
-  
-  for (int y = (int) (entity->position.y - (entity->bitmap.height / 2));
-       y < entity->position.y + (entity->bitmap.height / 2); ++y) {
+checkTileLayerOverlap(Entity *entity, TileLayer *tileLayer) {
 
-    for (int x = (int) (entity->position.x - (entity->bitmap.width / 2));
-         x < entity->position.x + (entity->bitmap.width / 2); ++x) {
+  int leftA = (int) (entity->position.x - entity->bitmap.width / 2);
+  int rightA = (int) (entity->position.x + entity->bitmap.width / 2);
+  int topA = (int) (entity->position.y - entity->bitmap.height / 2);
+  int bottomA = (int) (entity->position.y + entity->bitmap.height / 2);
+
+  for (int y = topA; y < bottomA; ++y) {
+    for (int x = leftA; x < rightA; ++x) {
 
       int tileColumn = x / tileLayer->tileWidth;
       int tileRow = y / tileLayer->tileHeight;
@@ -511,25 +512,56 @@ checkTileLayerCollision(Entity *entity, TileLayer *tileLayer) {
 }
 
 void
+handleTileLayerOverlap(PlayState *playState, Entity *entity, V2D oldPos) {
+  switch (entity->type) {
+    case NULL_ENTITY_TYPE:{
+      break;
+    }
+    case PLAYER_BULLET_TYPE:
+    case ENEMY_BULLET_TYPE:{
+      entity->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+      entity->health = 0;
+      break;
+    }
+    case PLAYER_TYPE: {
+      entity->position = oldPos;
+      --entity->health;
+      break;
+    }
+    case SHOT_GLIDER_TYPE:break;
+    case GLIDER_TYPE:
+    case ESKELETOR_TYPE:{
+      entity->position = oldPos;
+      entity->velocity.y *= -1;
+      entity->position += entity->velocity;
+      break;
+    }
+    case TURRET_TYPE:break;
+    case ROOF_TURRET_TYPE:break;
+    case LEVEL_1_BOSS_TYPE:break;
+  }
+}
+
+void
 doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext) {
 
   V2D oldPos = entity->position;
   entity->position += entity->velocity;
 
-  if (checkEntityCollision(entity, playState->tileMap->player)) {
-    handleCollision(playState, entity, playState->tileMap->player);
+  if (checkEntitiesOverlap(entity, playState->tileMap->player)) {
+    handleEntitiesOverlap(playState, entity, playState->tileMap->player);
   }
 
   for (EntityNode *node = playState->bullets; node; node = node->next) {
-    if (checkEntityCollision(entity, &node->entity)) {
-      handleCollision(playState, entity, &node->entity);
+    if (checkEntitiesOverlap(entity, &node->entity)) {
+      handleEntitiesOverlap(playState, entity, &node->entity);
     }
   }
 
   for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
     for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      if (checkEntityCollision(entity, &node->entity)) {
-        handleCollision(playState, entity, &node->entity);
+      if (checkEntitiesOverlap(entity, &node->entity)) {
+        handleEntitiesOverlap(playState, entity, &node->entity);
       }
     }
   }
@@ -537,14 +569,8 @@ doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext)
   for (TileLayer *tileLayer = playState->tileMap->tileLayerList; tileLayer;
        tileLayer = tileLayer->next) {
     if (tileLayer->collidable) {
-      if (checkTileLayerCollision(entity, tileLayer)) {
-        if (entity->type == PLAYER_BULLET_TYPE || entity->type == ENEMY_BULLET_TYPE) {
-          entity->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-          entity->health = 0;
-        } else {
-          //entity->velocity *= -1;
-          entity->position = oldPos;// + entity->velocity;
-        }
+      if (checkTileLayerOverlap(entity, tileLayer)) {
+        handleTileLayerOverlap(playState, entity, oldPos);
       }
     }
   }
@@ -644,12 +670,13 @@ moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserI
     }
     case ESKELETOR_TYPE: {
       if (entity->dyingCounter == 0) {
-        entity->velocity.y = entity->maxSpeed;
+        if (entity->velocity.y == 0) {
+          entity->velocity.y = entity->maxSpeed;
+        }
         doEntityMovement(playState, entity, gameContext);
 
-        // TODO improve or remove when region simulation is completed
-        if (entity->position.y > gameContext->gameHeight) {
-          entity->position.y = entity->initialPosition.y;
+        if (entity->velocity.y < 0 && entity->position.y <= entity->initialPosition.y) {
+          entity->velocity.y *= -1;
         }
       }
       break;

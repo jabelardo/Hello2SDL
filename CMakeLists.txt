@@ -27,12 +27,14 @@ set(SOURCE_FILES
         src/PlayState.h
         src/RenderUtils.cpp
         src/RenderUtils.h
+        src/ScrollingBackground.cpp
+        src/ScrollingBackground.h
         src/SharedDefinitions.h
         src/TextureStorage.cpp
         src/TextureStorage.h
         src/TileMap.cpp
         src/TileMap.h
-        src/V2D.h src/ScrollingBackground.cpp src/ScrollingBackground.h)
+        src/V2D.h)
 
 add_executable(CLION_PLACEHOLDER ${SOURCE_FILES})
 

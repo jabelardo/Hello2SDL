@@ -8,6 +8,7 @@
 struct GameContext;
 struct GameMemory;
 struct SDL_Renderer;
+struct SDL_Texture;
 
 bool loadTexture(const char *textureName, const char *filename, const char* resourcePath,
                  SDL_Renderer *renderer, GameContext *gameContext, GameMemory* gameMemory);
