@@ -129,7 +129,7 @@ initEntity(Entity *entity) {
       entity->bitmap.currentFrame = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 35;
+      entity->bulletTime = 45;
       entity->bulletCounter = 0;
       break;
     }
@@ -175,7 +175,7 @@ initEntity(Entity *entity) {
       entity->bitmap.currentFrame = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 100;
+      entity->bulletTime = 25;
       entity->bulletCounter = 0;
       break;
     }

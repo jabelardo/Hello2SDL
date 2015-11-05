@@ -310,6 +310,23 @@ handleEvent(SDL_Event *event, UserInput *userInput, PlatformReplayState *state,
       userInput->shouldQuit = true;
       break;
     }
+    case SDL_WINDOWEVENT:  {
+      switch (event->window.event)  {
+        case SDL_WINDOWEVENT_FOCUS_GAINED: {
+          if (userInput->globalPause) {
+            userInput->globalPause = false;
+          }
+          break;
+        }
+        case SDL_WINDOWEVENT_FOCUS_LOST: {
+          if (!userInput->globalPause) {
+            userInput->globalPause = true;
+          }
+          break;
+        }
+      }
+      break;
+    }
     case SDL_MOUSEWHEEL: {
       userInput->mouseWheelY = event->wheel.y;
       break;

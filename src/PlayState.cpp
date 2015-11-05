@@ -447,7 +447,7 @@ checkEntitiesOverlap(Entity *entity1, Entity *entity2) {
 }
 
 void
-handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2) {
+handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2D oldPos) {
   if (entity1->type > entity2->type) {
     Entity *tmp = entity1;
     entity1 = entity2;
@@ -510,6 +510,29 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2) {
     } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
       entity1->health = 0;
       entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+    }
+  } else if (entity1->type == PLAYER_TYPE) {
+    if (entity2->type == GLIDER_TYPE || entity2->type == SHOT_GLIDER_TYPE) {
+      entity1->position = oldPos;
+      entity1->velocity.y *= -8;
+      entity1->position += entity1->velocity;
+      --entity1->health;
+      --entity2->health;
+
+    } else if (entity2->type == ESKELETOR_TYPE || entity2->type == TURRET_TYPE ||
+               entity2->type == ROOF_TURRET_TYPE) {
+      entity1->position = oldPos;
+      entity1->velocity.y *= -8;
+      entity1->position += entity1->velocity;
+      --entity1->health;
+      --entity2->health;
+
+    } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
+      entity1->position = oldPos;
+      entity1->velocity.y *= -8;
+      entity1->position += entity1->velocity;
+      --entity1->health;
+      --entity2->health;
     }
   }
 }
@@ -581,19 +604,19 @@ doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext)
   entity->position += entity->velocity;
 
   if (checkEntitiesOverlap(entity, playState->tileMap->player)) {
-    handleEntitiesOverlap(playState, entity, playState->tileMap->player);
+    handleEntitiesOverlap(playState, entity, playState->tileMap->player, oldPos);
   }
 
   for (EntityNode *node = playState->bullets; node; node = node->next) {
     if (checkEntitiesOverlap(entity, &node->entity)) {
-      handleEntitiesOverlap(playState, entity, &node->entity);
+      handleEntitiesOverlap(playState, entity, &node->entity, oldPos);
     }
   }
 
   for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
     for (EntityNode *node = objNode->entityList; node; node = node->next) {
       if (checkEntitiesOverlap(entity, &node->entity)) {
-        handleEntitiesOverlap(playState, entity, &node->entity);
+        handleEntitiesOverlap(playState, entity, &node->entity, oldPos);
       }
     }
   }
@@ -650,8 +673,8 @@ moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserI
           // if the player is dying
           entity->velocity += V2D{0, .05};
         }
-        doEntityMovement(playState, entity, gameContext);
-      }
+      doEntityMovement(playState, entity, gameContext);
+    }
       // change the angle with the velocity to give the impression of a moving helicopter
       if (entity->velocity.x < 0) {
         entity->bitmap.angle = -10.0;
