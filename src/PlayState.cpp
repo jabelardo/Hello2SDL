@@ -127,6 +127,13 @@ renderPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *re
   for (int i = 0; i < playState->currentLives; ++i) {
     drawTextureFrame(renderer, playState->liveTexture, i * 30, 0, 32, 30, 0, 0);
   }
+  for (int i = 0; i < playState->tileMap->player->health; ++i) {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+    int partWidth = 8;
+    SDL_Rect rect = {(i * 4 * partWidth) + 1, 40, partWidth * 3, 5};
+    SDL_RenderFillRect(renderer, &rect);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+  }
 
   for (EntityNode *bullet = playState->bullets; bullet; bullet = bullet->next) {
     drawEntity(&bullet->entity, gameContext, renderer);
@@ -287,16 +294,18 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
     }
   }
 
-  if (handleDying(entity)) {
-    if ((entity->type == LEVEL_1_BOSS_TYPE) && (entity->dyingCounter == 1)) {
+  if (handleDying(entity) && entity->dyingCounter == 1) {
+    if (entity->type == LEVEL_1_BOSS_TYPE) {
       gameContext->isLevelCompleted = true;
 
-    } else if ((entity->type == PLAYER_TYPE) && (entity->dyingCounter == 1)) {
+    } else if (entity->type == PLAYER_TYPE) {
       if (playState->currentLives > 0) {
         resurrectPlayer(entity, playState);
       } else {
         gameContext->stateChange = GAME_OVER;
       }
+    } else {
+      entity->type = NULL_ENTITY_TYPE;
     }
     return;
   }
@@ -455,6 +464,7 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2) {
 
     } else if (entity2->type == GLIDER_TYPE || entity2->type == SHOT_GLIDER_TYPE) {
       entity1->health = 0;
+      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
       --entity2->health;
       if (entity2->health < 1) {
         entity2->bitmap = {playState->explosionTexture, 40, 40, 9};
@@ -463,6 +473,7 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2) {
     } else if (entity2->type == ESKELETOR_TYPE || entity2->type == TURRET_TYPE ||
                entity2->type == ROOF_TURRET_TYPE) {
       entity1->health = 0;
+      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
       --entity2->health;
       if (entity2->health < 1) {
         entity2->bitmap = {playState->largeExplosionTexture, 60, 60, 9};
@@ -470,6 +481,7 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2) {
 
     } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
       entity1->health = 0;
+      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
       --entity2->health;
       if (entity2->health < 1) {
         entity2->bitmap = {playState->bossExplosionTexture, 180, 180, 9};
@@ -480,6 +492,24 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2) {
     if (entity2->type == ENEMY_BULLET_TYPE) {
       entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
       entity1->health = entity2->health = 0;
+
+    } else if (entity2->type == PLAYER_TYPE) {
+      entity1->health = 0;
+      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+      --entity2->health;
+
+    } else if (entity2->type == GLIDER_TYPE || entity2->type == SHOT_GLIDER_TYPE) {
+      entity1->health = 0;
+      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+
+    } else if (entity2->type == ESKELETOR_TYPE || entity2->type == TURRET_TYPE ||
+               entity2->type == ROOF_TURRET_TYPE) {
+      entity1->health = 0;
+      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+
+    } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
+      entity1->health = 0;
+      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
     }
   }
 }
@@ -525,6 +555,8 @@ handleTileLayerOverlap(PlayState *playState, Entity *entity, V2D oldPos) {
     }
     case PLAYER_TYPE: {
       entity->position = oldPos;
+      entity->velocity.y *= -8;
+      entity->position += entity->velocity;
       --entity->health;
       break;
     }
@@ -604,15 +636,15 @@ moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserI
         if (entity->dyingCounter == 0) {
           V2D target = {(float) userInput->mousePositionX, (float) userInput->mousePositionY};
 
-          V2D entityVelocity = (target - screenPosition)
-                               / (entity->maxSpeed * entity->maxSpeed);
+          V2D entityVelocity = V2D{gameContext->scrollSpeed, 0}
+                             + (target - screenPosition) / (entity->maxSpeed * entity->maxSpeed);
 
           if (lengthSquare(entityVelocity) > entity->maxSpeed * entity->maxSpeed) {
             normalize(entityVelocity);
             entityVelocity *= entity->maxSpeed;
           }
 
-          entity->velocity = entityVelocity + V2D{gameContext->scrollSpeed, 0};
+          entity->velocity = entityVelocity;
 
         } else {
           // if the player is dying

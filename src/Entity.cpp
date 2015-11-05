@@ -86,7 +86,7 @@ initEntity(Entity *entity) {
   switch (entity->type) {
     case PLAYER_TYPE: {
       entity->halfCollisionDim = 15;
-      entity->health = 1;
+      entity->health = 20;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 5;
       entity->dyingTime = 100;
@@ -129,7 +129,7 @@ initEntity(Entity *entity) {
       entity->bitmap.currentFrame = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 25;
+      entity->bulletTime = 35;
       entity->bulletCounter = 0;
       break;
     }
@@ -137,8 +137,8 @@ initEntity(Entity *entity) {
     case TURRET_TYPE: {
       entity->halfCollisionDim = 14;
       entity->dyingTime = 100;
-      entity->health = 15;
-      entity->bulletTime = 50;
+      entity->health = 4;
+      entity->bulletTime = 60;
       break;
     }
     case ESKELETOR_TYPE: {
@@ -146,13 +146,13 @@ initEntity(Entity *entity) {
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {0, 0};
-      entity->health = 3;
+      entity->health = 2;
       entity->dyingTime = 50;
       entity->dyingCounter = 0;
       entity->bitmap.currentFrame = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
-      entity->bulletTime = 50;
+      entity->bulletTime = 60;
       entity->bulletCounter = 0;
       break;
     }
@@ -169,7 +169,7 @@ initEntity(Entity *entity) {
       entity->initialPosition = entity->position;
       entity->maxSpeed = 2;
       entity->velocity = {-entity->maxSpeed, 0};
-      entity->health = 100;
+      entity->health = 25;
       entity->dyingTime = 100;
       entity->dyingCounter = 0;
       entity->bitmap.currentFrame = 0;
