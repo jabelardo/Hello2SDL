@@ -58,14 +58,26 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
     return false;
   }
 
-  playState->tileMap = RESERVE_MEMORY(&gameMemory->permanentMemory, TileMap);
+  TileMap *tileMap = RESERVE_MEMORY(&gameMemory->shortTimeMemory, TileMap);
 
-  if (!initTileMap(playState->tileMap, "map1.tmx", gameContext, renderer, gameMemory,
+  if (!loadTileMap(tileMap, "map1.tmx", gameContext, renderer, gameMemory,
                    platformConfig)) {
     return false;
   }
+  playState->tileMapWidth = tileMap->width * tileMap->tileWidth;
+  playState->scrollingBackground = tileMap->scrollingBackground;
+  playState->entityList = tileMap->entityList;
+  playState->player = 0;
+  for (EntityNode *entityNode = playState->entityList; entityNode; entityNode = entityNode->next) {
+    if (entityNode->entity.type == PLAYER_TYPE) {
+      playState->player = &entityNode->entity;
+      break;
+    }
+  }
+  if (!playState->player) {
+    return false;
+  }
 
-  playState->bullets = 0;
   playState->freeEntities = 0;
 
   return true;
@@ -101,33 +113,25 @@ startGame(PlayState *playState, GameContext *gameContext) {
   if (!playState->bossExplosionTexture) {
     return false;
   }
-  for (TileLayer *tileLayer = playState->tileMap->tileLayerList; tileLayer;
-       tileLayer = tileLayer->next) {
-    tileLayer->position = {0, 0};
-  }
 
-  initEntity(playState->tileMap->player);
+  for (EntityNode *node = playState->entityList; node; node = node->next) {
+    initEntity(&node->entity);
+  }
 
   playState->currentLives = 3;
 
-  for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode;
-       objNode = objNode->next) {
-    for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      initEntity(&node->entity);
-    }
-  }
   return true;
 }
 
 void
 renderPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer) {
 
-  drawTileMap(playState->tileMap, gameContext, renderer);
+  drawScrollingBackground(playState->scrollingBackground, gameContext, renderer);
 
   for (int i = 0; i < playState->currentLives; ++i) {
     drawTextureFrame(renderer, playState->liveTexture, i * 30, 0, 32, 30, 0, 0);
   }
-  for (int i = 0; i < playState->tileMap->player->health; ++i) {
+  for (int i = 0; i < playState->player->health; ++i) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
     int partWidth = 8;
     SDL_Rect rect = {(i * 4 * partWidth) + 1, 40, partWidth * 3, 5};
@@ -135,8 +139,8 @@ renderPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *re
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   }
 
-  for (EntityNode *bullet = playState->bullets; bullet; bullet = bullet->next) {
-    drawEntity(&bullet->entity, gameContext, renderer);
+  for (EntityNode *node = playState->entityList; node; node = node->next) {
+    drawEntity(&node->entity, gameContext, renderer);
   }
 }
 
@@ -151,9 +155,9 @@ addPlayerBullet(PlayState *playState, GameMemory *gameMemory, V2D position, V2D 
     bullet = RESERVE_MEMORY(&gameMemory->permanentMemory, EntityNode);
   }
 
-  bullet->next = playState->bullets;
+  bullet->next = playState->entityList;
 
-  playState->bullets = bullet;
+  playState->entityList = bullet;
 
   bullet->entity = {PLAYER_BULLET_TYPE,
                     position,
@@ -176,9 +180,9 @@ addEnemyBullet(PlayState *playState, GameMemory *gameMemory, V2D position, V2D v
     bullet = RESERVE_MEMORY(&gameMemory->permanentMemory, EntityNode);
   }
 
-  bullet->next = playState->bullets;
+  bullet->next = playState->entityList;
 
-  playState->bullets = bullet;
+  playState->entityList = bullet;
 
   bullet->entity = {ENEMY_BULLET_TYPE,
                     position,
@@ -217,9 +221,8 @@ addEnemy(PlayState *playState, GameContext *gameContext, GameMemory *gameMemory)
 #endif
 
 void
-updateCameraPosition(TileMap *tileMap, GameContext *gameContext) {
-  if (gameContext->cameraPosition.x + gameContext->gameWidth <
-      tileMap->width * tileMap->tileWidth) {
+updateCameraPosition(PlayState *playState, GameContext *gameContext) {
+  if (gameContext->cameraPosition.x + gameContext->gameWidth < playState->tileMapWidth) {
     gameContext->cameraPosition += {gameContext->scrollSpeed, 0};
   }
 }
@@ -241,11 +244,11 @@ handlePlayerAnimation(Entity *entity) {
   } else if (entity->invulnerableCounter > 1) {
     // otherwise, flash the alpha on and off
     if (entity->bitmap.alpha == 255) {
-      entity->decreasingAlpha = true;
+      setEntityFlags(entity, DEC_ALPHA_FLAG);
     } else if (entity->bitmap.alpha == 125) {
-      entity->decreasingAlpha = false;
+      clearEntityFlags(entity, DEC_ALPHA_FLAG);
     }
-    if (entity->decreasingAlpha) {
+    if (areSetEntityFlags(entity, DEC_ALPHA_FLAG)) {
       entity->bitmap.alpha -= 10;
     } else {
       entity->bitmap.alpha += 10;
@@ -336,7 +339,7 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
       break;
     }
     case SHOT_GLIDER_TYPE: {
-      if (entity->bulletCounter == 0) {
+      if (entity->bulletCounter == 0 && entity->dyingCounter == 0) {
         entity->bulletCounter = entity->bulletTime;
         addEnemyBullet(playState, gameMemory, entity->position + V2D{-20, 0}, {-10, 0});
 
@@ -350,7 +353,7 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
       break;
     }
     case TURRET_TYPE: {
-      if (entity->bulletCounter == 0) {
+      if (entity->bulletCounter == 0 && entity->dyingCounter == 0) {
         entity->bulletCounter = entity->bulletTime;
         addEnemyBullet(playState, gameMemory, entity->position + V2D{-20, -20}, {-3, -3});
         addEnemyBullet(playState, gameMemory, entity->position + V2D{0, -20}, {0, -3});
@@ -362,7 +365,7 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
       break;
     }
     case ROOF_TURRET_TYPE: {
-      if (entity->bulletCounter == 0) {
+      if (entity->bulletCounter == 0 && entity->dyingCounter == 0) {
         entity->bulletCounter = entity->bulletTime;
         addEnemyBullet(playState, gameMemory, entity->position + V2D{-20, 20}, {-3, 3});
         addEnemyBullet(playState, gameMemory, entity->position + V2D{0, 20}, {0, 3});
@@ -374,10 +377,10 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
       break;
     }
     case ESKELETOR_TYPE: {
-      if (entity->bulletCounter == 0) {
+      if (entity->bulletCounter == 0 && entity->dyingCounter == 0) {
         entity->bulletCounter = entity->bulletTime;
-        addEnemyBullet(playState, gameMemory, entity->position + V2D{-10, 10}, {-3, 0});
-        addEnemyBullet(playState, gameMemory, entity->position + V2D{10, 10}, {3, 0});
+        addEnemyBullet(playState, gameMemory, entity->position + V2D{-15, 10}, {-3, 0});
+        addEnemyBullet(playState, gameMemory, entity->position + V2D{15, 10}, {3, 0});
 
       } else if (entity->bulletCounter > 0) {
         --entity->bulletCounter;
@@ -390,7 +393,7 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
 
       if (screenPosition.x <= gameContext->gameWidth - 32) {
 
-        if (entity->bulletCounter == 0) {
+        if (entity->bulletCounter == 0 && entity->dyingCounter == 0) {
           entity->bulletCounter = entity->bulletTime;
 
           addEnemyBullet(playState, gameMemory, entity->position + V2D{-80, -97}, {-10, 0});
@@ -405,6 +408,7 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
       }
       break;
     }
+    case TILE_TYPE:
     case NULL_ENTITY_TYPE: {
       break;
     }
@@ -567,11 +571,11 @@ checkTileLayerOverlap(Entity *entity, TileLayer *tileLayer) {
 void
 handleTileLayerOverlap(PlayState *playState, Entity *entity, V2D oldPos) {
   switch (entity->type) {
-    case NULL_ENTITY_TYPE:{
+    case NULL_ENTITY_TYPE: {
       break;
     }
     case PLAYER_BULLET_TYPE:
-    case ENEMY_BULLET_TYPE:{
+    case ENEMY_BULLET_TYPE: {
       entity->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
       entity->health = 0;
       break;
@@ -583,17 +587,23 @@ handleTileLayerOverlap(PlayState *playState, Entity *entity, V2D oldPos) {
       --entity->health;
       break;
     }
-    case SHOT_GLIDER_TYPE:break;
+    case SHOT_GLIDER_TYPE:
+      break;
     case GLIDER_TYPE:
-    case ESKELETOR_TYPE:{
+    case ESKELETOR_TYPE: {
       entity->position = oldPos;
       entity->velocity.y *= -1;
       entity->position += entity->velocity;
       break;
     }
-    case TURRET_TYPE:break;
-    case ROOF_TURRET_TYPE:break;
-    case LEVEL_1_BOSS_TYPE:break;
+    case TURRET_TYPE:
+      break;
+    case ROOF_TURRET_TYPE:
+      break;
+    case LEVEL_1_BOSS_TYPE:
+      break;
+    case TILE_TYPE:
+      break;
   }
 }
 
@@ -603,30 +613,9 @@ doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext)
   V2D oldPos = entity->position;
   entity->position += entity->velocity;
 
-  if (checkEntitiesOverlap(entity, playState->tileMap->player)) {
-    handleEntitiesOverlap(playState, entity, playState->tileMap->player, oldPos);
-  }
-
-  for (EntityNode *node = playState->bullets; node; node = node->next) {
+  for (EntityNode *node = playState->entityList; node; node = node->next) {
     if (checkEntitiesOverlap(entity, &node->entity)) {
       handleEntitiesOverlap(playState, entity, &node->entity, oldPos);
-    }
-  }
-
-  for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
-    for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      if (checkEntitiesOverlap(entity, &node->entity)) {
-        handleEntitiesOverlap(playState, entity, &node->entity, oldPos);
-      }
-    }
-  }
-
-  for (TileLayer *tileLayer = playState->tileMap->tileLayerList; tileLayer;
-       tileLayer = tileLayer->next) {
-    if (tileLayer->collidable) {
-      if (checkTileLayerOverlap(entity, tileLayer)) {
-        handleTileLayerOverlap(playState, entity, oldPos);
-      }
     }
   }
 }
@@ -660,7 +649,7 @@ moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserI
           V2D target = {(float) userInput->mousePositionX, (float) userInput->mousePositionY};
 
           V2D entityVelocity = V2D{gameContext->scrollSpeed, 0}
-                             + (target - screenPosition) / (entity->maxSpeed * entity->maxSpeed);
+                               + (target - screenPosition) / (entity->maxSpeed * entity->maxSpeed);
 
           if (lengthSquare(entityVelocity) > entity->maxSpeed * entity->maxSpeed) {
             normalize(entityVelocity);
@@ -673,8 +662,8 @@ moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserI
           // if the player is dying
           entity->velocity += V2D{0, .05};
         }
-      doEntityMovement(playState, entity, gameContext);
-    }
+        doEntityMovement(playState, entity, gameContext);
+      }
       // change the angle with the velocity to give the impression of a moving helicopter
       if (entity->velocity.x < 0) {
         entity->bitmap.angle = -10.0;
@@ -760,6 +749,7 @@ moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserI
       }
       break;
     }
+    case TILE_TYPE:
     case NULL_ENTITY_TYPE: {
       break;
     }
@@ -767,15 +757,16 @@ moveEntity(PlayState *playState, Entity *entity, GameContext *gameContext, UserI
 }
 
 static void
-updateTransientEntities(PlayState *playState, EntityNode **entities, GameContext *gameContext,
-                        UserInput *userInput, GameMemory *gameMemory) {
+updateEntities(PlayState *playState, EntityNode **entities, GameContext *gameContext, UserInput *userInput,
+               GameMemory *gameMemory) {
   for (EntityNode **entityNode = entities; *entityNode;) {
     V2D position = getEntityScreenPosition(&(*entityNode)->entity, gameContext->cameraPosition);
-    if (position.x < -(*entityNode)->entity.bitmap.width ||
-        position.x > gameContext->gameWidth + (*entityNode)->entity.bitmap.width ||
-        position.y < -(*entityNode)->entity.bitmap.height ||
-        position.y > gameContext->gameHeight + (*entityNode)->entity.bitmap.height ||
-        (*entityNode)->entity.dyingCounter == 1) {
+    if (((*entityNode)->entity.type == PLAYER_BULLET_TYPE || (*entityNode)->entity.type == ENEMY_BULLET_TYPE) &&
+        (position.x < -(*entityNode)->entity.bitmap.width ||
+         position.x > gameContext->gameWidth + (*entityNode)->entity.bitmap.width ||
+         position.y < -(*entityNode)->entity.bitmap.height ||
+         position.y > gameContext->gameHeight + (*entityNode)->entity.bitmap.height ||
+         (*entityNode)->entity.dyingCounter == 1)) {
 
       (*entityNode)->entity.dyingCounter = 0;
 
@@ -800,29 +791,13 @@ void
 updatePlayState(PlayState *playState, GameContext *gameContext, UserInput *userInput,
                 GameMemory *gameMemory) {
 
-  updateScrollingBackground(playState->tileMap->scrollingBackground, gameContext);
+  updateScrollingBackground(playState->scrollingBackground, gameContext);
 
-  updateCameraPosition(playState->tileMap, gameContext);
+  updateCameraPosition(playState, gameContext);
+  
+  updateEntities(playState, &playState->entityList, gameContext, userInput, gameMemory);
 
-  updateEntity(playState, playState->tileMap->player, gameContext, userInput, gameMemory);
-
-  updateTransientEntities(playState, &playState->bullets, gameContext, userInput, gameMemory);
-
-  for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
-    for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      updateEntity(playState, &node->entity, gameContext, userInput, gameMemory);
-    }
-  }
-
-  moveEntity(playState, playState->tileMap->player, gameContext, userInput);
-
-  for (EntityNode *node = playState->bullets; node; node = node->next) {
+  for (EntityNode *node = playState->entityList; node; node = node->next) {
     moveEntity(playState, &node->entity, gameContext, userInput);
-  }
-
-  for (ObjectLayer *objNode = playState->tileMap->objectLayerList; objNode; objNode = objNode->next) {
-    for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      moveEntity(playState, &node->entity, gameContext, userInput);
-    }
   }
 }

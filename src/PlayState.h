@@ -13,12 +13,14 @@ struct GameMemory;
 struct MenuButton;
 struct PlatformConfig;
 struct SDL_Renderer;
+struct ScrollingBackground;
 struct TileMap;
 struct UserInput;
 
 struct PlayState {
-  TileMap *tileMap;
-  EntityNode* bullets;
+  int tileMapWidth;
+  ScrollingBackground *scrollingBackground;
+  EntityNode* entityList;
   EntityNode* freeEntities;
   SDL_Texture* liveTexture;
   SDL_Texture* bullet1Texture;
@@ -28,6 +30,7 @@ struct PlayState {
   SDL_Texture* largeExplosionTexture;
   SDL_Texture* bossExplosionTexture;
   int currentLives;
+  Entity* player;
 };
 
 bool initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer,

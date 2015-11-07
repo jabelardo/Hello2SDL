@@ -33,11 +33,6 @@ struct TileSet {
   SDL_Texture *texture;
 };
 
-struct ObjectLayer {
-  EntityNode* entityList;
-  ObjectLayer* next;
-};
-
 struct TileLayer {
   int mapWidth;
   int mapHeight;
@@ -62,17 +57,12 @@ struct TileMap {
   int height;
   int tileWidth;
   int tileHeight;
-  Entity* player;
-  TileLayer* tileLayerList;
-  ObjectLayer* objectLayerList;
+  EntityNode* entityList;
   ScrollingBackground *scrollingBackground;
 };
 
-bool initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
-                 SDL_Renderer *renderer, GameMemory* gameMemory, PlatformConfig *platformConfig);
+bool loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
+                 SDL_Renderer *renderer, GameMemory *gameMemory, PlatformConfig *platformConfig);
 
-void drawTileMap(TileMap *tileMap, GameContext* gameContext, SDL_Renderer *renderer);
-
-TileSet * getTileSetById(TileLayer *tileLayer, int tileId);
 
 #endif //HELLO2SDL_TILEMMAP_H

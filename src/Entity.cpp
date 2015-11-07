@@ -49,6 +49,7 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
                    (entity->velocity.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
       break;
     }
+    case TILE_TYPE:
     case ENEMY_BULLET_TYPE:
     case PLAYER_BULLET_TYPE:
     case GLIDER_TYPE:
@@ -180,6 +181,7 @@ initEntity(Entity *entity) {
       break;
     }
     case NULL_ENTITY_TYPE:break;
+    case TILE_TYPE:break;
   }
 }
 

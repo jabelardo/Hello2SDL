@@ -24,6 +24,12 @@ enum EntityType {
   TURRET_TYPE,
   ROOF_TURRET_TYPE,
   LEVEL_1_BOSS_TYPE,
+  TILE_TYPE,
+};
+
+enum EntityFlags {
+  DEC_ALPHA_FLAG = 1 << 0,
+  DONT_COLLIDE_FLAG = 1 << 0,
 };
 
 struct Entity {
@@ -37,13 +43,29 @@ struct Entity {
   int invulnerableTime;
   int bulletCounter;
   int bulletTime;
-  bool decreasingAlpha;
+  int flags;
   float maxSpeed;
   float deltaMovement;
   V2D initialPosition;
   int health;
   float halfCollisionDim;
 };
+
+inline void
+setEntityFlags(Entity* entity, EntityFlags flags) {
+  entity->flags |= flags;
+}
+
+inline void
+clearEntityFlags(Entity* entity, EntityFlags flags) {
+  entity->flags &= ~flags;
+}
+
+inline bool
+areSetEntityFlags(Entity* entity, EntityFlags flags) {
+  int result = entity->flags & ~flags;
+  return result != 0;
+}
 
 struct EntityNode {
   Entity entity;

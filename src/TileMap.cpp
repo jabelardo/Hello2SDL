@@ -4,6 +4,7 @@
 
 #include <libxml/tree.h>
 #include <zlib.h>
+#include <assert.h>
 
 #include "TileMap.h"
 #include "RenderUtils.h"
@@ -194,27 +195,6 @@ drawTileLayers(TileLayer *tileLayer, V2D cameraPosition, SDL_Renderer *renderer)
       drawTile(renderer, 2, 2, x, y, &bitmap);
     }
   }
-}
-
-void
-drawTileMap(TileMap *tileMap, GameContext* gameContext, SDL_Renderer *renderer) {
-
-  drawScrollingBackground(tileMap->scrollingBackground, gameContext, renderer);
-
-  for (TileLayer *node = tileMap->tileLayerList; node; node = node->next) {
-#if 0
-    drawTileLayerTexture(node, gameContext, renderer);
-#else
-    drawTileLayers(node, gameContext->cameraPosition, renderer);
-#endif
-  }
-  for (ObjectLayer *objNode = tileMap->objectLayerList; objNode; objNode = objNode->next) {
-    for (EntityNode *node = objNode->entityList; node; node = node->next) {
-      drawEntity(&node->entity, gameContext, renderer);
-    }
-  }
-
-  drawEntity(tileMap->player, gameContext, renderer);
 }
 
 #if 0
@@ -501,13 +481,58 @@ xmlGetProp(xmlNode *node, const xmlChar *name, int *value) {
     return false;
   }
   *value = atoi((const char *) prop);
-  xmlFree(prop);
   return true;
 }
 
+EntityNode *
+createTileLayerEntities(MemoryPartition *memoryPartition, TileLayer *tileLayer, SDL_Renderer *renderer) {
+
+  EntityNode *resultList = 0;
+
+  for (int y = 0; y < tileLayer->mapHeight; ++y) {
+    for (int x = 0; x < tileLayer->mapWidth; ++x) {
+      int tileIdx = y * tileLayer->mapWidth + x;
+      if (tileIdx >= tileLayer->tileGidsCount) {
+        continue;
+      }
+      int32_t tileId = tileLayer->tileGids[tileIdx];
+      if (tileId == 0) {
+        continue;
+      }
+      TileSet *tileSet = getTileSetById(tileLayer, tileId);
+      if (tileSet == 0) {
+        continue;
+      }
+      SDL_Texture *texture = tileSet->texture;
+      int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
+      int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
+      Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame,
+                       currentRow};
+      int objectX = x * tileLayer->tileWidth;
+      int objectY = y * tileLayer->tileHeight;
+
+      EntityNode *newEntityNode = RESERVE_MEMORY(memoryPartition, EntityNode);
+      newEntityNode->entity.health = 1;
+      newEntityNode->entity.type = TILE_TYPE;
+      newEntityNode->entity.position = {ceilf((float) objectX) + ((float) tileLayer->tileWidth) / 2.f,
+                                        ceilf((float) objectY) + ((float) tileLayer->tileHeight) / 2.f};
+      newEntityNode->entity.bitmap = bitmap;
+      newEntityNode->entity.velocity = {0, 0};
+      if (!tileLayer->collidable) {
+        setEntityFlags(&newEntityNode->entity, DONT_COLLIDE_FLAG);
+      }
+      newEntityNode->next = resultList;
+      resultList = newEntityNode;
+    }
+  }
+  return resultList;
+}
+
 bool
-initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
+loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             SDL_Renderer *renderer, GameMemory *gameMemory, PlatformConfig *platformConfig) {
+
+  assert(tileMap->entityList == 0);
 
   if (xmlMemSetup(xmlFreeFunction(&gameMemory->shortTimeMemory),
                   xmlMallocFunction(&gameMemory->shortTimeMemory),
@@ -528,7 +553,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
 
   TileSet *tileSetList = 0;
   TileLayer *tileLayerList = 0;
-  ObjectLayer *objectLayerList = 0;
   if (!doc) {
     goto fail;
   }
@@ -555,7 +579,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
     if (!xmlGetProp(map, (const xmlChar *) "tileheight", &tileMap->tileHeight)) {
       goto fail;
     }
-    tileMap->tileLayerList = 0;
 
     xmlNode *mapProperties = getXmlElement(map, (const xmlChar *) "properties");
     if (!mapProperties) {
@@ -570,33 +593,21 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         }
         char *value = (char *) xmlGetProp(property, (const xmlChar *) "value");
         if (!value) {
-          xmlFree(name);
           goto fail;
         }
         if (!loadTexture(name, value, platformConfig->resourcePath, renderer, gameContext,
                          gameMemory)) {
-          xmlFree(name);
-          xmlFree(value);
           goto fail;
         }
-        xmlFree(name);
-        xmlFree(value);
       }
     }
 
-    TileSet *tileSetNodePrev = 0;
     for (xmlNode *tileset = map->children; tileset; tileset = tileset->next) {
       if (tileset->type == XML_ELEMENT_NODE &&
           xmlStrcmp(tileset->name, (const xmlChar *) "tileset") == 0) {
-        TileSet *newTileSet = RESERVE_MEMORY(&gameMemory->longTimeMemory, TileSet);
-        if (!tileSetList) {
-          tileSetList = newTileSet;
-        }
-        if (tileSetNodePrev) {
-          tileSetNodePrev->next = newTileSet;
-        }
-        tileSetNodePrev = newTileSet;
-        newTileSet->next = 0;
+        TileSet *newTileSet = RESERVE_MEMORY(&gameMemory->shortTimeMemory, TileSet);
+        newTileSet->next = tileSetList;
+        tileSetList = newTileSet;
         if (!xmlGetProp(tileset, (const xmlChar *) "firstgid", &newTileSet->firstGid)) {
           goto fail;
         }
@@ -619,11 +630,7 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         if (!name) {
           goto fail;
         }
-        size_t tileSetNodeNameLen = strlen(name);
-        newTileSet->name = (char *) reserveMemory(&gameMemory->longTimeMemory,
-                                                  tileSetNodeNameLen + 1);
-        strcpy(newTileSet->name, name);
-        xmlFree(name);
+        newTileSet->name = name;
 
         for (xmlNode *image = tileset->children; image; image = image->next) {
           if (image->type == XML_ELEMENT_NODE &&
@@ -640,10 +647,8 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             }
             if (!loadTexture(newTileSet->name, source, platformConfig->resourcePath, renderer,
                              gameContext, gameMemory)) {
-              xmlFree(source);
               goto fail;
             }
-            xmlFree(source);
             newTileSet->texture = getTexture(newTileSet->name, gameContext);
           }
         }
@@ -652,7 +657,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
       }
     }
 
-    TileLayer *tileLayerNodePrev = 0;
     for (xmlNode *layer = map->children; layer; layer = layer->next) {
       if (layer->type == XML_ELEMENT_NODE &&
           xmlStrcmp(layer->name, (const xmlChar *) "layer") == 0) {
@@ -670,14 +674,11 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
               }
               char *value = (char *) xmlGetProp(property, (const xmlChar *) "value");
               if (!value) {
-                xmlFree(name);
                 goto fail;
               }
               if ((strcmp(name, "collidable")) == 0 && (strcmp(value, "true")) == 0) {
                 collidable = true;
               }
-              xmlFree(name);
-              xmlFree(value);
             }
           }
         }
@@ -686,15 +687,10 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         if (!data) {
           goto fail;
         }
-        TileLayer *newTileLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, TileLayer);
-        if (!tileLayerList) {
-          tileLayerList = newTileLayer;
-        }
-        if (tileLayerNodePrev) {
-          tileLayerNodePrev->next = newTileLayer;
-        }
-        tileLayerNodePrev = newTileLayer;
-        newTileLayer->next = 0;
+        TileLayer *newTileLayer = RESERVE_MEMORY(&gameMemory->shortTimeMemory, TileLayer);
+        newTileLayer->next = tileLayerList;
+        tileLayerList = newTileLayer;
+
         newTileLayer->tileWidth = tileMap->tileWidth;
         newTileLayer->tileHeight = tileMap->tileHeight;
         newTileLayer->screenColumns = platformConfig->screenWidth / tileMap->tileWidth;
@@ -710,29 +706,19 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         int32_t *gids = 0;
         if (!dataDecode(trimBase64Gids, newTileLayer->tileGidsCount, &gids,
                         &gameMemory->shortTimeMemory)) {
-          xmlFree(base64Gids);
           goto fail;
         }
-        xmlFree(base64Gids);
+        newTileLayer->tileGids = gids;
 
-        size_t sizeofids = newTileLayer->tileGidsCount * sizeof(int32_t);
-        newTileLayer->tileGids = (int32_t *) reserveMemory(&gameMemory->longTimeMemory,
-                                                           sizeofids);
-
-        memcpy(newTileLayer->tileGids, gids, sizeofids);
-#if 0
-         createTileLayerTexture(newTileLayer, renderer);
-#endif
+        EntityNode *entityList = createTileLayerEntities(&gameMemory->longTimeMemory, newTileLayer, renderer);
+        entityList->next = tileMap->entityList;
+        tileMap->entityList = entityList;
       }
     }
-    tileMap->tileLayerList = tileLayerList;
 
-    ObjectLayer *objectLayerNodePrev = 0;
     for (xmlNode *objectgroup = map->children; objectgroup; objectgroup = objectgroup->next) {
       if (objectgroup->type == XML_ELEMENT_NODE &&
           xmlStrcmp(objectgroup->name, (const xmlChar *) "objectgroup") == 0) {
-
-        ObjectLayer *newObjectLayer = 0;
 
         for (xmlNode *object = objectgroup->children; object; object = object->next) {
           if (object->type == XML_ELEMENT_NODE &&
@@ -750,13 +736,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             if (!type) {
               goto fail;
             }
-#if 0
-            char *name = (char *) xmlGetProp(object, (const xmlChar *) "name");
-            if (strcmp(name, "Turret1") != 0 && strcmp(type, "ScrollingBackground") != 0 &&
-                strcmp(type, "Player") != 0) {
-              continue;
-            }
-#endif
             xmlNode *objectProperties = getXmlElement(object, (const xmlChar *) "properties");
             if (!objectProperties) {
               goto fail;
@@ -776,7 +755,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                 }
                 char *propertyValue = (char *) xmlGetProp(property, (const xmlChar *) "value");
                 if (!propertyValue) {
-                  xmlFree(propertyName);
                   goto fail;
 
                 } else if (strcmp(propertyName, "numFrames") == 0) {
@@ -797,8 +775,6 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                                                      propertyValueLen + 1);
                   memcpy(textureId, propertyValue, propertyValueLen + 1);
                 }
-                xmlFree(propertyName);
-                xmlFree(propertyValue);
               }
             }
             if (strcmp(type, "ScrollingBackground") == 0) {
@@ -814,44 +790,19 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
 
             } else {
               SDL_Texture *texture = getTexture(textureId, gameContext);
-              EntityNode *node = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
-              node->entity.type = parseEntityType(type);
-              node->entity.position = {ceilf((float) objectX) + ((float) textureWidth) / 2.f,
+              EntityNode *newEntityNode = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+              newEntityNode->entity.type = parseEntityType(type);
+              newEntityNode->entity.position = {ceilf((float) objectX) + ((float) textureWidth) / 2.f,
                                         ceilf((float) objectY) + ((float) textureHeight) / 2.f};
-              node->entity.bitmap = {texture, textureWidth, textureHeight, numFrames};
-              node->entity.velocity = {0, 0};
-              node->next = 0;
-
-              if (node->entity.type != PLAYER_TYPE) {
-
-                if (!newObjectLayer) {
-                  newObjectLayer = RESERVE_MEMORY(&gameMemory->longTimeMemory, ObjectLayer);
-                  if (!objectLayerList) {
-                    objectLayerList = newObjectLayer;
-                  }
-                  if (objectLayerNodePrev) {
-                    objectLayerNodePrev->next = newObjectLayer;
-                  }
-                  objectLayerNodePrev = newObjectLayer;
-                  newObjectLayer->next = 0;
-                  newObjectLayer->entityList = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
-                  newObjectLayer->entityList->next = 0;
-                }
-
-                node->next = newObjectLayer->entityList;
-                newObjectLayer->entityList = node;
-
-              } else {
-                tileMap->player = &node->entity;
-              }
+              newEntityNode->entity.bitmap = {texture, textureWidth, textureHeight, numFrames};
+              newEntityNode->entity.velocity = {0, 0};
+              newEntityNode->next = tileMap->entityList;
+              tileMap->entityList = newEntityNode;
             }
           }
         }
       }
     }
-    tileMap->objectLayerList = objectLayerList;
-
-    xmlFreeDoc(doc);
 
     xmlCleanupParser();
 
@@ -860,28 +811,13 @@ initTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
     return true;
   }
   fail:
-  if (doc) {
-    xmlFreeDoc(doc);
+  if (tileMap->scrollingBackground) {
+    freeMemory(&gameMemory->longTimeMemory, tileMap->scrollingBackground);
   }
-  for (TileSet *tileSetNode = tileSetList; tileSetNode; tileSetNode = tileSetNode->next) {
-    if (tileSetNode->name) {
-      freeMemory(&gameMemory->longTimeMemory, tileSetNode->name);
-    }
-    freeMemory(&gameMemory->longTimeMemory, tileSetNode);
+  for (EntityNode *entityNode = tileMap->entityList; entityNode; entityNode = entityNode->next) {
+    freeMemory(&gameMemory->longTimeMemory, entityNode);
   }
-  for (TileLayer *tileLayerNode = tileLayerList; tileLayerNode; tileLayerNode = tileLayerNode->next) {
-    if (tileLayerNode->tileGids) {
-      freeMemory(&gameMemory->longTimeMemory, tileLayerNode->tileGids);
-    }
-    freeMemory(&gameMemory->longTimeMemory, tileLayerNode);
-  }
-  // TODO !!!!!!
-//  if (tileMap->objectLayer && tileMap->objectLayer->player) {
-//    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer->player);
-//  }
-//  if (tileMap->objectLayer) {
-//    freeMemory(&gameMemory->longTimeMemory, tileMap->objectLayer);
-//  }
+
   gameMemory->shortTimeMemory.usedSize = 0;
   return false;
 }
