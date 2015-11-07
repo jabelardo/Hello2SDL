@@ -6,11 +6,11 @@
 #include "Bitmap.h"
 
 void
-drawTile(SDL_Renderer *renderer, int margin, int spacing, int x, int y, Bitmap *bitmap) {
+drawTile(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap) {
   SDL_Rect srcRect;
   SDL_Rect destRect;
-  srcRect.x = margin + (spacing + bitmap->width) * bitmap->currentFrame;
-  srcRect.y = margin + (spacing + bitmap->height) * bitmap->currentRow;
+  srcRect.x = bitmap->margin + (bitmap->spacing + bitmap->width) * bitmap->currentColumn;
+  srcRect.y = bitmap->margin + (bitmap->spacing + bitmap->height) * bitmap->currentRow;
   srcRect.w = destRect.w = bitmap->width;
   srcRect.h = destRect.h = bitmap->height;
   destRect.x = x;
@@ -21,14 +21,14 @@ drawTile(SDL_Renderer *renderer, int margin, int spacing, int x, int y, Bitmap *
 void
 drawBitmap(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, SDL_RendererFlip flip) {
   drawTextureFrame(renderer, bitmap->texture, x, y, bitmap->width, bitmap->height,
-                   bitmap->currentRow, bitmap->currentFrame, flip);
+                   bitmap->currentRow, bitmap->currentColumn, flip);
 }
 
 void
 drawBitmapEx(SDL_Renderer *renderer, int x, int y, Bitmap *bitmap, SDL_RendererFlip flip) {
   SDL_Rect srcRect;
   SDL_Rect destRect;
-  srcRect.x = bitmap->width * bitmap->currentFrame;
+  srcRect.x = bitmap->width * bitmap->currentColumn;
   srcRect.y = bitmap->height * bitmap->currentRow;
   srcRect.w = destRect.w = bitmap->width;
   srcRect.h = destRect.h = bitmap->height;

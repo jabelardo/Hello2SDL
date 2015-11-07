@@ -28,18 +28,18 @@ updateMenuButton(MenuButton* menuButton, GameContext *gameContext, UserInput* us
       && mousePositionY > menuButton->y) {
 
     if (menuButton->clickedTime && menuButton->clickedTime + 125 <= SDL_GetTicks()) {
-      menuButton->bitmap.currentFrame = MenuButton::CLICKED;
+      menuButton->bitmap.currentColumn = MenuButton::CLICKED;
       menuButton->clickedTime = 0;
       gameContext->stateChange = menuButton->stateChange;
 
     } else if (userInput->mouseButtonLeft.endedDown) {
-      menuButton->bitmap.currentFrame = MenuButton::MOUSE_OUT;
+      menuButton->bitmap.currentColumn = MenuButton::MOUSE_OUT;
       menuButton->clickedTime = SDL_GetTicks();
 
     } else {
-      menuButton->bitmap.currentFrame = MenuButton::MOUSE_OVER;
+      menuButton->bitmap.currentColumn = MenuButton::MOUSE_OVER;
     }
   } else {
-    menuButton->bitmap.currentFrame = MenuButton::MOUSE_OUT;
+    menuButton->bitmap.currentColumn = MenuButton::MOUSE_OUT;
   }
 }

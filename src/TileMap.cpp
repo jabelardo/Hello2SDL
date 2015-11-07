@@ -132,10 +132,10 @@ createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
       int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
       int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
       Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame,
-                       currentRow};
+                       currentRow, 2, 2};
       int x1 = x * tileLayer->tileWidth;
       int y1 = y * tileLayer->tileHeight;
-      drawTile(renderer, 2, 2, x1, y1, &bitmap);
+      drawTile(renderer, x1, y1, &bitmap);
     }
   }
   SDL_SetRenderTarget(renderer, 0);
@@ -189,10 +189,10 @@ drawTileLayers(TileLayer *tileLayer, V2D cameraPosition, SDL_Renderer *renderer)
       int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
       int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
       Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame,
-                       currentRow};
+                       currentRow, 2, 2};
       int x = (screenColumn * tileLayer->tileWidth) - adjustX;
       int y = (screenRow * tileLayer->tileHeight) - adjustY;
-      drawTile(renderer, 2, 2, x, y, &bitmap);
+      drawTile(renderer, x, y, &bitmap);
     }
   }
 }
@@ -485,7 +485,7 @@ xmlGetProp(xmlNode *node, const xmlChar *name, int *value) {
 }
 
 EntityNode *
-createTileLayerEntities(MemoryPartition *memoryPartition, TileLayer *tileLayer, SDL_Renderer *renderer) {
+createTileLayerEntities(TileLayer *tileLayer, MemoryPartition *memoryPartition) {
 
   EntityNode *resultList = 0;
 
@@ -506,8 +506,6 @@ createTileLayerEntities(MemoryPartition *memoryPartition, TileLayer *tileLayer, 
       SDL_Texture *texture = tileSet->texture;
       int currentFrame = (tileId - 1 - (tileSet->firstGid - 1)) % tileSet->numColumns;
       int currentRow = (tileId - 1 - (tileSet->firstGid - 1)) / tileSet->numColumns;
-      Bitmap bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame,
-                       currentRow};
       int objectX = x * tileLayer->tileWidth;
       int objectY = y * tileLayer->tileHeight;
 
@@ -516,8 +514,8 @@ createTileLayerEntities(MemoryPartition *memoryPartition, TileLayer *tileLayer, 
       newEntityNode->entity.type = TILE_TYPE;
       newEntityNode->entity.position = {ceilf((float) objectX) + ((float) tileLayer->tileWidth) / 2.f,
                                         ceilf((float) objectY) + ((float) tileLayer->tileHeight) / 2.f};
-      newEntityNode->entity.bitmap = bitmap;
-      newEntityNode->entity.velocity = {0, 0};
+      newEntityNode->entity.bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame, currentRow,
+                                      tileSet->margin, tileSet->spacing};
       if (!tileLayer->collidable) {
         setEntityFlags(&newEntityNode->entity, DONT_COLLIDE_FLAG);
       }
@@ -710,9 +708,17 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         }
         newTileLayer->tileGids = gids;
 
-        EntityNode *entityList = createTileLayerEntities(&gameMemory->longTimeMemory, newTileLayer, renderer);
-        entityList->next = tileMap->entityList;
-        tileMap->entityList = entityList;
+        EntityNode *entityList = createTileLayerEntities(newTileLayer, &gameMemory->longTimeMemory);
+        if (tileMap->entityList) {
+          EntityNode* node = tileMap->entityList;
+          for (; node->next ; node = node->next) {
+            // skip
+          }
+          node->next = entityList;
+
+        } else {
+          tileMap->entityList = entityList;
+        }
       }
     }
 
@@ -789,9 +795,10 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
                                                       numFrames};
 
             } else {
+              EntityType entityType = parseEntityType(type);
               SDL_Texture *texture = getTexture(textureId, gameContext);
               EntityNode *newEntityNode = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
-              newEntityNode->entity.type = parseEntityType(type);
+              newEntityNode->entity.type = entityType;
               newEntityNode->entity.position = {ceilf((float) objectX) + ((float) textureWidth) / 2.f,
                                         ceilf((float) objectY) + ((float) textureHeight) / 2.f};
               newEntityNode->entity.bitmap = {texture, textureWidth, textureHeight, numFrames};
@@ -813,11 +820,12 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
   fail:
   if (tileMap->scrollingBackground) {
     freeMemory(&gameMemory->longTimeMemory, tileMap->scrollingBackground);
+    tileMap->scrollingBackground = 0;
   }
   for (EntityNode *entityNode = tileMap->entityList; entityNode; entityNode = entityNode->next) {
     freeMemory(&gameMemory->longTimeMemory, entityNode);
   }
-
+  tileMap->entityList = 0;
   gameMemory->shortTimeMemory.usedSize = 0;
   return false;
 }

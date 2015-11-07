@@ -49,7 +49,10 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
                    (entity->velocity.x < 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
       break;
     }
-    case TILE_TYPE:
+    case TILE_TYPE: {
+      drawTile(renderer, x, y, &entity->bitmap);
+      break;
+    }
     case ENEMY_BULLET_TYPE:
     case PLAYER_BULLET_TYPE:
     case GLIDER_TYPE:
@@ -92,7 +95,7 @@ initEntity(Entity *entity) {
       entity->maxSpeed = 5;
       entity->dyingTime = 100;
       entity->dyingCounter = 0;
-      entity->bitmap.currentFrame = 0;
+      entity->bitmap.currentColumn = 0;
       entity->bitmap.alpha = 255;
       entity->bitmap.r = 255;
       entity->bitmap.g = 255;
@@ -112,7 +115,7 @@ initEntity(Entity *entity) {
       entity->health = 1;
       entity->dyingTime = 25;
       entity->dyingCounter = 0;
-      entity->bitmap.currentFrame = 0;
+      entity->bitmap.currentColumn = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
       entity->bulletTime = 0;
@@ -127,7 +130,7 @@ initEntity(Entity *entity) {
       entity->health = 1;
       entity->dyingTime = 25;
       entity->dyingCounter = 0;
-      entity->bitmap.currentFrame = 0;
+      entity->bitmap.currentColumn = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
       entity->bulletTime = 45;
@@ -150,7 +153,7 @@ initEntity(Entity *entity) {
       entity->health = 2;
       entity->dyingTime = 50;
       entity->dyingCounter = 0;
-      entity->bitmap.currentFrame = 0;
+      entity->bitmap.currentColumn = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
       entity->bulletTime = 60;
@@ -173,7 +176,7 @@ initEntity(Entity *entity) {
       entity->health = 25;
       entity->dyingTime = 100;
       entity->dyingCounter = 0;
-      entity->bitmap.currentFrame = 0;
+      entity->bitmap.currentColumn = 0;
       entity->invulnerableTime = 0;
       entity->invulnerableCounter = 0;
       entity->bulletTime = 25;

@@ -12,8 +12,10 @@ struct Bitmap {
   int width;
   int height;
   int totalFrames;
-  int currentFrame;
+  int currentColumn;
   int currentRow;
+  int margin;
+  int spacing;
   double angle;
   uint8_t r;
   uint8_t g;

@@ -20,7 +20,7 @@ drawAnimatedGraphic(AnimatedGraphic *animatedGraphic, SDL_Renderer *renderer) {
 void
 updateAnimatedGraphic(AnimatedGraphic *animatedGraphic) {
   if (animatedGraphic->animationSpeed) {
-    animatedGraphic->bitmap.currentFrame = (int) (
+    animatedGraphic->bitmap.currentColumn = (int) (
         (SDL_GetTicks() / (1000 / animatedGraphic->animationSpeed)) %
         animatedGraphic->bitmap.totalFrames);
   }
