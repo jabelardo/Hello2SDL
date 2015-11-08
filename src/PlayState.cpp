@@ -66,6 +66,8 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
 bool
 startGame(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer, GameMemory *gameMemory) {
 
+  gameContext->cameraPosition = {-gameContext->scrollSpeed, 0};
+
   if (playState->scrollingBackground) {
     freeMemory(&gameMemory->longTimeMemory, playState->scrollingBackground);
     playState->scrollingBackground = 0;

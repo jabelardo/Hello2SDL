@@ -153,7 +153,6 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
     gameContext->currentState = MAIN_MENU_STATE;
     gameContext->scrollSpeed = 1;
     gameContext->pixelsPerMt = 10;
-    gameContext->cameraPosition = {-gameContext->scrollSpeed, 0};
     gameMemory->isInitialized = true;
   }
   gameContext->stateChange = NO_CHANGE;
