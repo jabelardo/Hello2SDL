@@ -432,15 +432,15 @@ checkEntitiesOverlap(Entity *entity1, Entity *entity2) {
     return false;
   }
 
-  float leftA = entity1->position.x - entity1->halfCollisionDim;
-  float rightA = entity1->position.x + entity1->halfCollisionDim;
-  float topA = entity1->position.y - entity1->halfCollisionDim;
-  float bottomA = entity1->position.y + entity1->halfCollisionDim;
+  float leftA = entity1->position.x - entity1->halfCollisionWidth;
+  float rightA = entity1->position.x + entity1->halfCollisionWidth;
+  float topA = entity1->position.y - entity1->halfCollisionHeight;
+  float bottomA = entity1->position.y + entity1->halfCollisionHeight;
 
-  float leftB = entity2->position.x - entity2->halfCollisionDim;
-  float rightB = entity2->position.x + entity2->halfCollisionDim;
-  float topB = entity2->position.y - entity2->halfCollisionDim;
-  float bottomB = entity2->position.y + entity2->halfCollisionDim;
+  float leftB = entity2->position.x - entity2->halfCollisionWidth;
+  float rightB = entity2->position.x + entity2->halfCollisionWidth;
+  float topB = entity2->position.y - entity2->halfCollisionHeight;
+  float bottomB = entity2->position.y + entity2->halfCollisionHeight;
 
   if (bottomA <= topB) { return false; }
   if (topA >= bottomB) { return false; }

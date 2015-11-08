@@ -48,7 +48,8 @@ struct Entity {
   float deltaMovement;
   V2D initialPosition;
   int health;
-  float halfCollisionDim;
+  float halfCollisionWidth;
+  float halfCollisionHeight;
 };
 
 inline void

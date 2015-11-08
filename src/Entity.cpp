@@ -89,7 +89,8 @@ void
 initEntity(Entity *entity) {
   switch (entity->type) {
     case PLAYER_TYPE: {
-      entity->halfCollisionDim = 15;
+      entity->halfCollisionWidth = 15;
+      entity->halfCollisionHeight = 15;
       entity->health = 20;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 5;
@@ -107,7 +108,8 @@ initEntity(Entity *entity) {
       break;
     }
     case GLIDER_TYPE: {
-      entity->halfCollisionDim = 9;
+      entity->halfCollisionWidth = 9;
+      entity->halfCollisionHeight = 9;
       entity->deltaMovement = 60;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
@@ -123,7 +125,8 @@ initEntity(Entity *entity) {
       break;
     }
     case SHOT_GLIDER_TYPE: {
-      entity->halfCollisionDim = 9;
+      entity->halfCollisionWidth = 9;
+      entity->halfCollisionHeight = 9;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {-entity->maxSpeed, 0};
@@ -139,14 +142,16 @@ initEntity(Entity *entity) {
     }
     case ROOF_TURRET_TYPE:
     case TURRET_TYPE: {
-      entity->halfCollisionDim = 14;
+      entity->halfCollisionWidth = 14;
+      entity->halfCollisionHeight = 14;
       entity->dyingTime = 100;
       entity->health = 4;
       entity->bulletTime = 60;
       break;
     }
     case ESKELETOR_TYPE: {
-      entity->halfCollisionDim = 8;
+      entity->halfCollisionWidth = 8;
+      entity->halfCollisionHeight = 8;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 3;
       entity->velocity = {0, 0};
@@ -162,14 +167,16 @@ initEntity(Entity *entity) {
     }
     case PLAYER_BULLET_TYPE:
     case ENEMY_BULLET_TYPE: {
-      entity->halfCollisionDim = 5;
+      entity->halfCollisionWidth = 5;
+      entity->halfCollisionHeight = 5;
       entity->health = 1;
       entity->dyingTime = 1;
       entity->dyingCounter = 0;
       break;
     }
     case LEVEL_1_BOSS_TYPE: {
-      entity->halfCollisionDim = 28;
+      entity->halfCollisionWidth = 28;
+      entity->halfCollisionHeight = 28;
       entity->initialPosition = entity->position;
       entity->maxSpeed = 2;
       entity->velocity = {-entity->maxSpeed, 0};

@@ -557,7 +557,8 @@ createTileLayerEntities(TileLayer *tileLayer, MemoryPartition *memoryPartition) 
       newEntityNode->entity.bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame, currentRow,
                                       tileSet->margin, tileSet->spacing};
 
-      newEntityNode->entity.halfCollisionDim = ((float) tileLayer->tileWidth) / 2.f;
+      newEntityNode->entity.halfCollisionWidth = ((float) tileLayer->tileWidth) / 2.f;
+      newEntityNode->entity.halfCollisionHeight = ((float) tileLayer->tileHeight) / 2.f;
 
       if (!tileLayer->collidable) {
         setEntityFlags(&newEntityNode->entity, DONT_COLLIDE_FLAG);
@@ -869,6 +870,7 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
     freeMemory(&gameMemory->longTimeMemory, entityNode);
   }
   tileMap->entityList = 0;
+  xmlCleanupParser();
   gameMemory->shortTimeMemory.usedSize = 0;
   return false;
 }
