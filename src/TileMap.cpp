@@ -556,6 +556,9 @@ createTileLayerEntities(TileLayer *tileLayer, MemoryPartition *memoryPartition) 
                                         ceilf((float) objectY) + ((float) tileLayer->tileHeight) / 2.f};
       newEntityNode->entity.bitmap = {texture, tileLayer->tileWidth, tileLayer->tileHeight, 0, currentFrame, currentRow,
                                       tileSet->margin, tileSet->spacing};
+
+      newEntityNode->entity.halfCollisionDim = ((float) tileLayer->tileWidth) / 2.f;
+
       if (!tileLayer->collidable) {
         setEntityFlags(&newEntityNode->entity, DONT_COLLIDE_FLAG);
       }
