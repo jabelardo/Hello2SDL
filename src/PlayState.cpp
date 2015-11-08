@@ -248,7 +248,7 @@ handlePlayerAnimation(Entity *entity) {
     } else if (entity->bitmap.alpha == 125) {
       clearEntityFlags(entity, DEC_ALPHA_FLAG);
     }
-    if (areSetEntityFlags(entity, DEC_ALPHA_FLAG)) {
+    if (areEntityFlagsSet(entity, DEC_ALPHA_FLAG)) {
       entity->bitmap.alpha -= 10;
     } else {
       entity->bitmap.alpha += 10;
@@ -457,155 +457,153 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
     entity1 = entity2;
     entity2 = tmp;
   }
-  if (entity1->type == PLAYER_BULLET_TYPE) {
-
-    if (entity2->type == PLAYER_TYPE) {
-      return;
-
-    } else if (entity2->type == ENEMY_BULLET_TYPE) {
-      entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-      entity1->health = entity2->health = 0;
-
-    } else if (entity2->type == GLIDER_TYPE || entity2->type == SHOT_GLIDER_TYPE) {
-      entity1->health = 0;
-      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-      --entity2->health;
-      if (entity2->health < 1) {
-        entity2->bitmap = {playState->explosionTexture, 40, 40, 9};
+  if (entity1->type == TILE_TYPE && !areEntityFlagsSet(entity1, DONT_COLLIDE_FLAG)) {
+    switch (entity2->type) {
+      case PLAYER_BULLET_TYPE:
+      case ENEMY_BULLET_TYPE: {
+        entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        entity2->health = 0;
+        break;
       }
-
-    } else if (entity2->type == ESKELETOR_TYPE || entity2->type == TURRET_TYPE ||
-               entity2->type == ROOF_TURRET_TYPE) {
-      entity1->health = 0;
-      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-      --entity2->health;
-      if (entity2->health < 1) {
-        entity2->bitmap = {playState->largeExplosionTexture, 60, 60, 9};
+      case PLAYER_TYPE: {
+        entity2->position = oldPos;
+        entity2->velocity.y *= -8;
+        entity2->position += entity2->velocity;
+        --entity2->health;
+        break;
       }
-
-    } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
-      entity1->health = 0;
-      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-      --entity2->health;
-      if (entity2->health < 1) {
-        entity2->bitmap = {playState->bossExplosionTexture, 180, 180, 9};
+      case GLIDER_TYPE:
+      case ESKELETOR_TYPE: {
+        entity2->position = oldPos;
+        entity2->velocity.y *= -1;
+        entity2->position += entity2->velocity;
+        break;
+      }
+      case TILE_TYPE:
+      case LEVEL_1_BOSS_TYPE:
+      case ROOF_TURRET_TYPE:
+      case TURRET_TYPE:
+      case SHOT_GLIDER_TYPE:
+      case NULL_ENTITY_TYPE:
+      default: {
+        break;
+      }
+    }
+  } else if (entity1->type == PLAYER_BULLET_TYPE) {
+    switch (entity2->type) {
+      case PLAYER_TYPE: {
+        break;
+      }
+      case ENEMY_BULLET_TYPE: {
+        entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        entity1->health = entity2->health = 0;
+        break;
+      }
+      case GLIDER_TYPE:
+      case SHOT_GLIDER_TYPE: {
+        entity1->health = 0;
+        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        --entity2->health;
+        if (entity2->health < 1) {
+          entity2->bitmap = {playState->explosionTexture, 40, 40, 9};
+        }
+        break;
+      }
+      case ESKELETOR_TYPE:
+      case TURRET_TYPE:
+      case ROOF_TURRET_TYPE: {
+        entity1->health = 0;
+        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        --entity2->health;
+        if (entity2->health < 1) {
+          entity2->bitmap = {playState->largeExplosionTexture, 60, 60, 9};
+        }
+        break;
+      }
+      case LEVEL_1_BOSS_TYPE: {
+        entity1->health = 0;
+        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        --entity2->health;
+        if (entity2->health < 1) {
+          entity2->bitmap = {playState->bossExplosionTexture, 180, 180, 9};
+        }
+        break;
+      }
+      default: {
+        break;
       }
     }
 
   } else if (entity1->type == ENEMY_BULLET_TYPE) {
-    if (entity2->type == ENEMY_BULLET_TYPE) {
-      entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-      entity1->health = entity2->health = 0;
-
-    } else if (entity2->type == PLAYER_TYPE) {
-      entity1->health = 0;
-      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-      --entity2->health;
-
-    } else if (entity2->type == GLIDER_TYPE || entity2->type == SHOT_GLIDER_TYPE) {
-      entity1->health = 0;
-      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-
-    } else if (entity2->type == ESKELETOR_TYPE || entity2->type == TURRET_TYPE ||
-               entity2->type == ROOF_TURRET_TYPE) {
-      entity1->health = 0;
-      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-
-    } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
-      entity1->health = 0;
-      entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+    switch (entity2->type) {
+      case ENEMY_BULLET_TYPE: {
+        entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        entity1->health = entity2->health = 0;
+        break;
+      }
+      case PLAYER_TYPE: {
+        entity1->health = 0;
+        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        --entity2->health;
+        break;
+      }
+      case GLIDER_TYPE:
+      case SHOT_GLIDER_TYPE: {
+        entity1->health = 0;
+        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        break;
+      }
+      case ESKELETOR_TYPE:
+      case TURRET_TYPE:
+      case ROOF_TURRET_TYPE: {
+        entity1->health = 0;
+        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        break;
+      }
+      case LEVEL_1_BOSS_TYPE: {
+        entity1->health = 0;
+        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+        break;
+      }
+      default: {
+        break;
+      }
     }
   } else if (entity1->type == PLAYER_TYPE) {
-    if (entity2->type == GLIDER_TYPE || entity2->type == SHOT_GLIDER_TYPE) {
-      entity1->position = oldPos;
-      entity1->velocity.y *= -8;
-      entity1->position += entity1->velocity;
-      --entity1->health;
-      --entity2->health;
-
-    } else if (entity2->type == ESKELETOR_TYPE || entity2->type == TURRET_TYPE ||
-               entity2->type == ROOF_TURRET_TYPE) {
-      entity1->position = oldPos;
-      entity1->velocity.y *= -8;
-      entity1->position += entity1->velocity;
-      --entity1->health;
-      --entity2->health;
-
-    } else if (entity2->type == LEVEL_1_BOSS_TYPE) {
-      entity1->position = oldPos;
-      entity1->velocity.y *= -8;
-      entity1->position += entity1->velocity;
-      --entity1->health;
-      --entity2->health;
+    switch (entity2->type) {
+      case GLIDER_TYPE:
+      case SHOT_GLIDER_TYPE: {
+        entity1->position = oldPos;
+        entity1->velocity.y *= -8;
+        entity1->position += entity1->velocity;
+        --entity1->health;
+        --entity2->health;
+        break;
+      }
+      case ESKELETOR_TYPE:
+      case TURRET_TYPE:
+      case ROOF_TURRET_TYPE: {
+        entity1->position = oldPos;
+        entity1->velocity.y *= -8;
+        entity1->position += entity1->velocity;
+        --entity1->health;
+        --entity2->health;
+        break;
+      }
+      case LEVEL_1_BOSS_TYPE: {
+        entity1->position = oldPos;
+        entity1->velocity.y *= -8;
+        entity1->position += entity1->velocity;
+        --entity1->health;
+        --entity2->health;
+        break;
+      }
+      default: {
+        break;
+      }
     }
   }
 }
-
-//bool
-//checkTileLayerOverlap(Entity *entity, TileLayer *tileLayer) {
-//
-//  int leftA = (int) (entity->position.x - entity->bitmap.width / 2);
-//  int rightA = (int) (entity->position.x + entity->bitmap.width / 2);
-//  int topA = (int) (entity->position.y - entity->bitmap.height / 2);
-//  int bottomA = (int) (entity->position.y + entity->bitmap.height / 2);
-//
-//  for (int y = topA; y < bottomA; ++y) {
-//    for (int x = leftA; x < rightA; ++x) {
-//
-//      int tileColumn = x / tileLayer->tileWidth;
-//      int tileRow = y / tileLayer->tileHeight;
-//
-//      int tileIdx = tileRow * tileLayer->mapWidth + tileColumn;
-//      if (tileIdx >= tileLayer->tileGidsCount) {
-//        continue;
-//      }
-//      int32_t tileId = tileLayer->tileGids[tileIdx];
-//      if (tileId != 0) {
-//        return true;
-//      }
-//    }
-//  }
-//  return false;
-//}
-
-//void
-//handleTileLayerOverlap(PlayState *playState, Entity *entity, V2D oldPos) {
-//  switch (entity->type) {
-//    case NULL_ENTITY_TYPE: {
-//      break;
-//    }
-//    case PLAYER_BULLET_TYPE:
-//    case ENEMY_BULLET_TYPE: {
-//      entity->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-//      entity->health = 0;
-//      break;
-//    }
-//    case PLAYER_TYPE: {
-//      entity->position = oldPos;
-//      entity->velocity.y *= -8;
-//      entity->position += entity->velocity;
-//      --entity->health;
-//      break;
-//    }
-//    case SHOT_GLIDER_TYPE:
-//      break;
-//    case GLIDER_TYPE:
-//    case ESKELETOR_TYPE: {
-//      entity->position = oldPos;
-//      entity->velocity.y *= -1;
-//      entity->position += entity->velocity;
-//      break;
-//    }
-//    case TURRET_TYPE:
-//      break;
-//    case ROOF_TURRET_TYPE:
-//      break;
-//    case LEVEL_1_BOSS_TYPE:
-//      break;
-//    case TILE_TYPE:
-//      break;
-//  }
-//}
 
 void
 doEntityMovement(PlayState *playState, Entity *entity, GameContext *gameContext) {

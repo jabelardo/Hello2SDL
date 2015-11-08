@@ -15,6 +15,7 @@ struct SDL_Renderer;
 
 enum EntityType {
   NULL_ENTITY_TYPE = 0,
+  TILE_TYPE,
   PLAYER_BULLET_TYPE,
   ENEMY_BULLET_TYPE,
   PLAYER_TYPE,
@@ -24,7 +25,6 @@ enum EntityType {
   TURRET_TYPE,
   ROOF_TURRET_TYPE,
   LEVEL_1_BOSS_TYPE,
-  TILE_TYPE,
 };
 
 enum EntityFlags {
@@ -62,7 +62,7 @@ clearEntityFlags(Entity* entity, EntityFlags flags) {
 }
 
 inline bool
-areSetEntityFlags(Entity* entity, EntityFlags flags) {
+areEntityFlagsSet(Entity* entity, EntityFlags flags) {
   int result = entity->flags & ~flags;
   return result != 0;
 }

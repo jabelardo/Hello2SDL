@@ -13,6 +13,40 @@
 #include "SharedDefinitions.h"
 #include "ScrollingBackground.h"
 
+struct TileSet {
+  char* name;
+  int firstGid;
+  int tileCount;
+  int tileWidth;
+  int tileHeight;
+  int imageWidth;
+  int imageHeight;
+  int spacing;
+  int margin;
+  int numColumns;
+  TileSet* next;
+  SDL_Texture *texture;
+};
+
+struct TileLayer {
+  int mapWidth;
+  int mapHeight;
+  int tileWidth;
+  int tileHeight;
+  V2D position;
+  V2D velocity;
+
+  int screenColumns;
+  int screenRows;
+  bool collidable;
+
+  TileSet* tileSetList;
+  size_t tileGidsCount;
+  int32_t* tileGids;
+  SDL_Texture* texture;
+  TileLayer* next;
+};
+
 TileSet *
 getTileSetById(TileLayer *tileLayer, int tileId) {
   for (TileSet *node = tileLayer->tileSetList; node; node = node->next) {
@@ -23,6 +57,7 @@ getTileSetById(TileLayer *tileLayer, int tileId) {
   return 0;
 }
 
+#if 0
 void
 drawTileLayerTexture(TileLayer *tileLayer, GameContext* gameContext, SDL_Renderer *renderer) {
 
@@ -104,7 +139,9 @@ drawTileLayerTexture(TileLayer *tileLayer, GameContext* gameContext, SDL_Rendere
     SDL_RenderCopy(renderer, tileLayer->texture, &srcMainRect, &destMainRect);
   }
 }
+#endif
 
+#if 0
 void
 createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
   tileLayer->texture = SDL_CreateTexture(renderer,
@@ -140,7 +177,9 @@ createTileLayerTexture(TileLayer *tileLayer, SDL_Renderer *renderer) {
   }
   SDL_SetRenderTarget(renderer, 0);
 }
+#endif
 
+#if 0
 void
 drawTileLayers(TileLayer *tileLayer, V2D cameraPosition, SDL_Renderer *renderer) {
   int relativeLayerX = (int) (tileLayer->position.x - cameraPosition.x);
@@ -196,6 +235,7 @@ drawTileLayers(TileLayer *tileLayer, V2D cameraPosition, SDL_Renderer *renderer)
     }
   }
 }
+#endif
 
 #if 0
 void
@@ -233,7 +273,7 @@ stringTrim(char *str) {
   }
   // Trim leading space
   while (isspace(*str)) {
-    str++;
+    ++str;
   }
   if (*str == 0) {
     return str;
@@ -241,7 +281,7 @@ stringTrim(char *str) {
   // Trim trailing space
   char *end = str + strlen(str) - 1;
   while (end > str && isspace(*end)) {
-    end--;
+    --end;
   }
   // Write new null terminator
   *(end + 1) = 0;

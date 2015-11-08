@@ -36,10 +36,10 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
   int x = (int) roundf(drawPos.x);
   int y = (int) roundf(drawPos.y);
 
-  if ((x < -entity->bitmap.width / 2) ||
-      (x > gameContext->gameWidth + entity->bitmap.width / 2) ||
-      (y < -entity->bitmap.height / 2) ||
-      (y > gameContext->gameHeight + entity->bitmap.height / 2)) {
+  if ((x < -entity->bitmap.width + 1) ||
+      (x > gameContext->gameWidth + entity->bitmap.width - 1) ||
+      (y < -entity->bitmap.height + 1) ||
+      (y > gameContext->gameHeight + entity->bitmap.height - 1)) {
     return;
   }
   switch (entity->type) {
