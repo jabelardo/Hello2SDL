@@ -43,6 +43,9 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
     return;
   }
   switch (entity->type) {
+    case NULL_ENTITY_TYPE: {
+      return;
+    }
     case PLAYER_TYPE: {
 
       drawBitmapEx(renderer, x, y, &entity->bitmap,
@@ -67,10 +70,8 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
       drawBitmap(renderer, x, y, &entity->bitmap, SDL_FLIP_VERTICAL);
       break;
     }
-    case NULL_ENTITY_TYPE: {
-      return;
-    }
   }
+#ifdef DEBUG
   SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
   SDL_Rect rect;
   rect.x = x;
@@ -83,6 +84,7 @@ drawEntity(Entity *entity, GameContext* gameContext, SDL_Renderer *renderer) {
 
   SDL_RenderDrawLine(renderer, drawPos.x, drawPos.y, screenPos.x, screenPos.y);
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+#endif
 }
 
 void
