@@ -525,7 +525,9 @@ xmlGetProp(xmlNode *node, const xmlChar *name, int *value) {
 }
 
 EntityNode *
-createTileLayerEntities(TileLayer *tileLayer, MemoryPartition *memoryPartition) {
+createTileLayerEntities(TileLayer *tileLayer, MemoryPartition *longTimeMemory, EntityNode** freeEntityList) {
+
+  assert(longTimeMemory->type == LONG_TIME_MEMORY);
 
   EntityNode *resultList = 0;
 
@@ -549,7 +551,13 @@ createTileLayerEntities(TileLayer *tileLayer, MemoryPartition *memoryPartition) 
       int objectX = x * tileLayer->tileWidth;
       int objectY = y * tileLayer->tileHeight;
 
-      EntityNode *newEntityNode = RESERVE_MEMORY(memoryPartition, EntityNode);
+      EntityNode *newEntityNode = 0;
+      if (*freeEntityList) {
+        newEntityNode = *freeEntityList;
+        *freeEntityList = (*freeEntityList)->next;
+      } else {
+        newEntityNode = RESERVE_MEMORY(longTimeMemory, EntityNode);
+      }
       newEntityNode->entity.health = 1;
       newEntityNode->entity.type = TILE_TYPE;
       newEntityNode->entity.position = {ceilf((float) objectX) + ((float) tileLayer->tileWidth) / 2.f,
@@ -571,8 +579,8 @@ createTileLayerEntities(TileLayer *tileLayer, MemoryPartition *memoryPartition) 
 }
 
 bool
-loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
-            SDL_Renderer *renderer, GameMemory *gameMemory, PlatformConfig *platformConfig) {
+loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext, SDL_Renderer *renderer,
+            GameMemory *gameMemory, EntityNode** freeEntityList) {
 
   assert(tileMap->entityList == 0);
 
@@ -584,8 +592,7 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
   }
   xmlInitParser();
 
-  char *mapfilePath = stringConcat(platformConfig->resourcePath, mapfileName,
-                                   &gameMemory->shortTimeMemory);
+  char *mapfilePath = stringConcat(gameContext->resourcePath, mapfileName, &gameMemory->shortTimeMemory);
 
   if (!mapfilePath) {
     return false;
@@ -637,8 +644,7 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         if (!value) {
           goto fail;
         }
-        if (!loadTexture(name, value, platformConfig->resourcePath, renderer, gameContext,
-                         gameMemory)) {
+        if (!loadTexture(name, value, gameContext->resourcePath, renderer, gameContext, gameMemory)) {
           goto fail;
         }
       }
@@ -687,7 +693,7 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             if (!source) {
               goto fail;
             }
-            if (!loadTexture(newTileSet->name, source, platformConfig->resourcePath, renderer,
+            if (!loadTexture(newTileSet->name, source, gameContext->resourcePath, renderer,
                              gameContext, gameMemory)) {
               goto fail;
             }
@@ -735,8 +741,8 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
 
         newTileLayer->tileWidth = tileMap->tileWidth;
         newTileLayer->tileHeight = tileMap->tileHeight;
-        newTileLayer->screenColumns = platformConfig->screenWidth / tileMap->tileWidth;
-        newTileLayer->screenRows = platformConfig->screenHeight / tileMap->tileHeight;
+        newTileLayer->screenColumns = (int) (gameContext->gameWidth / tileMap->tileWidth);
+        newTileLayer->screenRows = (int) (gameContext->gameHeight / tileMap->tileHeight);
         newTileLayer->mapWidth = tileMap->width;
         newTileLayer->mapHeight = tileMap->height;
         newTileLayer->tileSetList = tileSetList;
@@ -752,7 +758,7 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
         }
         newTileLayer->tileGids = gids;
 
-        EntityNode *entityList = createTileLayerEntities(newTileLayer, &gameMemory->longTimeMemory);
+        EntityNode *entityList = createTileLayerEntities(newTileLayer, &gameMemory->longTimeMemory, freeEntityList);
         if (tileMap->entityList) {
           EntityNode* node = tileMap->entityList;
           for (; node->next ; node = node->next) {
@@ -841,7 +847,13 @@ loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
             } else {
               EntityType entityType = parseEntityType(type);
               SDL_Texture *texture = getTexture(textureId, gameContext);
-              EntityNode *newEntityNode = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+              EntityNode *newEntityNode = 0;
+              if (*freeEntityList) {
+                newEntityNode = *freeEntityList;
+                *freeEntityList = (*freeEntityList)->next;
+              } else {
+                newEntityNode = RESERVE_MEMORY(&gameMemory->longTimeMemory, EntityNode);
+              }
               newEntityNode->entity.type = entityType;
               newEntityNode->entity.position = {ceilf((float) objectX) + ((float) textureWidth) / 2.f,
                                         ceilf((float) objectY) + ((float) textureHeight) / 2.f};

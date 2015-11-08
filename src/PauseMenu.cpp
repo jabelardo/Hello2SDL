@@ -15,13 +15,12 @@
 #include "SharedDefinitions.h"
 
 bool
-initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, SDL_Renderer *renderer,
-              GameMemory* gameMemory, PlatformConfig *platformConfig) {
-  if (!loadTexture("MAIN_BUTTON", "main.png", platformConfig->resourcePath, renderer,
+initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, SDL_Renderer *renderer, GameMemory* gameMemory) {
+  if (!loadTexture("MAIN_BUTTON", "main.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("RESUME_BUTTON", "resume.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("RESUME_BUTTON", "resume.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }

@@ -15,14 +15,13 @@
 #include "SharedDefinitions.h"
 
 bool
-initMainMenu(MainMenu *mainMenu, GameContext *gameContext, SDL_Renderer *renderer,
-             GameMemory* gameMemory, PlatformConfig *platformConfig) {
+initMainMenu(MainMenu *mainMenu, GameContext *gameContext, SDL_Renderer *renderer, GameMemory* gameMemory) {
 
-  if (!loadTexture("PLAY_BUTTON", "button.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("PLAY_BUTTON", "button.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("EXIT_BUTTON", "exit.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("EXIT_BUTTON", "exit.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }

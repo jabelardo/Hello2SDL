@@ -8,7 +8,6 @@
 struct GameContext;
 struct GameMemory;
 struct MenuButton;
-struct PlatformConfig;
 struct SDL_Renderer;
 struct UserInput;
 
@@ -22,8 +21,7 @@ struct MainMenu {
   };
 };
 
-bool initMainMenu(MainMenu *mainMenu, GameContext *gameContext, SDL_Renderer *renderer,
-                  GameMemory* gameMemory, PlatformConfig *platformConfig);
+bool initMainMenu(MainMenu *mainMenu, GameContext *gameContext, SDL_Renderer *renderer, GameMemory* gameMemory);
 
 void updateMainMenu(MainMenu *mainMenu, GameContext *gameContext, UserInput* userInput);
 

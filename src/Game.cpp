@@ -74,7 +74,7 @@ renderGame(GameContext *gameContext, SDL_Renderer *renderer) {
 }
 
 void
-processStateChange(GameContext *gameContext, UserInput* userInput) {
+processStateChange(GameContext *gameContext, UserInput* userInput, SDL_Renderer *renderer, GameMemory* gameMemory) {
   switch (gameContext->stateChange) {
     case NO_CHANGE: {
       break;
@@ -82,7 +82,7 @@ processStateChange(GameContext *gameContext, UserInput* userInput) {
     case START_PLAY: {
 //      SDL_ShowCursor(SDL_DISABLE);
       *userInput = {};
-      startGame(gameContext->playState, gameContext);
+      startGame(gameContext->playState, gameContext, renderer, gameMemory);
       gameContext->currentState = PLAY_STATE;
       break;
     }
@@ -126,37 +126,40 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
 
   GameContext *gameContext = (GameContext *) gameMemory->permanentMemory.base;
 
+  gameContext->resourcePath = platformConfig->resourcePath;
+  gameContext->dtPerFrame = platformConfig->dtPerFrame;
+  gameContext->gameWidth = platformConfig->screenWidth;
+  gameContext->gameHeight = platformConfig->screenHeight;
+
   if (!gameMemory->isInitialized) {
     gameContext = RESERVE_MEMORY(&gameMemory->permanentMemory, GameContext);
 
     gameContext->mainMenu = RESERVE_MEMORY(&gameMemory->permanentMemory, MainMenu);
-    if (!initMainMenu(gameContext->mainMenu, gameContext, renderer, gameMemory, platformConfig)) {
+    if (!initMainMenu(gameContext->mainMenu, gameContext, renderer, gameMemory)) {
       return -1;
     }
     gameContext->playState = RESERVE_MEMORY(&gameMemory->permanentMemory, PlayState);
-    if (!initPlayState(gameContext->playState, gameContext, renderer, gameMemory, platformConfig)) {
+    if (!initPlayState(gameContext->playState, gameContext, renderer, gameMemory)) {
       return -1;
     }
     gameContext->pauseMenu = RESERVE_MEMORY(&gameMemory->permanentMemory, PauseMenu);
-    if (!initPauseMenu(gameContext->pauseMenu, gameContext, renderer, gameMemory, platformConfig)) {
+    if (!initPauseMenu(gameContext->pauseMenu, gameContext, renderer, gameMemory)) {
       return -1;
     }
     gameContext->gameOverMenu = RESERVE_MEMORY(&gameMemory->permanentMemory, GameOverMenu);
-    if (!initGameOverMenu(gameContext->gameOverMenu, gameContext, renderer, gameMemory, platformConfig)) {
+    if (!initGameOverMenu(gameContext->gameOverMenu, gameContext, renderer, gameMemory)) {
       return -1;
     }
     gameContext->currentState = MAIN_MENU_STATE;
-    gameContext->gameWidth = platformConfig->screenWidth;
-    gameContext->gameHeight = platformConfig->screenHeight;
     gameContext->scrollSpeed = 1;
-    gameContext->dtPerFrame = platformConfig->dtPerFrame;
     gameContext->pixelsPerMt = 10;
     gameContext->cameraPosition = {-gameContext->scrollSpeed, 0};
     gameMemory->isInitialized = true;
   }
   gameContext->stateChange = NO_CHANGE;
+
   updateGame(gameContext, userInput, gameMemory);
-  processStateChange(gameContext, userInput);
+  processStateChange(gameContext, userInput, renderer, gameMemory);
   renderGame(gameContext, renderer);
 
   return 0;

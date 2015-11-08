@@ -11,7 +11,6 @@
 struct GameContext;
 struct GameMemory;
 struct MenuButton;
-struct PlatformConfig;
 struct SDL_Renderer;
 struct ScrollingBackground;
 struct TileMap;
@@ -33,15 +32,14 @@ struct PlayState {
   Entity* player;
 };
 
-bool initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer,
-                   GameMemory* gameMemory, PlatformConfig *platformConfig);
+bool initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer, GameMemory* gameMemory);
+
+bool startGame(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer, GameMemory *gameMemory);
 
 void updatePlayState(PlayState *playState, GameContext *gameContext, UserInput* userInput,
                      GameMemory *gameMemory);
 
 void renderPlayState(PlayState *playState, GameContext* gameContext, SDL_Renderer *renderer);
-
-bool startGame(PlayState *playState, GameContext *gameContext);
 
 void addPlayerBullet(PlayState* playState, GameMemory *gameMemory, V2D position, V2D velocity);
 

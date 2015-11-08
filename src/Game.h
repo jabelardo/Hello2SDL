@@ -50,6 +50,7 @@ struct GameContext {
   float pixelsPerMt;
   float dtPerFrame;
   float tileSideInMt;
+  char *resourcePath;
   bool isLevelCompleted;
 };
 

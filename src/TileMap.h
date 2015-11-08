@@ -9,7 +9,6 @@
 #include "V2D.h"
 #include "Entity.h"
 
-struct PlatformConfig;
 struct ScrollingBackground;
 
 struct TileMap {
@@ -21,8 +20,8 @@ struct TileMap {
   ScrollingBackground *scrollingBackground;
 };
 
-bool loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext,
-                 SDL_Renderer *renderer, GameMemory *gameMemory, PlatformConfig *platformConfig);
+bool loadTileMap(TileMap *tileMap, const char *mapfileName, GameContext *gameContext, SDL_Renderer *renderer,
+                 GameMemory *gameMemory, EntityNode** freeEntityList);
 
 
 #endif //HELLO2SDL_TILEMMAP_H

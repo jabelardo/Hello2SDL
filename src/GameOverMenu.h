@@ -9,7 +9,6 @@ struct AnimatedGraphic;
 struct GameContext;
 struct GameMemory;
 struct MenuButton;
-struct PlatformConfig;
 struct SDL_Renderer;
 struct UserInput;
 
@@ -25,7 +24,7 @@ struct GameOverMenu {
 };
 
 bool initGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext, SDL_Renderer *renderer,
-                      GameMemory* gameMemory, PlatformConfig *platformConfig);
+                      GameMemory* gameMemory);
 
 void updateGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext, UserInput* userInput);
 

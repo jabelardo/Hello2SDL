@@ -16,18 +16,17 @@
 #include "SharedDefinitions.h"
 
 bool
-initGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext, SDL_Renderer *renderer,
-                 GameMemory* gameMemory, PlatformConfig *platformConfig) {
+initGameOverMenu(GameOverMenu *gameOverMenu, GameContext *gameContext, SDL_Renderer *renderer, GameMemory* gameMemory) {
 
-  if (!loadTexture("GAME_OVER_TEXT", "gameover.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("GAME_OVER_TEXT", "gameover.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("MAIN_BUTTON", "main.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("MAIN_BUTTON", "main.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("RESTART_BUTTON", "restart.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("RESTART_BUTTON", "restart.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }

@@ -23,45 +23,70 @@
 
 bool
 initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer,
-              GameMemory *gameMemory, PlatformConfig *platformConfig) {
+              GameMemory *gameMemory) {
 
-  if (!loadTexture("BULLET1", "bullet1.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("BULLET1", "bullet1.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("BULLET2", "bullet2.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("BULLET2", "bullet2.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("BULLET3", "bullet3.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("BULLET3", "bullet3.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("LIVES", "lives.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("LIVES", "lives.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("SMALL_EXPLOSION", "smallexplosion.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("SMALL_EXPLOSION", "smallexplosion.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("EXPLOSION", "explosion.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("EXPLOSION", "explosion.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("LARGE_EXPLOSION", "largeexplosion.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("LARGE_EXPLOSION", "largeexplosion.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
   }
-  if (!loadTexture("BOSS_EXPLOSION", "bossexplosion.png", platformConfig->resourcePath, renderer,
+  if (!loadTexture("BOSS_EXPLOSION", "bossexplosion.png", gameContext->resourcePath, renderer,
                    gameContext, gameMemory)) {
     return false;
+  }
+
+  playState->freeEntities = 0;
+
+  return true;
+}
+
+bool
+startGame(PlayState *playState, GameContext *gameContext, SDL_Renderer *renderer, GameMemory *gameMemory) {
+
+  if (playState->scrollingBackground) {
+    freeMemory(&gameMemory->longTimeMemory, playState->scrollingBackground);
+    playState->scrollingBackground = 0;
+  }
+
+  for (EntityNode **entityNode = &playState->entityList; *entityNode;) {
+
+    EntityNode *freeEntity = *entityNode;
+
+    // NOTE: must modify the pointer itself
+    *entityNode = (*entityNode)->next;
+
+    freeEntity->next = playState->freeEntities;
+    playState->freeEntities = freeEntity;
+    assert((*entityNode == 0) || (*entityNode != (*entityNode)->next));
   }
 
   TileMap *tileMap = RESERVE_MEMORY(&gameMemory->shortTimeMemory, TileMap);
+  *tileMap = {};
 
-  if (!loadTileMap(tileMap, "map1.tmx", gameContext, renderer, gameMemory,
-                   platformConfig)) {
+  if (!loadTileMap(tileMap, "map1.tmx", gameContext, renderer, gameMemory, &playState->freeEntities)) {
     return false;
   }
   playState->tileMapWidth = tileMap->width * tileMap->tileWidth;
@@ -78,13 +103,6 @@ initPlayState(PlayState *playState, GameContext *gameContext, SDL_Renderer *rend
     return false;
   }
 
-  playState->freeEntities = 0;
-
-  return true;
-}
-
-bool
-startGame(PlayState *playState, GameContext *gameContext) {
   playState->liveTexture = getTexture("LIVES", gameContext);
   if (!playState->liveTexture) {
     return false;
@@ -228,9 +246,10 @@ updateCameraPosition(PlayState *playState, GameContext *gameContext) {
 }
 
 void
-resurrectPlayer(Entity *entity, PlayState *playState) {
+resurrectPlayer(PlayState *playState, GameContext *gameContext, Entity *entity) {
   initEntity(entity);
   --playState->currentLives;
+  entity->position = entity->initialPosition + gameContext->cameraPosition;
   entity->invulnerableCounter = entity->invulnerableTime;
 }
 
@@ -288,22 +307,14 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
     entity->dyingCounter = entity->dyingTime;
   }
 
-  V2D screenPosition = getEntityScreenPosition(entity, gameContext->cameraPosition);
-
-  if (entity->type != PLAYER_TYPE) {
-    if ((screenPosition.x > gameContext->gameWidth + entity->bitmap.width) ||
-        (screenPosition.x < -entity->bitmap.width)) {
-      return;
-    }
-  }
-
   if (handleDying(entity) && entity->dyingCounter == 1) {
     if (entity->type == LEVEL_1_BOSS_TYPE) {
+      entity->type = NULL_ENTITY_TYPE;
       gameContext->isLevelCompleted = true;
 
     } else if (entity->type == PLAYER_TYPE) {
       if (playState->currentLives > 0) {
-        resurrectPlayer(entity, playState);
+        resurrectPlayer(playState, gameContext, entity);
       } else {
         gameContext->stateChange = GAME_OVER;
       }
@@ -311,6 +322,15 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
       entity->type = NULL_ENTITY_TYPE;
     }
     return;
+  }
+
+  V2D screenPosition = getEntityScreenPosition(entity, gameContext->cameraPosition);
+
+  if (entity->type != PLAYER_TYPE) {
+    if ((screenPosition.x > gameContext->gameWidth + entity->bitmap.width) ||
+        (screenPosition.x < -entity->bitmap.width)) {
+      return;
+    }
   }
 
   switch (entity->type) {
@@ -450,6 +470,37 @@ checkEntitiesOverlap(Entity *entity1, Entity *entity2) {
   return true;
 }
 
+void handleExplosion(PlayState *playState, Entity *entity) {
+  if (entity->health > 0) {
+    return;
+  }
+  switch (entity->type) {
+    case NULL_ENTITY_TYPE:break;
+    case TILE_TYPE:break;
+    case PLAYER_BULLET_TYPE:
+    case ENEMY_BULLET_TYPE: {
+      entity->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
+      break;
+    }
+    case PLAYER_TYPE:break;
+    case GLIDER_TYPE:
+    case SHOT_GLIDER_TYPE: {
+      entity->bitmap = {playState->explosionTexture, 40, 40, 9};
+      break;
+    }
+    case ESKELETOR_TYPE:
+    case TURRET_TYPE:
+    case ROOF_TURRET_TYPE: {
+      entity->bitmap = {playState->largeExplosionTexture, 60, 60, 9};
+      break;
+    }
+    case LEVEL_1_BOSS_TYPE:{
+      entity->bitmap = {playState->bossExplosionTexture, 180, 180, 9};
+      break;
+    }
+  }
+}
+
 void
 handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2D oldPos) {
   if (entity1->type > entity2->type) {
@@ -461,7 +512,6 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
     switch (entity2->type) {
       case PLAYER_BULLET_TYPE:
       case ENEMY_BULLET_TYPE: {
-        entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         entity2->health = 0;
         break;
       }
@@ -469,7 +519,9 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
         entity2->position = oldPos;
         entity2->velocity.y *= -8;
         entity2->position += entity2->velocity;
-        --entity2->health;
+        if (entity2->invulnerableCounter < 1) {
+          --entity2->health;
+        }
         break;
       }
       case GLIDER_TYPE:
@@ -495,38 +547,25 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
         break;
       }
       case ENEMY_BULLET_TYPE: {
-        entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         entity1->health = entity2->health = 0;
         break;
       }
       case GLIDER_TYPE:
       case SHOT_GLIDER_TYPE: {
         entity1->health = 0;
-        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         --entity2->health;
-        if (entity2->health < 1) {
-          entity2->bitmap = {playState->explosionTexture, 40, 40, 9};
-        }
         break;
       }
       case ESKELETOR_TYPE:
       case TURRET_TYPE:
       case ROOF_TURRET_TYPE: {
         entity1->health = 0;
-        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         --entity2->health;
-        if (entity2->health < 1) {
-          entity2->bitmap = {playState->largeExplosionTexture, 60, 60, 9};
-        }
         break;
       }
       case LEVEL_1_BOSS_TYPE: {
         entity1->health = 0;
-        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         --entity2->health;
-        if (entity2->health < 1) {
-          entity2->bitmap = {playState->bossExplosionTexture, 180, 180, 9};
-        }
         break;
       }
       default: {
@@ -537,32 +576,29 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
   } else if (entity1->type == ENEMY_BULLET_TYPE) {
     switch (entity2->type) {
       case ENEMY_BULLET_TYPE: {
-        entity1->bitmap = entity2->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         entity1->health = entity2->health = 0;
         break;
       }
       case PLAYER_TYPE: {
         entity1->health = 0;
-        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
-        --entity2->health;
+        if (entity2->invulnerableCounter < 1) {
+          --entity2->health;
+        }
         break;
       }
       case GLIDER_TYPE:
       case SHOT_GLIDER_TYPE: {
         entity1->health = 0;
-        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         break;
       }
       case ESKELETOR_TYPE:
       case TURRET_TYPE:
       case ROOF_TURRET_TYPE: {
         entity1->health = 0;
-        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         break;
       }
       case LEVEL_1_BOSS_TYPE: {
         entity1->health = 0;
-        entity1->bitmap = {playState->smallExplosionTexture, 20, 20, 2};
         break;
       }
       default: {
@@ -576,7 +612,9 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
         entity1->position = oldPos;
         entity1->velocity.y *= -8;
         entity1->position += entity1->velocity;
-        --entity1->health;
+        if (entity1->invulnerableCounter < 1) {
+          --entity1->health;
+        }
         --entity2->health;
         break;
       }
@@ -586,7 +624,9 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
         entity1->position = oldPos;
         entity1->velocity.y *= -8;
         entity1->position += entity1->velocity;
-        --entity1->health;
+        if (entity1->invulnerableCounter < 1) {
+          --entity1->health;
+        }
         --entity2->health;
         break;
       }
@@ -594,7 +634,9 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
         entity1->position = oldPos;
         entity1->velocity.y *= -8;
         entity1->position += entity1->velocity;
-        --entity1->health;
+        if (entity1->invulnerableCounter < 1) {
+          --entity1->health;
+        }
         --entity2->health;
         break;
       }
@@ -603,6 +645,8 @@ handleEntitiesOverlap(PlayState *playState, Entity *entity1, Entity *entity2, V2
       }
     }
   }
+  handleExplosion(playState, entity1);
+  handleExplosion(playState, entity2);
 }
 
 void
@@ -759,7 +803,8 @@ updateEntities(PlayState *playState, EntityNode **entities, GameContext *gameCon
                GameMemory *gameMemory) {
   for (EntityNode **entityNode = entities; *entityNode;) {
     V2D position = getEntityScreenPosition(&(*entityNode)->entity, gameContext->cameraPosition);
-    if (((*entityNode)->entity.type == PLAYER_BULLET_TYPE || (*entityNode)->entity.type == ENEMY_BULLET_TYPE) &&
+    if (((*entityNode)->entity.type == PLAYER_BULLET_TYPE || (*entityNode)->entity.type == ENEMY_BULLET_TYPE ||
+        (*entityNode)->entity.type == NULL_ENTITY_TYPE) &&
         (position.x < -(*entityNode)->entity.bitmap.width ||
          position.x > gameContext->gameWidth + (*entityNode)->entity.bitmap.width ||
          position.y < -(*entityNode)->entity.bitmap.height ||

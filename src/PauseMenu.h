@@ -8,7 +8,6 @@
 struct GameContext;
 struct GameMemory;
 struct MenuButton;
-struct PlatformConfig;
 struct SDL_Renderer;
 struct UserInput;
 
@@ -22,8 +21,7 @@ struct PauseMenu {
   };
 };
 
-bool initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, SDL_Renderer *renderer,
-                   GameMemory* gameMemory, PlatformConfig *platformConfign);
+bool initPauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, SDL_Renderer *renderer, GameMemory* gameMemory);
 
 void updatePauseMenu(PauseMenu *pauseMenu, GameContext *gameContext, UserInput* userInput);
 
