@@ -6,6 +6,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -I/usr/include/libxml2")
 set(SOURCE_FILES
         src/AnimatedGraphic.cpp
         src/AnimatedGraphic.h
+        src/AssetsManagement.cpp
+        src/AssetsManagement.h
         src/Bitmap.h
         src/Entity.cpp
         src/Entity.h
@@ -30,8 +32,6 @@ set(SOURCE_FILES
         src/ScrollingBackground.cpp
         src/ScrollingBackground.h
         src/SharedDefinitions.h
-        src/TextureStorage.cpp
-        src/TextureStorage.h
         src/TileMap.cpp
         src/TileMap.h
         src/V2D.h)

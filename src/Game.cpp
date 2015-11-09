@@ -7,6 +7,7 @@
 #include "SharedDefinitions.h"
 
 #include "AnimatedGraphic.cpp"
+#include "AssetsManagement.cpp"
 #include "Entity.cpp"
 #include "GameOverMenu.cpp"
 #include "MainMenu.cpp"
@@ -16,7 +17,6 @@
 #include "PlayState.cpp"
 #include "RenderUtils.cpp"
 #include "ScrollingBackground.cpp"
-#include "TextureStorage.cpp"
 #include "TileMap.cpp"
 
 void
@@ -154,6 +154,13 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
     gameContext->scrollSpeed = 1;
     gameContext->pixelsPerMt = 10;
     gameMemory->isInitialized = true;
+
+    // add some sound effects - TODO move to better place
+    loadSound("music1", SOUND_MUSIC, "DST_ElectroRock.ogg", gameContext->resourcePath, gameContext, gameMemory);
+    loadSound("explode", SOUND_SFX, "boom.wav", gameContext->resourcePath, gameContext, gameMemory);
+    loadSound("shoot", SOUND_SFX, "phaser.wav", gameContext->resourcePath, gameContext, gameMemory);
+
+    playMusic("music1", gameContext, -1);
   }
   gameContext->stateChange = NO_CHANGE;
 

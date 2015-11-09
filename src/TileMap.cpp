@@ -9,7 +9,7 @@
 #include "TileMap.h"
 #include "RenderUtils.h"
 #include "Entity.h"
-#include "TextureStorage.h"
+#include "AssetsManagement.h"
 #include "SharedDefinitions.h"
 #include "ScrollingBackground.h"
 

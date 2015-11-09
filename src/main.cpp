@@ -1,7 +1,6 @@
 #ifdef __APPLE__
-
 #include <SDL2/SDL.h>
-
+#include <SDL2_Mixer/SDL_Mixer.h>
 #else
 #include <SDL.h>
 #endif
@@ -9,14 +8,12 @@
 #if _MSC_VER
 #include <windows.h>
 #else
-
 #include <sys/mman.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include <sys/errno.h>
-
 #endif
 
 #include <assert.h>
@@ -454,6 +451,11 @@ main(int argc, char *args[]) {
 
   atexit(SDL_Quit);
 
+  if (Mix_OpenAudio(22050, AUDIO_S16, 2, (4096 / 2)) == -1) {
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error Mix_OpenAudio: %s\n", SDL_GetError());
+    return 1;
+  }
+
   initResourcePath();
 
   SDL_Window *window = SDL_CreateWindow("Chapter 1", SDL_WINDOWPOS_UNDEFINED,
@@ -565,5 +567,8 @@ main(int argc, char *args[]) {
 
     lastCounter = endCounter;
   }
+
+  Mix_CloseAudio();
+
   return 0;
 }

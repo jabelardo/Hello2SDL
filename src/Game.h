@@ -26,11 +26,29 @@ enum GameStateChange {
   BETWEEN_LEVEL
 };
 
-struct TextureHashNode;
 struct MainMenu;
 struct PlayState;
 struct PauseMenu;
 struct GameOverMenu;
+struct SDL_Texture;
+
+struct TextureHashNode {
+  char *name;
+  SDL_Texture *texture;
+  TextureHashNode *next;
+};
+
+enum SoundType {
+  SOUND_MUSIC = 0,
+  SOUND_SFX
+};
+
+struct SoundHashNode {
+  SoundType type;
+  char *name;
+  void *data;
+  SoundHashNode *next;
+};
 
 struct GameContext {
   GameState currentState;
@@ -42,6 +60,8 @@ struct GameContext {
 
   TextureHashNode *textureHash[4096];
   TextureHashNode *freeTextureHashNodes;
+  SoundHashNode *soundHash[128];
+  SoundHashNode *freeSoundHashNodes;
   float gameWidth;
   float gameHeight;
   V2D cameraPosition;

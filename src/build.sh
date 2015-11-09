@@ -8,11 +8,11 @@ else
 	SRC_DIR="$1"
 fi
 
-LIB_LINKER_FLAGS="-lxml2 -lz -framework SDL2 -framework SDL2_image"
+LIB_LINKER_FLAGS="-lxml2 -lz -framework SDL2 -framework SDL2_image -framework SDL2_mixer"
 
-DEBUG_APP_LINKER_FLAGS="-framework SDL2"
+DEBUG_APP_LINKER_FLAGS="-framework SDL2 -framework SDL2_mixer"
 
-RELEASE_APP_LINKER_FLAGS="-L. -lGame -framework SDL2"
+RELEASE_APP_LINKER_FLAGS="-L. -lGame -framework SDL2 -framework SDL2_mixer"
 
 COMMON_FLAGS="-std=c++14 -I/usr/include/libxml2"
 

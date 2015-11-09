@@ -9,7 +9,7 @@
 #endif
 
 #include "MainMenu.h"
-#include "TextureStorage.h"
+#include "AssetsManagement.h"
 #include "MemoryPartition.h"
 #include "MenuButton.h"
 #include "SharedDefinitions.h"

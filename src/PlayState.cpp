@@ -14,7 +14,7 @@
 #include <float.h>
 #include "PlayState.h"
 #include "Entity.h"
-#include "TextureStorage.h"
+#include "AssetsManagement.h"
 #include "MemoryPartition.h"
 #include "TileMap.h"
 #include "SharedDefinitions.h"
@@ -310,6 +310,9 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
   }
 
   if (handleDying(entity) && entity->dyingCounter == 1) {
+    if (entity->type != ENEMY_BULLET_TYPE || entity->type != PLAYER_BULLET_TYPE || entity->type != NULL_ENTITY_TYPE) {
+      playSound("explode", gameContext);
+    }
     if (entity->type == LEVEL_1_BOSS_TYPE) {
       entity->type = NULL_ENTITY_TYPE;
       gameContext->isLevelCompleted = true;
@@ -343,10 +346,12 @@ updateEntity(PlayState *playState, Entity *entity, GameContext *gameContext, Use
         if (entity->bulletCounter == 0) {
           entity->bulletCounter = entity->bulletTime;
           if (entity->velocity.x >= 0) {
+            playSound("shoot", gameContext);
             addPlayerBullet(playState, gameMemory,
                             {entity->position.x + 40, entity->position.y + 23},
                             {10, 0});
           } else {
+            playSound("shoot", gameContext);
             addPlayerBullet(playState, gameMemory,
                             {entity->position.x - 40, entity->position.y + 23},
                             {-10, 0});
@@ -472,7 +477,8 @@ checkEntitiesOverlap(Entity *entity1, Entity *entity2) {
   return true;
 }
 
-void handleExplosion(PlayState *playState, Entity *entity) {
+void
+handleExplosion(PlayState *playState, Entity *entity) {
   if (entity->health > 0) {
     return;
   }
