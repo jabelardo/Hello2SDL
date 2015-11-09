@@ -156,9 +156,9 @@ gameUpdateAndRender(PlatformConfig *platformConfig, UserInput* userInput, GameMe
     gameMemory->isInitialized = true;
 
     // add some sound effects - TODO move to better place
-    loadSound("music1", SOUND_MUSIC, "DST_ElectroRock.ogg", gameContext->resourcePath, gameContext, gameMemory);
-    loadSound("explode", SOUND_SFX, "boom.wav", gameContext->resourcePath, gameContext, gameMemory);
-    loadSound("shoot", SOUND_SFX, "phaser.wav", gameContext->resourcePath, gameContext, gameMemory);
+    loadMusic("music1", "DST_ElectroRock.ogg", gameContext->resourcePath, gameContext, gameMemory);
+    loadSound("explode", "boom.wav", gameContext->resourcePath, gameContext, gameMemory);
+    loadSound("shoot", "phaser.wav", gameContext->resourcePath, gameContext, gameMemory);
 
     playMusic("music1", gameContext, -1);
   }

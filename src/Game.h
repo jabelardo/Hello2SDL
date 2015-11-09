@@ -32,22 +32,17 @@ struct PauseMenu;
 struct GameOverMenu;
 struct SDL_Texture;
 
-struct TextureHashNode {
-  char *name;
-  SDL_Texture *texture;
-  TextureHashNode *next;
+enum AssetType {
+  MUSIC_ASSET = 0,
+  SOUND_ASSET,
+  TEXTURE_ASSET,
 };
 
-enum SoundType {
-  SOUND_MUSIC = 0,
-  SOUND_SFX
-};
-
-struct SoundHashNode {
-  SoundType type;
+struct AssetHashNode {
+  AssetType type;
   char *name;
   void *data;
-  SoundHashNode *next;
+  AssetHashNode *next;
 };
 
 struct GameContext {
@@ -58,10 +53,8 @@ struct GameContext {
   PauseMenu *pauseMenu;
   GameOverMenu *gameOverMenu;
 
-  TextureHashNode *textureHash[4096];
-  TextureHashNode *freeTextureHashNodes;
-  SoundHashNode *soundHash[128];
-  SoundHashNode *freeSoundHashNodes;
+  AssetHashNode *assetHash[256];
+  AssetHashNode *freeAssetHashNodes;
   float gameWidth;
   float gameHeight;
   V2D cameraPosition;

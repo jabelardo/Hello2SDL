@@ -15,17 +15,22 @@ struct SDL_Texture;
 bool loadTexture(const char *textureName, const char *filename, const char* resourcePath,
                  SDL_Renderer *renderer, GameContext *gameContext, GameMemory* gameMemory);
 
-SDL_Texture * getTexture(const char *textureName, GameContext *gameContext);
+bool loadSound(const char *soundName,const char *fileName, const char* resourcePath,
+               GameContext *gameContext, GameMemory* gameMemory);
+
+bool loadMusic(const char *soundName,const char *fileName, const char* resourcePath,
+               GameContext *gameContext, GameMemory* gameMemory);
 
 bool unloadTexture(const char *textureName, GameContext *gameContext);
 
-bool loadSound(const char *soundName, SoundType type, const char *fileName, const char* resourcePath,
-               GameContext *gameContext, GameMemory* gameMemory);
+bool unloadSound(const char *soundName, GameContext *gameContext);
+
+bool unloadMusic(const char *soundName, GameContext *gameContext);
+
+SDL_Texture * getTexture(const char *textureName, GameContext *gameContext);
 
 void playSound(const char *soundName, GameContext *gameContext, int loops = 0);
 
 void playMusic(const char *soundName, GameContext *gameContext, int loops = 0);
-
-bool unloadSound(const char *soundName, SoundType type, GameContext *gameContext);
 
 #endif //HELLO2SDL_ASSETSMANAGEMENT_H
